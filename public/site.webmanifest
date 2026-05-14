@@ -1,0 +1,18 @@
+{
+  "name": "Dash Dental",
+  "short_name": "Dash Dental",
+  "description": "Missed-message recovery cockpit for dental clinics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1011",
+  "theme_color": "#0f1011",
+  "icons": [
+    {
+      "src": "/favicon.svg?v=4",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

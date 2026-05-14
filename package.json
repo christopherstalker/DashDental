@@ -1,0 +1,52 @@
+{
+  "name": "dental-recovery",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test:regression": "node --import tsx --test tests/regression/*.test.ts",
+    "test:e2e": "playwright test",
+    "test:ready": "npm run lint && npm run typecheck && npm run build && npm run test:e2e",
+    "monitor:synthetic": "playwright test tests/e2e/synthetic-launch.spec.ts",
+    "monitor:synthetic:guarded": "tsx scripts/synthetic-monitor-safety.ts && playwright test tests/e2e/synthetic-launch.spec.ts",
+    "monitor:preview": "tsx scripts/synthetic-monitor-safety.ts && playwright test tests/e2e/public-preview.spec.ts",
+    "rehearsal:first-clinic": "playwright test tests/e2e/first-clinic-rehearsal.spec.ts",
+    "go-live:check": "tsx scripts/go-live-readiness.ts",
+    "stripe:rehearsal": "tsx scripts/stripe-live-rehearsal.ts",
+    "prisma:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
+    "admin:grant": "tsx prisma/invite-oauth-user.ts",
+    "oauth:invite": "tsx prisma/invite-oauth-user.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "bullmq": "^5.76.5",
+    "dotenv": "^17.4.2",
+    "ioredis": "^5.10.1",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.4",
+    "pg": "^8.20.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "prisma": "^7.7.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

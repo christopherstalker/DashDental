@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dash Dental">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="40" x2="448" y2="472" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#202124"/>
+      <stop offset="1" stop-color="#0F1011"/>
+    </linearGradient>
+    <linearGradient id="line" x1="128" y1="112" x2="388" y2="396" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1F3F4"/>
+      <stop offset="0.55" stop-color="#CFE3FF"/>
+      <stop offset="1" stop-color="#8AB4F8"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bg)"/>
+  <rect x="42" y="42" width="428" height="428" rx="102" stroke="white" stroke-opacity="0.12" stroke-width="20"/>
+  <path d="M154 181C154 125 194 102 239 119C267 130 282 142 315 135C359 126 397 143 411 184C428 235 401 302 383 347C366 391 349 421 321 421C294 421 298 360 274 360C250 360 247 421 219 421C190 421 172 388 156 347C139 302 154 231 154 181Z" stroke="url(#line)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M170 258C229 279 316 271 386 224" stroke="#81C995" stroke-width="22" stroke-linecap="round"/>
+  <path d="M394 153L407 181L435 194L407 207L394 235L381 207L353 194L381 181L394 153Z" fill="#8AB4F8"/>
+</svg>
