@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -13,6 +15,8 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { LocalizedText } from "@/features/i18n/components/localized-text";
+import type { TranslationKey } from "@/features/i18n/translations";
 import { RecoveryCockpitSidebar } from "@/features/dashboard/components/recovery-cockpit-sidebar";
 
 export type CockpitQueueRow = {
@@ -30,8 +34,10 @@ export type CockpitQueueRow = {
 };
 
 export type CockpitMetric = {
-  helper: string;
-  label: string;
+  helper?: string;
+  helperKey?: TranslationKey;
+  label?: string;
+  labelKey?: TranslationKey;
   tone: "active" | "default" | "risk" | "success" | "warning";
   value: string;
 };
@@ -40,7 +46,14 @@ type RecoveryCockpitProps = {
   activeChannels?: string;
   ctaHref?: string;
   ctaLabel?: string;
+  ctaLabelKey?: TranslationKey;
   embedded?: boolean;
+  embeddedContext?: {
+    atRisk: number;
+    clinicName: string;
+    firstName: string;
+    unanswered: number;
+  };
   metrics?: CockpitMetric[];
   queueRows?: CockpitQueueRow[];
   sampleMode?: boolean;
@@ -176,7 +189,9 @@ export function RecoveryCockpit({
   activeChannels = "4",
   ctaHref = "/support#request",
   ctaLabel = "Book 15-min clinic demo",
+  ctaLabelKey,
   embedded = false,
+  embeddedContext,
   metrics = fallbackMetrics,
   queueRows = fallbackQueueRows,
   sampleMode = false,
@@ -187,6 +202,13 @@ export function RecoveryCockpit({
   const rows = queueRows.length > 0 ? queueRows : fallbackQueueRows;
   const selected = rows[Math.min(selectedIndex, rows.length - 1)] ?? fallbackQueueRows[0];
   const metricRows = metrics.length > 0 ? metrics : fallbackMetrics;
+  const queueHref = sampleMode ? "/register" : "/queue";
+  const ctaPrimary =
+    ctaLabelKey !== undefined ? (
+      <LocalizedText k={ctaLabelKey} />
+    ) : (
+      ctaLabel
+    );
 
   return (
     <section
@@ -204,38 +226,76 @@ export function RecoveryCockpit({
       )}
 
       <div className="dd-cockpit-workspace">
-        <header className="dd-cockpit-topbar clinic-console-header">
+        <header
+          className={`dd-cockpit-topbar clinic-console-header ${embedded ? "dd-cockpit-topbar-embedded" : ""}`}
+        >
           <div className="clinic-console-title">
-            <span className="dd-cockpit-kicker">Missed-message recovery cockpit</span>
-            <h1>Dashboard</h1>
-          <p className="clinic-console-summary">
-            Good morning. Prioritize unanswered patients, estimate money at risk, and keep
-            staff-reviewed AI drafts in one operating view.
-          </p>
+            {embedded && embeddedContext ? (
+              <>
+                <span className="dd-cockpit-kicker dd-cockpit-kicker-muted">
+                  <LocalizedText k="dashboard.cockpit.embeddedKicker" />
+                </span>
+                <p className="dd-cockpit-clinic-line">{embeddedContext.clinicName}</p>
+                <h1>
+                  <LocalizedText k="workspace.nav.dashboard" />
+                </h1>
+                <p className="clinic-console-summary dd-cockpit-summary-compact">
+                  <span className="dd-cockpit-greet-line">
+                    <LocalizedText k="dashboard.hero.greeting" /> {embeddedContext.firstName}
+                  </span>
+                  <span className="dd-cockpit-meta-line">
+                    {embeddedContext.unanswered}{" "}
+                    <LocalizedText k="dashboard.cockpit.unansweredPatients" />
+                    {" · "}
+                    {embeddedContext.atRisk}{" "}
+                    <LocalizedText k="dashboard.cockpit.atRiskItems" />
+                  </span>
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="dd-cockpit-kicker dd-cockpit-kicker-demo">
+                  <LocalizedText k="dashboard.cockpit.demoKicker" />
+                </span>
+                <h1>
+                  <LocalizedText k="workspace.nav.dashboard" />
+                </h1>
+                <p className="clinic-console-summary">
+                  <LocalizedText k="dashboard.cockpit.heroSummary" />
+                </p>
+              </>
+            )}
           </div>
           <div className="dd-cockpit-topbar-actions">
             <Link className="dd-cockpit-button primary" href={ctaHref}>
-              {ctaLabel}
+              {ctaPrimary}
             </Link>
-            <Link className="dd-cockpit-button secondary" href={sampleMode ? "/register" : "/queue"}>
-              Open recovery queue
+            <Link className="dd-cockpit-button secondary" href={queueHref}>
+              <LocalizedText k="dashboard.cockpit.openQueue" />
             </Link>
           </div>
         </header>
 
         <div className="dd-cockpit-metrics">
-          {metricRows.map((metric) => (
-            <MetricCard key={metric.label} metric={metric} />
+          {metricRows.map((metric, index) => (
+            <MetricCard
+              key={metric.labelKey ?? metric.label ?? `metric-${index}`}
+              metric={metric}
+            />
           ))}
         </div>
 
         <div className="dd-cockpit-center-grid">
           <div className="clinic-main-column">
             <ConsolePanel
-              action={<span className="dd-cockpit-chip ai">AI draft ready</span>}
+              action={
+                <span className="dd-cockpit-chip ai">
+                  <LocalizedText k="dashboard.cockpit.aiChipReady" />
+                </span>
+              }
               className="dd-cockpit-queue-panel"
-              eyebrow="Priority recovery queue"
-              title="Conversations most likely to disappear"
+              eyebrow={<LocalizedText k="dashboard.cockpit.queueEyebrow" />}
+              title={<LocalizedText k="dashboard.cockpit.queueTitle" />}
             >
               <div className="dd-cockpit-queue">
                 {rows.map((row, index) => (
@@ -257,11 +317,16 @@ export function RecoveryCockpit({
 }
 
 function MetricCard({ metric }: { metric: CockpitMetric }) {
+  const label =
+    metric.labelKey !== undefined ? <LocalizedText k={metric.labelKey} /> : metric.label;
+  const helper =
+    metric.helperKey !== undefined ? <LocalizedText k={metric.helperKey} /> : metric.helper;
+
   return (
     <article className={`dd-cockpit-metric ${metric.tone}`}>
-      <span>{metric.label}</span>
+      <span>{label}</span>
       <strong>{metric.value}</strong>
-      <small>{metric.helper}</small>
+      {helper ? <small>{helper}</small> : null}
     </article>
   );
 }
@@ -276,8 +341,8 @@ function ConsolePanel({
   action?: ReactNode;
   children: ReactNode;
   className?: string;
-  eyebrow: string;
-  title: string;
+  eyebrow: ReactNode;
+  title: ReactNode;
 }) {
   return (
     <section className={`dd-cockpit-panel ${className}`}>
@@ -309,7 +374,7 @@ function QueueItem({ active, row }: { active: boolean; row: CockpitQueueRow }) {
       <small>{row.action}</small>
       <em>{row.status}</em>
       <button aria-label={`Review ${row.intent}`} type="button">
-        Review
+        <LocalizedText k="dashboard.cockpit.review" />
       </button>
     </article>
   );
@@ -318,9 +383,13 @@ function QueueItem({ active, row }: { active: boolean; row: CockpitQueueRow }) {
 function ConversationPreview({ row }: { row: CockpitQueueRow }) {
   return (
     <ConsolePanel
-      action={<span className="dd-cockpit-chip danger">Staff owned</span>}
+      action={
+        <span className="dd-cockpit-chip danger">
+          <LocalizedText k="dashboard.cockpit.staffOwned" />
+        </span>
+      }
       className="dd-cockpit-preview"
-      eyebrow="Selected conversation"
+      eyebrow={<LocalizedText k="dashboard.cockpit.previewEyebrow" />}
       title={`${row.initials} / ${row.intent}`}
     >
       <div className="dd-cockpit-preview-profile">
@@ -332,25 +401,33 @@ function ConversationPreview({ row }: { row: CockpitQueueRow }) {
       </div>
       <dl className="dd-cockpit-preview-list">
         <div>
-          <dt>Latest safe message excerpt</dt>
+          <dt>
+            <LocalizedText k="dashboard.cockpit.excerptLabel" />
+          </dt>
           <dd>&quot;{row.excerpt}&quot;</dd>
         </div>
         <div>
-          <dt>Risk reason</dt>
+          <dt>
+            <LocalizedText k="dashboard.cockpit.riskLabel" />
+          </dt>
           <dd>{row.riskReason}</dd>
         </div>
         <div>
-          <dt>Suggested next action</dt>
+          <dt>
+            <LocalizedText k="dashboard.cockpit.nextActionLabel" />
+          </dt>
           <dd>{row.action}</dd>
         </div>
       </dl>
       <aside className="dd-cockpit-draft">
         <span>
-          <Sparkles size={15} />
-          AI draft reply
+          <Sparkles size={15} aria-hidden />
+          <LocalizedText k="dashboard.cockpit.aiDraftLabel" />
         </span>
         <p>{row.draft}</p>
-        <b>Draft only — staff review required</b>
+        <b>
+          <LocalizedText k="dashboard.cockpit.draftNotice" />
+        </b>
       </aside>
     </ConsolePanel>
   );
@@ -360,11 +437,13 @@ function InsightPanel({ sampleMode }: { sampleMode: boolean }) {
   return (
     <aside className="dd-cockpit-insights" aria-label="Recovery settings">
       <div className="dd-cockpit-insight-title">
-        <Settings2 size={18} />
-        <strong>Recovery settings</strong>
+        <Settings2 size={18} aria-hidden />
+        <strong>
+          <LocalizedText k="dashboard.cockpit.recoverySettings" />
+        </strong>
       </div>
 
-      <InsightSection title="Active channels">
+      <InsightSection title={<LocalizedText k="dashboard.cockpit.sectionChannels" />}>
         {channelHealth.map(([label, value]) => (
           <div className="dd-cockpit-insight-row" key={label}>
             <strong>{label}</strong>
@@ -373,16 +452,16 @@ function InsightPanel({ sampleMode }: { sampleMode: boolean }) {
         ))}
       </InsightSection>
 
-      <InsightSection title="AI boundaries">
+      <InsightSection title={<LocalizedText k="dashboard.cockpit.sectionAiBoundaries" />}>
         {aiBoundaries.map((item) => (
           <div className="dd-cockpit-insight-check" key={item}>
-            <CheckCircle2 size={14} />
+            <CheckCircle2 size={14} aria-hidden />
             {item}
           </div>
         ))}
       </InsightSection>
 
-      <InsightSection title="Revenue assumptions">
+      <InsightSection title={<LocalizedText k="dashboard.cockpit.sectionRevenue" />}>
         {revenueAssumptions.map(([label, value]) => (
           <div className="dd-cockpit-insight-row" key={label}>
             <strong>{label}</strong>
@@ -391,23 +470,27 @@ function InsightPanel({ sampleMode }: { sampleMode: boolean }) {
         ))}
       </InsightSection>
 
-      <InsightSection title="Channel health">
+      <InsightSection title={<LocalizedText k="dashboard.cockpit.sectionChannelHealth" />}>
         <div className="dd-cockpit-health-line">
-          <Clock3 size={15} />
-          Delivery and provider status stay visible.
+          <Clock3 size={15} aria-hidden />
+          <LocalizedText k="dashboard.cockpit.healthLine1" />
         </div>
         <div className="dd-cockpit-health-line">
-          <MessageCircle size={15} />
-          Provider approvals are not marked live until configured.
+          <MessageCircle size={15} aria-hidden />
+          <LocalizedText k="dashboard.cockpit.healthLine2" />
         </div>
       </InsightSection>
 
       {sampleMode ? (
         <section className="dd-cockpit-sample-notice" aria-label="Sample data notice">
-          <FileText size={16} />
+          <FileText size={16} aria-hidden />
           <div>
-            <strong>Sample data notice</strong>
-            <p>This dashboard uses illustrative data and does not show real patients.</p>
+            <strong>
+              <LocalizedText k="dashboard.cockpit.sampleNoticeTitle" />
+            </strong>
+            <p>
+              <LocalizedText k="dashboard.cockpit.sampleNoticeBody" />
+            </p>
           </div>
         </section>
       ) : null}
@@ -420,7 +503,7 @@ function InsightSection({
   title,
 }: {
   children: ReactNode;
-  title: string;
+  title: ReactNode;
 }) {
   return (
     <section className="dd-cockpit-insight-section">
