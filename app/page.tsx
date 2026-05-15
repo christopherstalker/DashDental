@@ -1,471 +1,331 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import {
-  Calendar,
-  Users,
-  BarChart3,
-  Settings,
-  Menu,
-  X,
-  Sparkles,
-  Shield,
-  Zap,
-  Clock,
-  ArrowRight,
-  Check,
-  ChevronRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-const navigation = [
-  { name: "Features", href: "#features" },
-  { name: "Pricing", href: "#pricing" },
-  { name: "About", href: "#about" },
-];
+import { ArrowRight, Check, ChevronRight, MessageSquare, Bell, BarChart3, Shield, Zap, Globe } from "lucide-react";
+import { Nav } from "@/components/nav";
+import { Footer } from "@/components/footer";
 
 const features = [
+  { icon: MessageSquare, color: "#8ab4f8", title: "Unified Recovery Queue", desc: "WhatsApp, Instagram DMs, Telegram, and web forms funneled into one prioritized queue. No tab-switching, no missed leads." },
+  { icon: Bell, color: "#fdd663", title: "Response-Time Risk Scoring", desc: "Every unanswered thread gets a risk score based on message age, procedure type, and patient lifetime value." },
+  { icon: Zap, color: "#81c995", title: "AI-Assisted Reply Drafts", desc: "Context-aware draft suggestions, clearly labeled for staff review before sending. Never auto-sends." },
+  { icon: BarChart3, color: "#c58af9", title: "Owner Recovery Reports", desc: "Weekly reports: money at risk, recovered conversations, avg first-response time by channel and staff member." },
+  { icon: Shield, color: "#f28b82", title: "HIPAA-Aware by Default", desc: "PII handling, audit logs, role-based access, and data retention controls built in from day one." },
+  { icon: Globe, color: "#8ab4f8", title: "Multi-Location Ready", desc: "Manage multiple clinic locations from one dashboard with per-location reporting and team assignments." },
+];
+
+const stats = [
+  { value: "4.2×", label: "more leads recovered" },
+  { value: "< 8 min", label: "avg first response" },
+  { value: "$12k+", label: "recovered per month" },
+  { value: "98%", label: "staff adoption" },
+];
+
+const channels = [
+  { name: "WhatsApp", color: "#81c995" },
+  { name: "Instagram", color: "#c58af9" },
+  { name: "Telegram", color: "#8ab4f8" },
+  { name: "Web Forms", color: "#fdd663" },
+];
+
+const testimonials = [
   {
-    icon: Calendar,
-    title: "Smart Scheduling",
-    description:
-      "AI-powered appointment scheduling that optimizes your daily workflow and reduces no-shows by 40%.",
+    quote: "We were losing implant consults in Instagram DMs for months. Dash Dental surfaced three high-value leads in the first week alone.",
+    name: "Dr. Maria Santos", role: "Owner, Santos Dental Group", initials: "MS", color: "#8ab4f8",
   },
   {
-    icon: Users,
-    title: "Patient Management",
-    description:
-      "Complete patient profiles with treatment history, documents, and automated communication.",
+    quote: "The response-time risk score changed how our front desk prioritizes. High-value emergency leads never fall through anymore.",
+    name: "James Okello", role: "Practice Manager, BrightSmile Clinics", initials: "JO", color: "#81c995",
   },
   {
-    icon: BarChart3,
-    title: "Analytics & Insights",
-    description:
-      "Real-time dashboards showing practice performance, revenue trends, and patient retention.",
-  },
-  {
-    icon: Shield,
-    title: "HIPAA Compliant",
-    description:
-      "Enterprise-grade security with full HIPAA compliance, encrypted data, and audit logs.",
-  },
-  {
-    icon: Zap,
-    title: "Instant Sync",
-    description:
-      "Real-time synchronization across all devices. Your team stays updated instantly.",
-  },
-  {
-    icon: Clock,
-    title: "Automated Reminders",
-    description:
-      "Smart SMS and email reminders that reduce no-shows and keep your schedule full.",
+    quote: "Setup was one afternoon. The AI drafts are a huge time-saver — we review every one but they are always on-point for our tone.",
+    name: "Dr. Leila Ahmadi", role: "Founder, Modern Dental Studio", initials: "LA", color: "#c58af9",
   },
 ];
 
-const pricingPlans = [
-  {
-    name: "Starter",
-    price: "99",
-    description: "Perfect for solo practitioners",
-    features: [
-      "Up to 200 patients",
-      "Basic scheduling",
-      "Email reminders",
-      "Standard support",
-    ],
-  },
-  {
-    name: "Professional",
-    price: "249",
-    description: "For growing practices",
-    features: [
-      "Unlimited patients",
-      "Advanced scheduling",
-      "SMS & email reminders",
-      "Analytics dashboard",
-      "Priority support",
-      "Custom branding",
-    ],
-    popular: true,
-  },
-  {
-    name: "Enterprise",
-    price: "499",
-    description: "For multi-location practices",
-    features: [
-      "Everything in Professional",
-      "Multi-location support",
-      "API access",
-      "Dedicated account manager",
-      "Custom integrations",
-      "SLA guarantee",
-    ],
-  },
+const queueRows = [
+  { name: "Carlos M.", msg: "Interested in full implant consultation, saw your ad...", tag: "Implant", risk: "HIGH", riskColor: "#f28b82", channel: "WhatsApp", age: "2h" },
+  { name: "Priya K.", msg: "Severe tooth pain, need an emergency appointment ASAP", tag: "Emergency", risk: "HIGH", riskColor: "#f28b82", channel: "Instagram", age: "45m" },
+  { name: "Tom W.", msg: "How much are veneers? Saw your post last week...", tag: "Veneer", risk: "MED", riskColor: "#fdd663", channel: "Web", age: "4h" },
+  { name: "Sofia R.", msg: "Do you do Invisalign? Looking for a consultation", tag: "Ortho", risk: "LOW", riskColor: "#a7adb5", channel: "Telegram", age: "1d" },
 ];
 
 export default function HomePage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-semibold tracking-tight text-foreground">
-              Dash Dental
-            </span>
+    <div style={{ backgroundColor: "#0f1011", color: "#f1f3f4", minHeight: "100vh", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <Nav />
+
+      {/* ── Hero ── */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-6">
+          <div
+            className="flex items-center gap-2 px-3 py-1 rounded-full text-xs"
+            style={{ border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#1b1c1e", color: "#a7adb5" }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: "#81c995" }} />
+            Now in early access — dental clinics only
           </div>
 
-          <div className="hidden md:flex md:items-center md:gap-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
+          <h1
+            className="text-4xl md:text-6xl font-bold leading-tight"
+            style={{ color: "#f1f3f4", letterSpacing: "-0.02em" }}
+          >
+            Stop losing implant, veneer, and{" "}
+            <span style={{ color: "#8ab4f8" }}>emergency leads</span> in DMs.
+          </h1>
 
-          <div className="hidden md:flex md:items-center md:gap-4">
+          <p className="text-lg md:text-xl max-w-2xl leading-relaxed" style={{ color: "#a7adb5" }}>
+            Dash Dental gives your front desk one prioritized recovery queue across WhatsApp, Instagram, Telegram, and website forms — with response-time risk, safe AI-assisted reply drafts, and owner-level recovery reports.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 mt-2">
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              style={{ backgroundColor: "#8ab4f8", color: "#0f1011" }}
+            >
+              Start free trial <ArrowRight size={15} />
+            </Link>
             <Link
               href="/dashboard"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-colors"
+              style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#a7adb5" }}
             >
-              Sign in
+              View live demo <ChevronRight size={15} />
             </Link>
-            <Button asChild size="sm">
-              <Link href="/dashboard">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
           </div>
 
-          <button
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6 text-foreground" />
-            ) : (
-              <Menu className="h-6 w-6 text-foreground" />
-            )}
-          </button>
-        </nav>
-
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="border-t border-border bg-background md:hidden">
-            <div className="space-y-1 px-6 py-4">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="block py-2 text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              <div className="flex flex-col gap-3 pt-4">
-                <Link
-                  href="/dashboard"
-                  className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Sign in
-                </Link>
-                <Button asChild>
-                  <Link href="/dashboard">
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-32">
-        {/* Background gradient */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+          <div className="flex flex-wrap justify-center gap-2 mt-2">
+            {channels.map((c) => (
+              <span
+                key={c.name}
+                className="px-3 py-1 text-xs rounded-full"
+                style={{ border: `1px solid ${c.color}30`, backgroundColor: `${c.color}10`, color: c.color }}
+              >
+                {c.name}
               </span>
-              Now with AI-powered insights
-            </div>
-
-            <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              Modern dental practice{" "}
-              <span className="text-primary">management</span>
-            </h1>
-
-            <p className="mt-6 text-pretty text-lg leading-relaxed text-muted-foreground lg:text-xl">
-              Streamline scheduling, patient management, and analytics in one
-              powerful platform. Built for dental professionals who demand
-              excellence.
-            </p>
-
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/dashboard">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                <Link href="#features">
-                  See Features
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-
-            <p className="mt-6 text-sm text-muted-foreground">
-              No credit card required • 14-day free trial • Cancel anytime
-            </p>
-          </div>
-
-          {/* Hero Dashboard Preview */}
-          <div className="relative mt-16 lg:mt-24">
-            <div className="overflow-hidden rounded-2xl border border-border bg-card/50 shadow-2xl shadow-primary/5">
-              <div className="flex items-center gap-2 border-b border-border bg-card px-4 py-3">
-                <div className="flex gap-1.5">
-                  <div className="h-3 w-3 rounded-full bg-destructive/80" />
-                  <div className="h-3 w-3 rounded-full bg-chart-4/80" />
-                  <div className="h-3 w-3 rounded-full bg-primary/80" />
-                </div>
-                <div className="ml-4 flex-1">
-                  <div className="mx-auto w-64 rounded-md bg-secondary px-3 py-1 text-center text-xs text-muted-foreground">
-                    app.dashdental.com/dashboard
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-3">
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Today&apos;s Appointments
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-foreground">24</p>
-                  <p className="mt-1 text-sm text-primary">+12% from yesterday</p>
-                </div>
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Active Patients
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-foreground">
-                    1,847
-                  </p>
-                  <p className="mt-1 text-sm text-primary">+89 this month</p>
-                </div>
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Revenue MTD
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-foreground">
-                    $48.2K
-                  </p>
-                  <p className="mt-1 text-sm text-primary">+23% from last month</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Everything you need to run your practice
-            </h2>
-            <p className="mt-4 text-pretty text-lg text-muted-foreground">
-              Powerful features designed specifically for dental professionals.
-              No complexity, just results.
-            </p>
-          </div>
-
-          <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="group relative rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:bg-card/80"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <feature.icon className="h-6 w-6" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Simple, transparent pricing
-            </h2>
-            <p className="mt-4 text-pretty text-lg text-muted-foreground">
-              Choose the plan that fits your practice. All plans include a
-              14-day free trial.
-            </p>
-          </div>
-
-          <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
-            {pricingPlans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative flex flex-col rounded-2xl border p-8 ${
-                  plan.popular
-                    ? "border-primary bg-card shadow-lg shadow-primary/10"
-                    : "border-border bg-card"
-                }`}
+      {/* ── Dashboard Preview ── */}
+      <section className="px-6 pb-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="rounded-xl overflow-hidden shadow-2xl" style={{ border: "1px solid rgba(255,255,255,0.06)", backgroundColor: "#1b1c1e" }}>
+            {/* Chrome bar */}
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", backgroundColor: "#202124" }}>
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#f28b82" }} />
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#fdd663" }} />
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#81c995" }} />
+              <span className="ml-3 text-xs font-mono" style={{ color: "#a7adb5" }}>app.dashdental.com/dashboard</span>
+              <span
+                className="ml-auto text-[10px] px-2 py-0.5 rounded"
+                style={{ color: "#fdd663", border: "1px solid rgba(253,214,99,0.3)", backgroundColor: "rgba(253,214,99,0.08)" }}
               >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                      Most Popular
-                    </span>
+                Sample data
+              </span>
+            </div>
+
+            {/* Mock layout */}
+            <div className="flex h-80 md:h-96">
+              {/* Sidebar */}
+              <div className="w-24 md:w-36 flex flex-col gap-1 p-3 shrink-0" style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+                {["Queue", "Channels", "Reports", "Settings"].map((item, i) => (
+                  <div
+                    key={item}
+                    className="px-2 py-1.5 rounded text-xs"
+                    style={{
+                      backgroundColor: i === 0 ? "rgba(138,180,248,0.1)" : "transparent",
+                      color: i === 0 ? "#8ab4f8" : "#a7adb5",
+                    }}
+                  >
+                    {item}
                   </div>
-                )}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {plan.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {plan.description}
-                  </p>
-                </div>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-foreground">
-                    ${plan.price}
-                  </span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <ul className="mb-8 flex-1 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-3 text-sm text-muted-foreground"
-                    >
-                      <Check className="h-4 w-4 text-primary" />
-                      {feature}
-                    </li>
+                ))}
+              </div>
+
+              {/* Center */}
+              <div className="flex-1 p-4 flex flex-col gap-3 min-w-0">
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Money at risk", value: "$3,840", color: "#f28b82" },
+                    { label: "Unanswered", value: "14", color: "#fdd663" },
+                    { label: "Avg response", value: "6.2m", color: "#8ab4f8" },
+                    { label: "Recovered", value: "8", color: "#81c995" },
+                  ].map((m) => (
+                    <div key={m.label} className="rounded-lg p-2.5" style={{ backgroundColor: "#202124", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div className="text-[10px] mb-1" style={{ color: "#a7adb5" }}>{m.label}</div>
+                      <div className="text-sm font-bold" style={{ color: m.color }}>{m.value}</div>
+                    </div>
                   ))}
-                </ul>
-                <Button
-                  asChild
-                  variant={plan.popular ? "default" : "outline"}
-                  className="w-full"
+                </div>
+
+                <div className="flex flex-col gap-1.5 flex-1">
+                  {queueRows.map((row) => (
+                    <div
+                      key={row.name}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                      style={{ backgroundColor: "#202124", border: "1px solid rgba(255,255,255,0.04)" }}
+                    >
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                        style={{ backgroundColor: "rgba(138,180,248,0.15)", color: "#8ab4f8" }}
+                      >
+                        {row.name.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium" style={{ color: "#f1f3f4" }}>{row.name}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#a7adb5" }}>{row.tag}</span>
+                        </div>
+                        <div className="text-[10px] truncate" style={{ color: "#a7adb5" }}>{row.msg}</div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[9px] font-medium" style={{ color: row.riskColor }}>{row.risk}</span>
+                        <span className="text-[9px]" style={{ color: "#a7adb5" }}>{row.age}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right panel */}
+              <div className="w-44 md:w-52 shrink-0 p-3 flex flex-col gap-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="text-[10px] uppercase tracking-widest" style={{ color: "#a7adb5" }}>AI Draft</div>
+                <div className="rounded-lg p-2.5 flex flex-col gap-2 flex-1" style={{ backgroundColor: "#202124", border: "1px solid rgba(138,180,248,0.2)" }}>
+                  <div
+                    className="text-[10px] rounded px-2 py-1"
+                    style={{ color: "#8ab4f8", border: "1px solid rgba(138,180,248,0.2)", backgroundColor: "rgba(138,180,248,0.08)" }}
+                  >
+                    Draft only — staff review required
+                  </div>
+                  <div className="text-[10px] leading-relaxed" style={{ color: "#f1f3f4" }}>
+                    Hi Carlos! Thanks for reaching out about dental implants. We&apos;d love to help — our consultations are complimentary. Are you free this week?
+                  </div>
+                  <div className="mt-auto flex gap-1.5">
+                    <div className="flex-1 rounded py-1 text-center text-[9px]" style={{ backgroundColor: "rgba(138,180,248,0.12)", color: "#8ab4f8" }}>Edit &amp; Send</div>
+                    <div className="flex-1 rounded py-1 text-center text-[9px]" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#a7adb5" }}>Discard</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stats ── */}
+      <section className="px-6 pb-20">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0" style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", overflow: "hidden" }}>
+          {stats.map((s) => (
+            <div key={s.label} className="p-6 text-center" style={{ backgroundColor: "#1b1c1e" }}>
+              <div className="text-3xl font-bold mb-1" style={{ color: "#8ab4f8" }}>{s.value}</div>
+              <div className="text-sm" style={{ color: "#a7adb5" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Features ── */}
+      <section id="features" className="px-6 pb-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-3" style={{ color: "#f1f3f4" }}>Everything your front desk needs</h2>
+            <p className="max-w-xl mx-auto" style={{ color: "#a7adb5" }}>Built specifically for dental practices recovering revenue from missed messages.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="rounded-xl p-5 transition-colors"
+                  style={{ backgroundColor: "#1b1c1e", border: "1px solid rgba(255,255,255,0.06)" }}
                 >
-                  <Link href="/dashboard">Get Started</Link>
-                </Button>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center mb-4"
+                    style={{ backgroundColor: `${f.color}15` }}
+                  >
+                    <Icon size={18} style={{ color: f.color }} />
+                  </div>
+                  <h3 className="text-sm font-semibold mb-2" style={{ color: "#f1f3f4" }}>{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "#a7adb5" }}>{f.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section className="px-6 pb-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold" style={{ color: "#f1f3f4" }}>Trusted by dental teams</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="rounded-xl p-5 flex flex-col gap-4"
+                style={{ backgroundColor: "#1b1c1e", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <p className="text-sm leading-relaxed flex-1" style={{ color: "#a7adb5" }}>&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ backgroundColor: t.color, color: "#0f1011" }}
+                  >
+                    {t.initials}
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium" style={{ color: "#f1f3f4" }}>{t.name}</div>
+                    <div className="text-xs" style={{ color: "#a7adb5" }}>{t.role}</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
-            <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -right-1/4 -top-1/4 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-              <div className="absolute -bottom-1/4 -left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-            </div>
-            <div className="relative px-6 py-16 text-center sm:px-16 lg:py-24">
-              <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Ready to transform your practice?
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-pretty text-lg text-muted-foreground">
-                Join thousands of dental professionals who have streamlined
-                their operations with Dash Dental.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Button asChild size="lg">
-                  <Link href="/dashboard">
-                    Start Your Free Trial
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="#features">Schedule a Demo</Link>
-                </Button>
-              </div>
-            </div>
+      {/* ── CTA ── */}
+      <section className="px-6 pb-24">
+        <div
+          className="max-w-3xl mx-auto text-center rounded-2xl p-12 flex flex-col items-center gap-5"
+          style={{ backgroundColor: "#1b1c1e", border: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <h2 className="text-3xl font-bold" style={{ color: "#f1f3f4" }}>
+            Every unanswered DM is a lead walking to your competitor.
+          </h2>
+          <p style={{ color: "#a7adb5", maxWidth: "28rem" }}>
+            Set up Dash Dental in one afternoon. No IT required. No long-term contract.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              href="/login"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              style={{ backgroundColor: "#8ab4f8", color: "#0f1011" }}
+            >
+              Start free trial <ArrowRight size={15} />
+            </Link>
+            <Link
+              href="/pricing"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm transition-colors"
+              style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#a7adb5" }}
+            >
+              See pricing
+            </Link>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 text-xs" style={{ color: "#a7adb5" }}>
+            {["14-day free trial", "No credit card required", "Cancel anytime"].map((t) => (
+              <span key={t} className="flex items-center gap-1">
+                <Check size={12} style={{ color: "#81c995" }} /> {t}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-12">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-semibold text-foreground">
-                Dash Dental
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2026 Dash Dental. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Privacy
-              </Link>
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Terms
-              </Link>
-              <Link
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Contact
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
