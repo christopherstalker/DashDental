@@ -50,17 +50,17 @@ export function WorkspaceLayoutShell({
       <div className="app-shell premium-app-shell">
         <aside className="sidebar">
           <div className="brand-lockup">
-            <div className="brand-mark brand-mark-compact">
+            <div className="brand-mark">
               <Image
                 alt=""
-                height={44}
+                height={160}
                 src="/dental-recovery-mark.svg"
                 unoptimized
-                width={44}
+                width={160}
               />
             </div>
             <div>
-              <strong className="brand-name">Dash Dental</strong>
+              <strong className="brand-name">Dental Recovery</strong>
               <p className="brand-subtitle">{bootstrap.organization.name}</p>
             </div>
           </div>

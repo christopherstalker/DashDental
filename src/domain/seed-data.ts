@@ -469,7 +469,7 @@ export const dataAccessContracts: DataAccessContract[] = [
     provider: "clinic_database",
     status: "pending_it_approval",
     purpose:
-      "Read lead intake, response, booking, and loss signals for Dash Dental dashboard analytics.",
+      "Read lead intake, response, booking, and loss signals for Dental Recovery dashboard analytics.",
     tables: ["dental_recovery_leads"],
     fields: [
       "external_id",

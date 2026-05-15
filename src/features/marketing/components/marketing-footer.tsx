@@ -32,7 +32,7 @@ export function MarketingFooter() {
       <div className="marketing-footer-brand">
         <strong>Dash Dental</strong>
         <p>
-          Missed-message recovery for dental clinics: prioritized patient queues, lead
+          Dental Recovery for dental clinics: missed-message recovery, lead
           intake only, human-reviewed AI assistance, and clear privacy boundaries.
         </p>
       </div>

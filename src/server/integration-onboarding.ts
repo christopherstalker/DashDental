@@ -70,7 +70,7 @@ export function getWebFormSetupGuide(requestUrl: string, organizationId: string)
       message: "I want to book a consultation.",
     },
     steps: [
-      "Save the generated webhook secret in Dash Dental.",
+      "Save the generated webhook secret in Dental Recovery.",
       "Send website form submissions to the endpoint below.",
       "Include x-webhook-secret with every request.",
       "Use Send test lead to verify the lead appears in Inbox and Dashboard.",
@@ -95,9 +95,9 @@ export function getMessagingSetupGuide(
       requiredCredentials: ["Bot token"],
       steps: [
         "Create or open the clinic bot in BotFather.",
-        "Paste the Bot token into Dash Dental.",
+        "Paste the Bot token into Dental Recovery.",
         "Keep the suggested secret token or rotate it.",
-        "Save the integration. Dash Dental will register the Telegram webhook automatically.",
+        "Save the integration. Dental Recovery will register the Telegram webhook automatically.",
       ],
     };
   }
@@ -119,7 +119,7 @@ export function getMessagingSetupGuide(
         "Create or open the clinic Meta app with WhatsApp Cloud API enabled.",
         "In Meta Webhooks, use the callback URL and verify token shown here.",
         "Subscribe the app to WhatsApp messages and message status events.",
-        "Paste the access token, phone number ID, and app secret into Dash Dental, then save.",
+        "Paste the access token, phone number ID, and app secret into Dental Recovery, then save.",
       ],
     };
   }
@@ -140,7 +140,7 @@ export function getMessagingSetupGuide(
       "Open the clinic Meta app and enable Instagram Messaging.",
       "In Meta Webhooks, use the callback URL and verify token shown here.",
       "Subscribe message-related Instagram webhook fields and connect the clinic page.",
-      "Paste the page token, page ID, and app secret into Dash Dental, then move the app to Live mode.",
+      "Paste the page token, page ID, and app secret into Dental Recovery, then move the app to Live mode.",
     ],
   };
 }

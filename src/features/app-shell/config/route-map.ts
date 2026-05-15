@@ -81,7 +81,7 @@ export const workspaceRoutes: AppRouteDefinition[] = [
     id: "leads",
     href: "/leads",
     label: "Leads",
-    description: "Workspace-scoped lead pipeline with filters, assignment, and status controls.",
+    description: "Tenant-scoped lead pipeline with filters, assignment, and status controls.",
     layout: "workspace",
     group: "Operate",
     requiredRole: "manager",

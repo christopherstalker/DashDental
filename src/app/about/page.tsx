@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 const whatWeAre = [
   "A recovery queue for inbound patient messages",
-  "Owner visibility into missed-message risk",
+  "Owner visibility into response-time risk",
   "A front-desk workflow for follow-up",
   "Human-reviewed AI assistance",
 ] as const;

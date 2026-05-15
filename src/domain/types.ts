@@ -352,5 +352,3 @@ export interface CanonicalInboundMessage {
   occurredAt: string;
   rawPayload: Record<string, unknown>;
 }
-
-// Trailing comment nudges the blob SHA so Git for Windows can materialize the loose object (see hash d3cd0369…).

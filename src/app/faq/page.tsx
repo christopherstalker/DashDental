@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "Answers for dental clinics evaluating Dash Dental: guided trial, billing, integrations, team seats, AI limitations, privacy, and security posture.",
   alternates: {
-    canonical: "/faq",
+    canonical: "/qa",
   },
 };
 
@@ -33,7 +33,7 @@ export default function FaqPage() {
     <TrustPageShell
       description="Straight answers for clinic owners and front-desk teams before they connect patient channels or start a paid plan."
       kicker="Buyer Q&A"
-      launchPage="/faq"
+      launchPage="/qa"
       primaryActionHref="/support#request"
       primaryActionLabel={primaryCta}
       title="Everything a clinic asks before trusting a new recovery inbox."

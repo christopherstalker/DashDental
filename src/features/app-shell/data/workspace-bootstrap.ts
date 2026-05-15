@@ -40,7 +40,7 @@ const fallbackOverview: DashboardOverview = {
 
 const fallbackOrganization: Organization = {
   id: "",
-  name: "Clinic workspace",
+  name: "Dental Recovery",
   timezone: "UTC",
   currency: "USD",
   averagePatientValue: 500,

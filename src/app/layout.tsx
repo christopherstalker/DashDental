@@ -27,8 +27,14 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: [{ url: "/favicon.svg?v=4", sizes: "any", type: "image/svg+xml" }],
-    shortcut: [{ url: "/favicon.svg?v=4" }],
+    apple: [{ url: "/apple-touch-icon.png?v=4", sizes: "180x180", type: "image/png" }],
+    icon: [
+      { url: "/favicon.ico?v=4", sizes: "any" },
+      { url: "/favicon.svg?v=4", type: "image/svg+xml" },
+      { url: "/icon-192.png?v=4", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png?v=4", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: [{ url: "/favicon.ico?v=4" }],
   },
   manifest: "/site.webmanifest",
   openGraph: {

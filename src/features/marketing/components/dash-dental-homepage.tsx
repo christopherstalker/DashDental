@@ -97,7 +97,7 @@ export function DashDentalHomepage() {
           <h1>Stop losing implant, veneer, and emergency leads in DMs.</h1>
           <p>
             Dash Dental gives your front desk one prioritized recovery queue across
-            WhatsApp, Instagram, Telegram, and website forms — with response-time risk,
+            WhatsApp, Instagram, Telegram, and website forms - with response-time risk,
             safe AI-assisted reply drafts, and owner-level recovery reports.
           </p>
           <div className="dd-hero-actions">
@@ -115,11 +115,18 @@ export function DashDentalHomepage() {
             <Link className="dd-button dd-button-secondary" href="/demo">
               {secondaryCta}
             </Link>
+            <Link
+              className="dd-button dd-button-quiet"
+              data-launch-event="public.home.start_trial_clicked"
+              data-launch-page="/"
+              data-launch-section="hero"
+              data-launch-target="/register"
+              href="/register"
+            >
+              Start 14-day guided trial
+            </Link>
           </div>
           <p className="dd-hero-microcopy">No CRM migration required. Start with one channel.</p>
-          <p className="dd-hero-tertiary-cta">
-            <Link href="/register">Prefer self-serve? Start the 14-day guided trial</Link>
-          </p>
           <div className="dd-trust-row" aria-label="Product boundaries">
             {trustItems.map((item) => (
               <span key={item}>
@@ -327,31 +334,21 @@ function HeroDashboardPreview() {
         <span className="dd-sample-badge">Sample data</span>
       </div>
 
-      <div className="dd-preview-metrics dd-preview-metrics-hero">
+      <div className="dd-preview-metrics">
         <article>
           <DollarSign size={16} />
-          <span>Money at risk today</span>
-          <strong className="tabular-nums">$7.8k</strong>
+          <span>Money at risk</span>
+          <strong>$7.8k</strong>
         </article>
         <article>
           <Inbox size={16} />
-          <span>Unanswered patients</span>
-          <strong className="tabular-nums">12</strong>
+          <span>Unanswered</span>
+          <strong>12</strong>
         </article>
         <article>
           <Clock3 size={16} />
-          <span>Avg first response</span>
-          <strong className="tabular-nums">38m</strong>
-        </article>
-        <article>
-          <CheckCircle2 size={16} />
-          <span>Recovered conversations</span>
-          <strong className="tabular-nums">21</strong>
-        </article>
-        <article>
-          <MessageCircle size={16} />
-          <span>Active channels</span>
-          <strong className="tabular-nums">4</strong>
+          <span>Avg response</span>
+          <strong>38m</strong>
         </article>
       </div>
 
@@ -365,7 +362,6 @@ function HeroDashboardPreview() {
             ["WA", "Emergency tooth pain", "22m", "$420"],
             ["IG", "Veneers pricing", "1h 14m", "$1,200"],
             ["WF", "Implant consult", "2h", "$1,500"],
-            ["TG", "Whitening inquiry", "46m", "$180"],
           ].map(([channel, intent, wait, value]) => (
             <article key={intent}>
               <span>{channel}</span>
@@ -385,7 +381,7 @@ function HeroDashboardPreview() {
             Thanks for reaching out. Our front desk can help today. Can you confirm
             the best callback number?
           </p>
-          <b>Draft only — staff review required</b>
+          <b>Draft only - staff review required</b>
         </section>
       </div>
 

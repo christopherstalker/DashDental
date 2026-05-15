@@ -1,63 +1,10 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# v0 runtime files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
 
-# dependencies
-/node_modules
-**/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-/.data
-/playwright-report
-/test-results
-
-# next.js
-/.next/
-/.next-codex-build/
-/.next-codex-browser/
-/.next-codex-e2e/
-/.next-codex-launch/
-/.next-codex-dev/
-/.next-codex-i18n-dev/
-/.tmp/
-/out/
-
-# production
-/build
-/backend/dist
-
-# misc
-.DS_Store
-*.pem
-
-# Unreadable / corrupted on some Windows volumes; restore from backup if you need these in git.
-.github/workflows/go-live-rehearsal.yml
-scripts/synthetic-monitor-guard.ts
-docs/superpowers/
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-*.log
-
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
-!.env.production.example
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
+# Common ignores
+node_modules
+.next/
 .env*.local
+.DS_Store

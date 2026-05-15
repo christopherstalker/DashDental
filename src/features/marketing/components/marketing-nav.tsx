@@ -49,7 +49,7 @@ export function MarketingNav({
         <LanguageSwitcher compact tone="dark" />
         <ThemeToggle compact />
         <Link className="recovery-ghost-button" href="/login">
-          <LocalizedText fallback="Sign in" k="common.nav.login" />
+          <LocalizedText fallback="Login" k="common.nav.login" />
         </Link>
         <Link
           className="recovery-white-button"

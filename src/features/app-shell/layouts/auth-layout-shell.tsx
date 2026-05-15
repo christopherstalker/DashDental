@@ -25,25 +25,24 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
           <div className="premium-auth-actions">
             <Link href="/pricing">Pricing</Link>
             <Link className="premium-auth-login" href="/login">
-              Sign in
+              Login
             </Link>
           </div>
         </header>
 
         <div className="premium-auth-grid">
           <div className="login-copy premium-auth-copy">
-            <p className="premium-auth-kicker">Dash Dental missed-message recovery</p>
+            <p className="premium-auth-kicker">Dental Recovery missed-message console</p>
             <h1>Start a clinic recovery workspace without replacing your CRM.</h1>
             <p className="login-subcopy">
-              Create a protected workspace for unanswered patient messages, response-time
-              risk, safe AI-assisted reply drafts (human-reviewed before sending), and
-              owner visibility. No CRM migration required — start with one channel and a
-              work email.
+              Create a protected workspace for unanswered patient messages,
+              response-time risk, safe AI-assisted drafts, and owner visibility.
+              Use a work email and start with one channel.
             </p>
             <div className="premium-auth-proof">
               <span>
                 <CheckCircle2 size={15} />
-                Lead intake only
+                Clinic-scoped workspace
               </span>
               <span>
                 <CreditCard size={15} />

@@ -24,8 +24,8 @@ export default function ErrorPage({
         <p className="recovery-kicker">Something went wrong</p>
         <h1>Dash Dental hit a recoverable page error.</h1>
         <p>
-          Your workspace data is not shown on this screen. Try reloading, or return to a
-          stable page while you contact support with the approximate time and route.
+          Your workspace data is not shown here. Try reloading this view, or return to a
+          stable public page while support checks the issue.
         </p>
         <div className="safe-fallback-actions">
           <button className="recovery-primary-button" onClick={() => unstable_retry()} type="button">

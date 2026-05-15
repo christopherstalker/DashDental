@@ -34,7 +34,7 @@ export function createDefaultClinicDbContract(input: {
     provider: "clinic_database",
     status: "pending_it_approval",
     purpose:
-      "Read lead intake, response, booking, and loss signals for Dash Dental dashboard analytics.",
+      "Read lead intake, response, booking, and loss signals for Dental Recovery dashboard analytics.",
     tables: clinicDbTables,
     fields: clinicDbFields,
     piiCategories: [

@@ -79,5 +79,3 @@ export function ManualInvoiceButton({
     </div>
   );
 }
-
-// git-for-windows loose-object path workaround

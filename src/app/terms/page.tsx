@@ -110,20 +110,15 @@ export default function TermsPage() {
         </Link>
       </div>
 
-      <div className="trust-cta-panel trust-cta-panel-split">
+      <div className="trust-cta-panel">
         <div>
           <ArrowRight size={20} />
           <span>Ready to evaluate Dash Dental?</span>
         </div>
-        <div className="trust-cta-actions">
-          <Link className="recovery-white-button" href="/register">
-            Start 14-day guided trial
-            <ArrowRight size={16} />
-          </Link>
-          <Link className="recovery-secondary-button" href="/demo">
-            Try sample dashboard
-          </Link>
-        </div>
+        <Link className="recovery-white-button" href="/register">
+          Start 14-day guided trial
+          <ArrowRight size={16} />
+        </Link>
       </div>
     </TrustPageShell>
   );

@@ -9,18 +9,18 @@ export default function NotFound() {
           <ShieldCheck size={22} />
         </div>
         <p className="recovery-kicker">Page not found</p>
-        <h1>This Dash Dental page does not exist.</h1>
+        <h1>This Dash Dental / Dental Recovery page could not be found.</h1>
         <p>
-          The route may have moved. Start from the homepage or open the public sample
-          recovery cockpit to preview the product without signing in.
+          The Dental Recovery public website is available, but this exact route is not
+          part of the launch surface. Start from the sample dashboard or homepage.
         </p>
         <div className="safe-fallback-actions">
           <Link className="recovery-primary-button" href="/demo">
-            Try sample dashboard
+            Product tour
             <ArrowRight size={16} />
           </Link>
           <Link className="recovery-secondary-button" href="/">
-            Back to homepage
+            Homepage
           </Link>
         </div>
       </section>

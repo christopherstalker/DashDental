@@ -144,7 +144,7 @@ export async function createStripeCheckoutSession(input: {
     "metadata[plan]": input.plan,
     "subscription_data[metadata][organization_id]": input.organizationId,
     "subscription_data[metadata][plan]": input.plan,
-    "subscription_data[description]": `Dash Dental ${input.plan} plan for ${input.organizationName}`,
+    "subscription_data[description]": `Dental Recovery ${input.plan} plan for ${input.organizationName}`,
     "tax_id_collection[enabled]": "true",
   });
 

@@ -17,7 +17,7 @@ export function PlatformLayoutShell({ children }: { children: ReactNode }) {
             />
           </div>
           <div>
-            <strong className="brand-name">Dash Dental</strong>
+            <strong className="brand-name">Dental Recovery</strong>
             <p className="brand-subtitle">Platform operations</p>
           </div>
         </div>
