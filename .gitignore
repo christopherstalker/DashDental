@@ -116,3 +116,5 @@ coverage/
 master.bundle
 dashboard-uk-audit*.png
 dashboard-uk-audit*.txt
+
+src/app/platform/[organizationId]/
