@@ -1,0 +1,273 @@
+import type { Role } from "@/domain/types";
+
+export type AppLayoutVariant = "public" | "auth" | "workspace" | "admin";
+
+export interface AppRouteDefinition {
+  id: string;
+  href: string;
+  label: string;
+  description: string;
+  layout: AppLayoutVariant;
+  group: string;
+  requiredRole: Role;
+  pageKind: "page" | "detail";
+}
+
+export const authRoutes: AppRouteDefinition[] = [
+  {
+    id: "login",
+    href: "/login",
+    label: "Login",
+    description: "Email/password and Google OAuth entrypoint for clinic users.",
+    layout: "auth",
+    group: "Access",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "register",
+    href: "/register",
+    label: "Register clinic",
+    description: "Owner self-serve registration and workspace provisioning.",
+    layout: "auth",
+    group: "Access",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+];
+
+export const workspaceRoutes: AppRouteDefinition[] = [
+  {
+    id: "dashboard",
+    href: "/dashboard",
+    label: "Dashboard",
+    description: "Revenue recovery KPIs, health widgets, and daily focus.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "setup",
+    href: "/setup",
+    label: "Setup",
+    description: "Clinic onboarding checklist, access contracts, and launch readiness.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "admin",
+    pageKind: "page",
+  },
+  {
+    id: "queue",
+    href: "/queue",
+    label: "Work queue",
+    description: "Prioritized lead actions ordered by SLA pressure and deal value.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "alerts",
+    href: "/alerts",
+    label: "Alerts",
+    description: "Operational alerts for no-response risk, sync issues, and usage pressure.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "leads",
+    href: "/leads",
+    label: "Leads",
+    description: "Workspace-scoped lead pipeline with filters, assignment, and status controls.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "inbox",
+    href: "/inbox",
+    label: "Inbox",
+    description: "Omnichannel conversation workspace with reply composer and AI context.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "notes",
+    href: "/notes",
+    label: "Notes",
+    description: "Live team handoff notes attached to employee seats.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "inbox-detail",
+    href: "/inbox/[conversationId]",
+    label: "Conversation detail",
+    description: "Focused inbox detail page for a single conversation thread.",
+    layout: "workspace",
+    group: "Operate",
+    requiredRole: "manager",
+    pageKind: "detail",
+  },
+  {
+    id: "automations",
+    href: "/automations",
+    label: "Automations",
+    description: "Rule toggles for auto-replies, SLA nudges, and escalation behavior.",
+    layout: "workspace",
+    group: "Optimize",
+    requiredRole: "admin",
+    pageKind: "page",
+  },
+  {
+    id: "integrations",
+    href: "/integrations",
+    label: "Integrations",
+    description: "Provider status, Clinic DB contract flow, and credential setup.",
+    layout: "workspace",
+    group: "Optimize",
+    requiredRole: "admin",
+    pageKind: "page",
+  },
+  {
+    id: "ai",
+    href: "/ai",
+    label: "AI insights",
+    description: "Summaries, intent detection, risk scoring, and cost-aware AI usage.",
+    layout: "workspace",
+    group: "Optimize",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "reports",
+    href: "/reports",
+    label: "Reports",
+    description: "Conversion, lost revenue, source performance, and manager load reporting.",
+    layout: "workspace",
+    group: "Govern",
+    requiredRole: "owner",
+    pageKind: "page",
+  },
+  {
+    id: "team",
+    href: "/team",
+    label: "Team",
+    description: "Seat management, teammate accounts, roles, and workload visibility.",
+    layout: "workspace",
+    group: "Govern",
+    requiredRole: "admin",
+    pageKind: "page",
+  },
+  {
+    id: "billing",
+    href: "/billing",
+    label: "Billing",
+    description: "Stripe plan, usage guardrails, checkout, and portal access.",
+    layout: "workspace",
+    group: "Govern",
+    requiredRole: "owner",
+    pageKind: "page",
+  },
+  {
+    id: "compliance",
+    href: "/compliance",
+    label: "Compliance",
+    description: "Data access contract, audit export, and sync history review.",
+    layout: "workspace",
+    group: "Govern",
+    requiredRole: "admin",
+    pageKind: "page",
+  },
+];
+
+export const adminRoutes: AppRouteDefinition[] = [
+  {
+    id: "platform",
+    href: "/platform",
+    label: "Platform",
+    description: "Super-admin overview across organizations, plans, and integration health.",
+    layout: "admin",
+    group: "Admin",
+    requiredRole: "super_admin",
+    pageKind: "page",
+  },
+  {
+    id: "platform-subscriptions",
+    href: "/platform/subscriptions",
+    label: "Subscriptions",
+    description: "Manual subscription grants for paid clinic accounts.",
+    layout: "admin",
+    group: "Admin",
+    requiredRole: "super_admin",
+    pageKind: "page",
+  },
+];
+
+export const publicRoutes: AppRouteDefinition[] = [
+  {
+    id: "pricing",
+    href: "/pricing",
+    label: "Pricing",
+    description: "Public landing and pricing page for clinic buyers.",
+    layout: "public",
+    group: "Marketing",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "qa",
+    href: "/qa",
+    label: "Q&A",
+    description: "Public buyer questions covering trial, billing, integrations, and security.",
+    layout: "public",
+    group: "Marketing",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "demo",
+    href: "/demo",
+    label: "Product tour",
+    description: "No-login recovery flow demo for clinic buyers.",
+    layout: "public",
+    group: "Marketing",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "trial",
+    href: "/trial",
+    label: "Trial",
+    description: "Public explanation of the 14-day trial and activation flow.",
+    layout: "public",
+    group: "Marketing",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+  {
+    id: "app-architecture",
+    href: "/app-architecture",
+    label: "App architecture",
+    description: "Frontend route map, layouts, state model, and design system blueprint.",
+    layout: "public",
+    group: "Blueprint",
+    requiredRole: "manager",
+    pageKind: "page",
+  },
+];
+
+export const appRoutes = [
+  ...publicRoutes,
+  ...authRoutes,
+  ...workspaceRoutes,
+  ...adminRoutes,
+];
