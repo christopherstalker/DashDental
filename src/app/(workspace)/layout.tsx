@@ -1,3 +1,6 @@
+﻿export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import type { ReactNode } from "react";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
 import { WorkspaceLayoutShell } from "@/features/app-shell/layouts/workspace-layout-shell";
