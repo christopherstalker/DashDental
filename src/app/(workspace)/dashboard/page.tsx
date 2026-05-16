@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import {
@@ -140,7 +142,7 @@ export default async function DashboardPage() {
       }}
       metrics={dashboardMetrics}
       queueRows={dashboardQueueRows}
-      userLabel={`${firstName} · ${bootstrap.session?.role ?? "manager"}`}
+      userLabel={`${firstName} Â· ${bootstrap.session?.role ?? "manager"}`}
       workspaceName={organization.name}
     />
   );
@@ -228,3 +230,4 @@ function formatWaiting(waitingMinutes: number) {
 
   return minutes ? `${hours}h ${minutes}m waiting` : `${hours}h waiting`;
 }
+
