@@ -1,0 +1,105 @@
+name: Go-Live Rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_url:
+        description: "Controlled staging or preview URL to verify before production traffic"
+        required: true
+        type: string
+      monitor_mode:
+        description: "Use preview for public route smoke, full for staging with demo reset paths"
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - full
+      allow_production:
+        description: "Only enable after synthetic tenant and cleanup policy approval"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  rehearse:
+    name: Build, check, and rehearse launch
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_URL: ${{ inputs.staging_url }}
+      PLAYWRIGHT_BASE_URL: ${{ inputs.staging_url }}
+      SYNTHETIC_MONITOR_BASE_URL: ${{ inputs.staging_url }}
+      SYNTHETIC_MONITOR_MODE: ${{ inputs.monitor_mode }}
+      SYNTHETIC_MONITOR_ALLOW_PRODUCTION: ${{ inputs.allow_production && 'true' || 'false' }}
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      REDIS_URL: ${{ secrets.STAGING_REDIS_URL }}
+      SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET }}
+      JWT_ACCESS_SECRET: ${{ secrets.STAGING_JWT_ACCESS_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.STAGING_JWT_REFRESH_SECRET }}
+      INTEGRATION_SECRET: ${{ secrets.STAGING_INTEGRATION_SECRET }}
+      REQUIRE_PUBLIC_AUTH_BOT_PROTECTION: "true"
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      SUPPORT_OWNER_EMAIL: support@dashdental.space
+      SECURITY_CONTACT_EMAIL: security@dashdental.space
+      INCIDENT_ESCALATION_EMAIL: security@dashdental.space
+      EDGE_RATE_LIMIT_PROFILE: launch
+      EDGE_PROTECTION_DEPLOYED: ${{ vars.EDGE_PROTECTION_DEPLOYED }}
+      DATABASE_BACKUPS_CONFIRMED: ${{ vars.DATABASE_BACKUPS_CONFIRMED }}
+      SYNTHETIC_MONITOR_SCHEDULED: ${{ vars.SYNTHETIC_MONITOR_SCHEDULED }}
+      PRODUCTION_MONITOR_POLICY_APPROVED: ${{ vars.PRODUCTION_MONITOR_POLICY_APPROVED }}
+      LEGAL_REVIEW_APPROVED: ${{ vars.LEGAL_REVIEW_APPROVED }}
+      DPA_APPROVED: ${{ vars.DPA_APPROVED }}
+      SUBPROCESSORS_APPROVED: ${{ vars.SUBPROCESSORS_APPROVED }}
+      ORDER_FORM_APPROVED: ${{ vars.ORDER_FORM_APPROVED }}
+      CANCELLATION_POLICY_APPROVED: ${{ vars.CANCELLATION_POLICY_APPROVED }}
+      DATA_HANDLING_POLICY_APPROVED: ${{ vars.DATA_HANDLING_POLICY_APPROVED }}
+      FIRST_CLINIC_REHEARSAL_APPROVED: ${{ vars.FIRST_CLINIC_REHEARSAL_APPROVED }}
+      BILLING_PROVIDER: manual
+      MANUAL_BILLING_SUPPORT_EMAIL: support@dashdental.space
+      MANUAL_BILLING_RECIPIENT_NAME: ${{ vars.MANUAL_BILLING_RECIPIENT_NAME }}
+      MANUAL_BILLING_INSTRUCTIONS: ${{ vars.MANUAL_BILLING_INSTRUCTIONS }}
+      MANUAL_INVOICE_TEMPLATE_APPROVED: ${{ vars.MANUAL_INVOICE_TEMPLATE_APPROVED }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Validate translations
+        run: npm run i18n:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Go-live readiness gate
+        run: npm run go-live:check
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Public preview monitor
+        if: ${{ env.SYNTHETIC_MONITOR_MODE == 'preview' }}
+        run: npm run monitor:preview
+
+      - name: Full guarded synthetic monitor
+        if: ${{ env.SYNTHETIC_MONITOR_MODE != 'preview' }}
+        run: npm run monitor:synthetic:guarded
