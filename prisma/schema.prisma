@@ -1,0 +1,783 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+generator backend_client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  owner
+  admin
+  manager
+  super_admin
+}
+
+enum OrganizationStatus {
+  active
+  trial
+  suspended
+}
+
+enum LeadStatus {
+  new
+  unanswered
+  at_risk
+  in_conversation
+  booked
+  lost
+}
+
+enum Provider {
+  telegram
+  web_form
+  instagram
+  whatsapp
+  clinic_database
+}
+
+enum WebhookProvider {
+  stripe
+  telegram
+  meta
+  web_form
+}
+
+enum IntegrationStatus {
+  active
+  pending
+  degraded
+  disconnected
+}
+
+enum SignatureStatus {
+  pending
+  valid
+  invalid
+  skipped
+}
+
+enum ReceiptProcessingStatus {
+  received
+  processing
+  processed
+  failed
+  dead_letter
+  ignored
+}
+
+enum OutboxStatus {
+  pending
+  dispatching
+  dispatched
+  failed
+  dead_letter
+}
+
+enum ReplayTargetType {
+  webhook_receipt
+  outbox_event
+}
+
+enum ReplayAttemptStatus {
+  started
+  completed
+  skipped
+  failed
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+enum MessageDeliveryStatus {
+  pending
+  sent
+  delivered
+  failed
+}
+
+enum SenderType {
+  patient
+  manager
+  automation
+  system
+}
+
+enum SubscriptionPlan {
+  starter
+  growth
+  scale
+}
+
+enum BillingEventStatus {
+  processing
+  processed
+  skipped
+  failed
+}
+
+enum DataLifecycleRunStatus {
+  completed
+  failed
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  avatar       String?
+  status       String       @default("active")
+  lastLoginAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+  auditLogs    AuditLog[]   @relation("AuditActor")
+  assignedLeads Lead[]      @relation("LeadAssignee")
+  teamNotes    TeamNote[]   @relation("TeamNoteAuthor")
+}
+
+model UserCredential {
+  userId       String   @id
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Organization {
+  id                  String              @id @default(cuid())
+  name                String
+  timezone            String
+  currency            String              @default("USD")
+  averagePatientValue Int                 @default(500)
+  businessHours       Json
+  status              OrganizationStatus  @default(trial)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  memberships         Membership[]
+  leads               Lead[]
+  conversations       Conversation[]
+  integrations        Integration[]
+  dataAccessContracts DataAccessContract[]
+  subscriptions       Subscription[]
+  automationRules     AutomationRule[]
+  aiInsights          AiInsight[]
+  usageLimits         UsageLimit[]
+  usageEvents         UsageEvent[]
+  usageRollups        UsageRollup[]
+  auditLogs           AuditLog[]
+  integrationEvents   IntegrationEvent[]
+  contacts            Contact[]
+  contactIdentities   ContactIdentity[]
+  webhookReceipts     WebhookReceipt[]
+  outboxEvents        OutboxEvent[]
+  messageDeliveries   MessageDelivery[]
+  conversationProjections ConversationProjection[]
+  metricSnapshots     OrganizationMetricSnapshot[]
+  replayAttempts      ReplayAttempt[]
+  billingEvents       BillingEvent[]
+  dataLifecycleRuns   DataLifecycleRun[]
+  teamNotes           TeamNote[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role
+  status         String       @default("active")
+  invitedBy      String?
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  teamNotes      TeamNote[]   @relation("TeamNoteMembership")
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+}
+
+model Lead {
+  id                   String              @id @default(cuid())
+  organizationId        String
+  contactId            String?
+  name                 String
+  phone                String?
+  email                String?
+  source               Provider
+  status               LeadStatus          @default(new)
+  assignedTo           String?
+  providerContactId    String
+  firstMessageAt       DateTime
+  firstHumanResponseAt DateTime?
+  bookedAt             DateTime?
+  lostReason           String?
+  estimatedValue       Int
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  organization         Organization        @relation(fields: [organizationId], references: [id])
+  contact              Contact?            @relation(fields: [contactId], references: [id])
+  assignee             User?               @relation("LeadAssignee", fields: [assignedTo], references: [id])
+  statusHistory        LeadStatusHistory[]
+  conversations        Conversation[]
+  aiInsights           AiInsight[]
+  teamNotes            TeamNote[]
+
+  @@unique([organizationId, source, providerContactId])
+  @@index([organizationId, status, firstMessageAt])
+  @@index([organizationId, assignedTo])
+  @@index([organizationId, contactId])
+}
+
+model LeadStatusHistory {
+  id          String     @id @default(cuid())
+  leadId      String
+  fromStatus  LeadStatus
+  toStatus    LeadStatus
+  changedBy   String
+  reason      String?
+  createdAt   DateTime   @default(now())
+  lead        Lead       @relation(fields: [leadId], references: [id])
+
+  @@index([leadId, createdAt])
+}
+
+model Conversation {
+  id               String       @id @default(cuid())
+  organizationId   String
+  leadId           String
+  contactId        String?
+  provider         Provider
+  providerThreadId String
+  status           String       @default("open")
+  lastMessageAt    DateTime
+  aiSummary        String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  lead             Lead         @relation(fields: [leadId], references: [id])
+  contact          Contact?     @relation(fields: [contactId], references: [id])
+  messages         Message[]
+  messageDeliveries MessageDelivery[]
+  aiInsights       AiInsight[]
+  teamNotes        TeamNote[]
+
+  @@unique([organizationId, provider, providerThreadId])
+  @@index([organizationId, lastMessageAt])
+  @@index([organizationId, contactId])
+}
+
+model Message {
+  id                String           @id @default(cuid())
+  conversationId    String
+  direction         MessageDirection
+  senderType        SenderType
+  providerMessageId String
+  text              String
+  payloadJson       Json?
+  sentAt            DateTime
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  createdAt         DateTime         @default(now())
+  conversation      Conversation     @relation(fields: [conversationId], references: [id])
+  delivery          MessageDelivery?
+
+  @@unique([conversationId, providerMessageId])
+  @@index([conversationId, sentAt])
+}
+
+model MessageDelivery {
+  id                String                @id @default(cuid())
+  organizationId    String
+  conversationId    String
+  messageId         String                @unique
+  outboxEventId     String?               @unique
+  provider          Provider
+  localMessageId    String
+  providerMessageId String?
+  status            MessageDeliveryStatus @default(pending)
+  attemptCount      Int                   @default(0)
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  organization      Organization          @relation(fields: [organizationId], references: [id])
+  conversation      Conversation          @relation(fields: [conversationId], references: [id])
+  message           Message               @relation(fields: [messageId], references: [id])
+  outboxEvent       OutboxEvent?          @relation(fields: [outboxEventId], references: [id])
+
+  @@unique([conversationId, localMessageId])
+  @@index([organizationId, status, updatedAt])
+  @@index([conversationId, status])
+  @@index([provider, providerMessageId])
+}
+
+model TeamNote {
+  id                 String       @id @default(cuid())
+  organizationId     String
+  conversationId     String?
+  leadId             String?
+  authorUserId       String
+  authorMembershipId String
+  body               String
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  conversation       Conversation? @relation(fields: [conversationId], references: [id])
+  lead               Lead?        @relation(fields: [leadId], references: [id])
+  author             User         @relation("TeamNoteAuthor", fields: [authorUserId], references: [id])
+  authorMembership   Membership   @relation("TeamNoteMembership", fields: [authorMembershipId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, conversationId, createdAt])
+  @@index([organizationId, leadId, createdAt])
+  @@index([authorMembershipId, createdAt])
+}
+
+model Integration {
+  id                   String            @id @default(cuid())
+  organizationId        String
+  provider             Provider
+  status               IntegrationStatus @default(disconnected)
+  externalAccountId    String            @default("")
+  encryptedCredentials String
+  webhookSecret        String
+  lastSyncAt           DateTime?
+  errorState           String?
+  healthScore          Int               @default(0)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  organization         Organization      @relation(fields: [organizationId], references: [id])
+  webhookReceipts      WebhookReceipt[]
+
+  @@unique([organizationId, provider])
+  @@index([provider, externalAccountId])
+  @@index([status, lastSyncAt])
+}
+
+model DataAccessContract {
+  id                String       @id @default(cuid())
+  organizationId    String
+  provider          Provider
+  status            String       @default("pending_it_approval")
+  purpose           String
+  tablesJson        Json
+  fieldsJson        Json
+  piiCategoriesJson Json
+  retentionDays     Int
+  readOnly          Boolean      @default(true)
+  approvedByName    String?
+  approvedByEmail   String?
+  approvedAt        DateTime?
+  revokedAt         DateTime?
+  createdBy         String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, provider, status])
+}
+
+model Subscription {
+  id                     String       @id @default(cuid())
+  organizationId          String
+  provider               String       @default("stripe")
+  plan                   SubscriptionPlan
+  status                 String
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  externalCustomerId     String
+  externalSubscriptionId String
+  lastProviderEventId    String?
+  lastProviderEventType  String?
+  lastProviderEventAt    DateTime?
+  lastSyncedAt           DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  organization           Organization @relation(fields: [organizationId], references: [id])
+  billingEvents          BillingEvent[]
+
+  @@unique([organizationId, externalSubscriptionId])
+  @@index([organizationId, lastProviderEventAt])
+  @@index([organizationId, status])
+}
+
+model BillingEvent {
+  id                String             @id @default(cuid())
+  organizationId    String?
+  subscriptionId    String?
+  outboxEventId     String             @unique
+  provider          String             @default("stripe")
+  providerEventId   String             @unique
+  providerEventType String
+  providerObjectId  String?
+  externalCustomerId String?
+  externalSubscriptionId String?
+  status            BillingEventStatus @default(processing)
+  decision          String?
+  eventCreatedAt    DateTime
+  rawPayloadJson    Json?
+  processedAt       DateTime?
+  retryCount        Int                @default(0)
+  resultJson        Json?
+  errorCode         String?
+  errorMessage      String?
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  organization      Organization?      @relation(fields: [organizationId], references: [id])
+  subscription      Subscription?      @relation(fields: [subscriptionId], references: [id])
+
+  @@index([organizationId, eventCreatedAt])
+  @@index([status, createdAt])
+  @@index([externalCustomerId, eventCreatedAt])
+}
+
+model AutomationRule {
+  id             String       @id @default(cuid())
+  organizationId String
+  trigger        String
+  conditionsJson Json
+  template       String
+  active         Boolean      @default(true)
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, trigger, active])
+}
+
+model AiInsight {
+  id             String       @id @default(cuid())
+  organizationId String
+  leadId         String?
+  conversationId String?
+  type           String
+  resultJson     Json
+  model          String
+  promptVersion  String
+  confidence     Float
+  costEstimate   Float
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  lead           Lead?        @relation(fields: [leadId], references: [id])
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+
+  @@index([organizationId, type, createdAt])
+  @@index([conversationId])
+}
+
+model UsageLimit {
+  id                String       @id @default(cuid())
+  organizationId    String
+  maxUsers          Int
+  maxIntegrations   Int
+  monthlyMessages   Int
+  monthlyAiRuns     Int
+  periodUsageJson   Json
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId])
+}
+
+model UsageEvent {
+  id               String       @id @default(cuid())
+  organizationId   String
+  idempotencyKey   String       @unique @default(cuid())
+  metric           String
+  quantity         Int
+  sourceEntityType String
+  sourceEntityId   String
+  periodStart      DateTime
+  periodEnd        DateTime?
+  occurredAt       DateTime
+  metadataJson     Json?
+  createdAt        DateTime     @default(now())
+  organization     Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, metric, sourceEntityType, sourceEntityId])
+  @@index([organizationId, metric, occurredAt])
+  @@index([organizationId, periodStart])
+}
+
+model UsageRollup {
+  id             String       @id @default(cuid())
+  organizationId String
+  metric         String
+  periodStart    DateTime
+  periodEnd      DateTime
+  quantity       Int          @default(0)
+  lastEventAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, metric, periodStart])
+  @@index([organizationId, periodStart])
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  actorUserId    String
+  action         String
+  entityType     String
+  entityId       String
+  metadataJson   Json
+  ip             String
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  actor          User          @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model IntegrationEvent {
+  id              String       @id @default(cuid())
+  organizationId  String
+  provider        Provider
+  providerEventId String
+  status          String
+  payloadJson     Json
+  retryCount      Int          @default(0)
+  errorMessage    String?
+  createdAt       DateTime     @default(now())
+  processedAt     DateTime?
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([provider, providerEventId])
+  @@index([organizationId, provider, status])
+}
+
+model Contact {
+  id            String            @id @default(cuid())
+  organizationId String
+  displayName   String
+  phoneE164     String?
+  emailLower    String?
+  lifecycleStatus String          @default("active")
+  firstSeenAt   DateTime          @default(now())
+  lastSeenAt    DateTime          @default(now())
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  organization  Organization      @relation(fields: [organizationId], references: [id])
+  identities    ContactIdentity[]
+  leads         Lead[]
+  conversations Conversation[]
+
+  @@index([organizationId, lastSeenAt])
+  @@unique([organizationId, phoneE164])
+  @@unique([organizationId, emailLower])
+}
+
+model ContactIdentity {
+  id               String       @id @default(cuid())
+  organizationId   String
+  contactId        String
+  provider         Provider
+  externalAccountId String      @default("")
+  externalContactId String
+  externalThreadId String       @default("")
+  firstSeenAt      DateTime     @default(now())
+  lastSeenAt       DateTime     @default(now())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  contact          Contact      @relation(fields: [contactId], references: [id])
+
+  @@unique([organizationId, provider, externalAccountId, externalContactId])
+  @@index([organizationId, provider, lastSeenAt])
+  @@index([contactId, provider])
+}
+
+model WebhookReceipt {
+  id               String                  @id @default(cuid())
+  organizationId   String?
+  integrationId    String?
+  provider         WebhookProvider
+  channelProvider  Provider?
+  externalEventId  String
+  dedupeKey        String                  @unique
+  payloadJson      Json
+  payloadSha256    String
+  signatureStatus  SignatureStatus         @default(pending)
+  processingStatus ReceiptProcessingStatus @default(received)
+  correlationId    String
+  providerAccountKey String                @default("")
+  occurredAt       DateTime?
+  receivedAt       DateTime                @default(now())
+  claimedAt        DateTime?
+  claimExpiresAt   DateTime?
+  firstProcessedAt DateTime?
+  lastProcessedAt  DateTime?
+  retryCount       Int                     @default(0)
+  lastErrorCode    String?
+  lastErrorMessage String?
+  organization     Organization?           @relation(fields: [organizationId], references: [id])
+  integration      Integration?            @relation(fields: [integrationId], references: [id])
+  outboxEvents     OutboxEvent[]
+
+  @@index([processingStatus, receivedAt])
+  @@index([provider, receivedAt])
+  @@index([organizationId, provider, receivedAt])
+}
+
+model OutboxEvent {
+  id               String       @id @default(cuid())
+  organizationId   String?
+  receiptId        String?
+  aggregateType    String
+  aggregateId      String
+  eventName        String
+  schemaVersion    Int          @default(1)
+  status           OutboxStatus @default(pending)
+  partitionKey     String
+  causationId      String?
+  correlationId    String
+  payloadJson      Json
+  occurredAt       DateTime
+  availableAt      DateTime     @default(now())
+  claimedAt        DateTime?
+  claimExpiresAt   DateTime?
+  dispatchedAt     DateTime?
+  attemptCount     Int          @default(0)
+  lastErrorCode    String?
+  lastErrorMessage String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+  receipt          WebhookReceipt? @relation(fields: [receiptId], references: [id])
+  messageDelivery  MessageDelivery?
+
+  @@index([status, availableAt])
+  @@index([partitionKey, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+model ReplayAttempt {
+  id                String              @id @default(cuid())
+  organizationId    String?
+  targetType        ReplayTargetType
+  targetId          String
+  source            String              @default("manual")
+  force             Boolean             @default(false)
+  status            ReplayAttemptStatus @default(started)
+  reason            String?
+  requestedByUserId String?
+  correlationId     String              @default(uuid())
+  startedAt         DateTime            @default(now())
+  completedAt       DateTime?
+  durationMs        Int?
+  resultJson        Json?
+  errorCode         String?
+  errorMessage      String?
+  organization      Organization?       @relation(fields: [organizationId], references: [id])
+
+  @@index([targetType, targetId, startedAt])
+  @@index([organizationId, startedAt])
+  @@index([status, startedAt])
+}
+
+model RuntimeLease {
+  key        String   @id
+  ownerId    String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
+model DataLifecycleRun {
+  id             String                 @id @default(cuid())
+  organizationId String?
+  dryRun         Boolean                @default(true)
+  source         String                 @default("manual")
+  status         DataLifecycleRunStatus
+  startedAt      DateTime               @default(now())
+  completedAt    DateTime?
+  durationMs     Int?
+  resultJson     Json?
+  errorCode      String?
+  errorMessage   String?
+  organization   Organization?          @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, startedAt])
+  @@index([status, startedAt])
+}
+
+model ConversationProjection {
+  id                   String           @id @default(cuid())
+  organizationId        String
+  conversationId        String
+  leadId                String
+  contactId             String?
+  provider              Provider
+  providerThreadId      String
+  status                String
+  leadStatus            LeadStatus
+  responseState         String
+  assignedTo            String?
+  patientName           String
+  patientPhone          String?
+  lastMessageText       String
+  lastMessagePreview    String           @default("")
+  lastMessageDirection  MessageDirection?
+  lastMessageAt         DateTime
+  unreadInboundCount    Int              @default(0)
+  firstInboundAt        DateTime
+  firstHumanResponseAt  DateTime?
+  slaDeadlineAt         DateTime?
+  slaBreachedAt         DateTime?
+  atRisk                Boolean          @default(false)
+  estimatedValue        Int
+  rebuiltAt             DateTime         @default(now())
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  organization          Organization     @relation(fields: [organizationId], references: [id])
+
+  @@unique([conversationId])
+  @@unique([organizationId, conversationId])
+  @@index([organizationId, status, lastMessageAt])
+  @@index([organizationId, responseState, slaDeadlineAt])
+  @@index([organizationId, assignedTo, lastMessageAt])
+}
+
+model OrganizationMetricSnapshot {
+  id                     String       @id @default(cuid())
+  organizationId          String
+  snapshotKey             String       @default("realtime")
+  totalLeads              Int          @default(0)
+  newLeads                Int          @default(0)
+  unansweredLeads         Int          @default(0)
+  atRiskLeads             Int          @default(0)
+  inConversationLeads     Int          @default(0)
+  bookedLeads             Int          @default(0)
+  lostLeads               Int          @default(0)
+  openConversations       Int          @default(0)
+  unreadConversations     Int          @default(0)
+  unreadInboundMessages   Int          @default(0)
+  lostRevenue             Int          @default(0)
+  averageResponseMinutes  Int          @default(0)
+  conversionRate          Int          @default(0)
+  rebuiltAt               DateTime     @default(now())
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  organization            Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, snapshotKey])
+  @@index([snapshotKey, rebuiltAt])
+}
