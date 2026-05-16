@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 import { Gauge, Search, TrendingDown, Users } from "lucide-react";
 import { SectionBlueprintPage } from "@/features/app-shell/components/section-blueprint-page";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
@@ -64,3 +66,4 @@ export default async function LeadsPage() {
     />
   );
 }
+
