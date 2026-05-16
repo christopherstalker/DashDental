@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -22,14 +22,14 @@ import {
 import { SupportRequestForm } from "@/features/support/components/support-request-form";
 
 export const metadata: Metadata = {
-  title: "Support — Dash Dental",
+  title: "Support â€” Dash Dental",
   description:
     "Contact Dash Dental support for clinic setup, billing, integrations, privacy/data requests, security reports, bugs, and feature ideas.",
   alternates: {
     canonical: "/support",
   },
   openGraph: {
-    title: "Support — Dash Dental",
+    title: "Support â€” Dash Dental",
     description:
       "Professional support contacts and request forms for Dash Dental clinic setup, bugs, feature ideas, privacy, and security.",
     url: "/support",
@@ -185,3 +185,4 @@ export default function SupportPage() {
     </SiteShell>
   );
 }
+
