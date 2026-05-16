@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import {
   Bot,
@@ -414,3 +416,4 @@ export default async function InboxPage() {
     </SectionBlueprintPage>
   );
 }
+
