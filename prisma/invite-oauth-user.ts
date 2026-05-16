@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Role, type Role as PrismaRole } from "../src/generated/prisma/enums";
+import { Role, type Role as PrismaRole } from "../src/generated/prisma/client";
 import { defaultOrganizationId } from "../src/domain/seed-data";
 import { prisma } from "../src/server/prisma";
 
