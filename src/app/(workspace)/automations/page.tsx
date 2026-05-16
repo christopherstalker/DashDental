@@ -1,4 +1,6 @@
-﻿import { Bot, ShieldCheck, ToggleRight, Zap } from "lucide-react";
+﻿export const dynamic = "force-dynamic";
+
+import { Bot, ShieldCheck, ToggleRight, Zap } from "lucide-react";
 import { SectionBlueprintPage } from "@/features/app-shell/components/section-blueprint-page";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
@@ -54,5 +56,6 @@ export default async function AutomationsPage() {
     />
   );
 }
+
 
 
