@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -619,3 +621,4 @@ function formatDate(iso: string): string {
     year: "numeric",
   }).format(new Date(iso));
 }
+
