@@ -28,6 +28,9 @@ import { LanguageSwitcher } from "@/features/i18n/components/language-switcher";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import styles from "./landing-system.module.css";
 
+export const demoRequestHref =
+  "/support?category=Demo%20or%20onboarding%20call&urgency=Normal&channel=Not%20channel-specific&message=Please%20book%20or%20reschedule%20a%20Dash%20Dental%20demo.%20I%20want%20to%20see%20the%20dashboard%20workflow.#request";
+
 export function MarketingShell({
   children,
   launchPage,
@@ -72,7 +75,10 @@ export function LandingNav({ launchPage }: { launchPage?: string }) {
           />
         </span>
         <span className={styles.brandText}>
-          <strong className="recovery-brand-wordmark">Dash Dental</strong>
+          <span className={styles.brandNameRow}>
+            <strong className="recovery-brand-wordmark">Dash Dental</strong>
+            <span className={styles.betaBadge}>Beta</span>
+          </span>
           <span>Revenue recovery cockpit</span>
         </span>
       </Link>
@@ -106,8 +112,8 @@ export function LandingNav({ launchPage }: { launchPage?: string }) {
           data-launch-event="public.marketing.demo_clicked"
           data-launch-page={launchPage}
           data-launch-section="nav"
-          data-launch-target="/support#request"
-          href="/support#request"
+          data-launch-target={demoRequestHref}
+          href={demoRequestHref}
         >
           <LocalizedText fallback="Book demo" k="common.cta.bookDemo" />
         </Link>
@@ -138,7 +144,7 @@ export function SectionHeader({
 
 export function CTAGroup({
   className = "",
-  primaryHref = "/support#request",
+  primaryHref = demoRequestHref,
   primaryLabel = primaryCta,
   secondaryHref = "/demo",
   secondaryLabel = secondaryCta,

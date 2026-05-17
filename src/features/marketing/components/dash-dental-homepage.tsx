@@ -16,6 +16,7 @@ import {
   AiAssistPanel,
   CTAGroup,
   DashboardPreview,
+  demoRequestHref,
   IntegrationCard,
   LeakCard,
   MarketingShell,
@@ -108,8 +109,8 @@ export function DashDentalHomepage() {
               data-launch-event="public.home.demo_clicked"
               data-launch-page="/"
               data-launch-section="hero"
-              data-launch-target="/support#request"
-              href="/support#request"
+              data-launch-target={demoRequestHref}
+              href={demoRequestHref}
             >
               <LocalizedText fallback={primaryCta} k="common.cta.bookDemo" />
               <ArrowRight size={16} />

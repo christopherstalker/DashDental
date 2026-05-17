@@ -622,6 +622,7 @@ const english: TrustSupportCopy = {
           "Describe what happened, what you expected, and any safe examples support can use.",
       },
       categories: [
+        "Demo or onboarding call",
         "Onboarding",
         "Integration",
         "Website form",

@@ -17,10 +17,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SupportPage() {
+function readQueryValue(
+  searchParams: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = searchParams[key];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
+  const initialRequest = {
+    category: readQueryValue(query, "category"),
+    channel: readQueryValue(query, "channel"),
+    clinic: readQueryValue(query, "clinic"),
+    email: readQueryValue(query, "email"),
+    message: readQueryValue(query, "message"),
+    name: readQueryValue(query, "name"),
+    urgency: readQueryValue(query, "urgency"),
+  };
+
   return (
     <MarketingShell launchPage="/support">
-      <SupportHubContent />
+      <SupportHubContent initialRequest={initialRequest} />
     </MarketingShell>
   );
 }

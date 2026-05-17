@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LanguageSwitcher } from "@/features/i18n/components/language-switcher";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
+import { demoRequestHref } from "@/features/marketing/components/landing-system";
 import { MarketingLocalizedText } from "@/features/marketing/components/marketing-localized-text";
 import { ThemeToggle } from "@/features/theme/components/theme-toggle";
 
@@ -27,6 +28,7 @@ export function MarketingNav({
           />
         </span>
         <span className="recovery-brand-wordmark">Dash Dental</span>
+        <span className="dd-beta-badge">Beta</span>
       </Link>
 
       <div className="recovery-nav-links">
@@ -58,8 +60,8 @@ export function MarketingNav({
           data-launch-event="public.home.demo_clicked"
           data-launch-page={launchPage}
           data-launch-section="nav"
-          data-launch-target="/support"
-          href="/support#request"
+          data-launch-target={demoRequestHref}
+          href={demoRequestHref}
         >
           <MarketingLocalizedText fallback="Book demo" k="bookDemo" />
         </Link>

@@ -30,7 +30,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
-import { SupportRequestForm } from "@/features/support/components/support-request-form";
+import {
+  type InitialSupportRequest,
+  SupportRequestForm,
+} from "@/features/support/components/support-request-form";
 import { privacyEmail, securityEmail, supportEmail } from "@/features/marketing/content/dash-dental";
 import { getTrustSupportCopy, type TrustControlCopy, type TrustStatusTone } from "@/features/marketing/content/trust-support";
 import styles from "./landing-system.module.css";
@@ -444,7 +447,11 @@ export function SecurityTrustContent() {
   );
 }
 
-export function SupportHubContent() {
+export function SupportHubContent({
+  initialRequest,
+}: {
+  initialRequest?: InitialSupportRequest;
+}) {
   const content = getTrustSupportCopy(useCurrentLanguageCode()).support;
 
   return (
@@ -520,7 +527,7 @@ export function SupportHubContent() {
             </div>
           </article>
           <div className={styles.formFrame}>
-            <SupportRequestForm />
+            <SupportRequestForm initialRequest={initialRequest} />
           </div>
         </div>
       </section>
