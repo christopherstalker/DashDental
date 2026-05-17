@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma";
 import type { CanonicalInboundMessage, Provider } from "@/domain/types";
 import { ApiError } from "./api-error";
 import { isPrismaStorageEnabled, mutateAppState } from "./data-store";
