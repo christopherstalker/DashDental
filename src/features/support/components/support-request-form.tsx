@@ -12,6 +12,10 @@ interface SupportResponse {
   error?: string;
 }
 
+export type InitialSupportRequest = Partial<
+  Record<"category" | "channel" | "clinic" | "email" | "message" | "name" | "urgency", string>
+>;
+
 function readFormValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -32,7 +36,11 @@ function buildDescription(formData: FormData) {
   return [context, "Message:", message].filter(Boolean).join("\n\n");
 }
 
-export function SupportRequestForm() {
+export function SupportRequestForm({
+  initialRequest,
+}: {
+  initialRequest?: InitialSupportRequest;
+}) {
   const languageCode = useCurrentLanguageCode();
   const copy = getTrustSupportCopy(languageCode).support.form;
   const [kind, setKind] = useState<RequestKind>("issue");
@@ -108,24 +116,43 @@ export function SupportRequestForm() {
         <div className="support-form-grid">
           <label>
             <span>{copy.labels.name}</span>
-            <input autoComplete="name" name="name" placeholder={copy.placeholders.name} type="text" />
+            <input
+              autoComplete="name"
+              defaultValue={initialRequest?.name}
+              name="name"
+              placeholder={copy.placeholders.name}
+              type="text"
+            />
           </label>
 
           <label>
             <span>{copy.labels.clinic}</span>
-            <input autoComplete="organization" name="clinic" placeholder={copy.placeholders.clinic} type="text" />
+            <input
+              autoComplete="organization"
+              defaultValue={initialRequest?.clinic}
+              name="clinic"
+              placeholder={copy.placeholders.clinic}
+              type="text"
+            />
           </label>
         </div>
 
         <label>
           <span>{copy.labels.email}</span>
-          <input autoComplete="email" name="email" placeholder={copy.placeholders.email} required type="email" />
+          <input
+            autoComplete="email"
+            defaultValue={initialRequest?.email}
+            name="email"
+            placeholder={copy.placeholders.email}
+            required
+            type="email"
+          />
         </label>
 
         <div className="support-form-grid">
           <label>
             <span>{copy.labels.category}</span>
-            <select name="category">
+            <select defaultValue={initialRequest?.category} name="category">
               {copy.categories.map((category) => (
                 <option key={category}>{category}</option>
               ))}
@@ -134,7 +161,7 @@ export function SupportRequestForm() {
 
           <label>
             <span>{copy.labels.urgency}</span>
-            <select name="urgency">
+            <select defaultValue={initialRequest?.urgency} name="urgency">
               {copy.urgencies.map((urgency) => (
                 <option key={urgency}>{urgency}</option>
               ))}
@@ -144,7 +171,7 @@ export function SupportRequestForm() {
 
         <label>
           <span>{copy.labels.channel}</span>
-          <select name="channel">
+          <select defaultValue={initialRequest?.channel} name="channel">
             {copy.channels.map((channel) => (
               <option key={channel}>{channel}</option>
             ))}
@@ -155,6 +182,7 @@ export function SupportRequestForm() {
           <span>{copy.labels.message}</span>
           <textarea
             minLength={12}
+            defaultValue={initialRequest?.message}
             name="message"
             placeholder={copy.placeholders.message}
             required
