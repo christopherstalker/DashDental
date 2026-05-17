@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -90,7 +90,7 @@ export function WorkspaceCommandBar({ context }: { context: WorkspaceCommandBarC
           <span>
             {context.unanswered} <LocalizedText k="workspace.command.unanswered" />
           </span>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true">/</span>
           <span>
             {context.atRisk} <LocalizedText k="workspace.command.atRisk" />
           </span>
