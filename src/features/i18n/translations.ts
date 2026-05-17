@@ -1,5 +1,4 @@
 import { generatedDictionaries } from "./generated-translations";
-import { polishCoverageOverrides } from "./pl-coverage-overrides";
 
 export const english = {
   "common.language.label": "Language",
@@ -3153,16 +3152,11 @@ const curatedLocaleOverrides: Record<string, Partial<Record<TranslationKey, stri
   },
 };
 
-const coverageLocaleOverrides: Record<string, Partial<Record<TranslationKey, string>>> = {
-  pl: polishCoverageOverrides,
-};
-
 const activeDictionaryCodes = new Set([
   ...Object.keys(dictionaries),
   ...Object.keys(localeOverrides),
   ...Object.keys(workspaceLocaleOverrides),
   ...Object.keys(curatedLocaleOverrides),
-  ...Object.keys(coverageLocaleOverrides),
 ]);
 
 const disabledLanguageCodes = new Set(["ru"]);
@@ -3187,7 +3181,6 @@ export function translate(key: TranslationKey, languageCode: string): string {
     curatedLocaleOverrides[normalized]?.[key] ??
     workspaceLocaleOverrides[normalized]?.[key] ??
     localeOverrides[normalized]?.[key] ??
-    coverageLocaleOverrides[normalized]?.[key] ??
     dictionaries[normalized]?.[key] ??
     generatedDictionaryMap[normalized]?.[key] ??
     english[key]
@@ -3202,7 +3195,6 @@ export function getMergedDictionary(
   return {
     ...generatedDictionaryMap[normalized],
     ...dictionaries[normalized],
-    ...coverageLocaleOverrides[normalized],
     ...localeOverrides[normalized],
     ...workspaceLocaleOverrides[normalized],
     ...curatedLocaleOverrides[normalized],

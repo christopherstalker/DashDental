@@ -21,6 +21,10 @@ export function LanguageSwitcher({
 }) {
   const languageCode = useCurrentLanguageCode();
 
+  if (selectableLanguages.length <= 1) {
+    return null;
+  }
+
   return (
     <label
       className={[

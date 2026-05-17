@@ -9,13 +9,11 @@ export interface SupportedLanguage {
 
 export const supportedLanguages: SupportedLanguage[] = [
   { code: "en", dir: "ltr", englishName: "English", nativeName: "English" },
-  { code: "uk", dir: "ltr", englishName: "Ukrainian", nativeName: "Українська" },
-  { code: "pl", dir: "ltr", englishName: "Polish", nativeName: "Polski" },
 ];
 
 export const defaultLanguageCode = "en";
 
-export const productionReadyLanguageCodes = new Set(["en", "uk", "pl"]);
+export const productionReadyLanguageCodes = new Set(["en"]);
 
 export const selectableLanguages = supportedLanguages.filter((language) =>
   productionReadyLanguageCodes.has(language.code),
