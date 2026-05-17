@@ -21,6 +21,7 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
               <ShieldCheck size={17} />
             </span>
             <strong>Dash Dental</strong>
+            <em className="dd-beta-badge">Beta</em>
           </Link>
           <div className="premium-auth-actions">
             <Link href="/pricing">Pricing</Link>
@@ -32,13 +33,12 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
 
         <div className="premium-auth-grid">
           <div className="login-copy premium-auth-copy">
-            <p className="premium-auth-kicker">Dash Dental missed-message recovery</p>
-            <h1>Start a clinic recovery workspace without replacing your CRM.</h1>
+            <p className="premium-auth-kicker">Clinic revenue recovery cockpit</p>
+            <h1>Sign in to the dashboard that finds missed patients first.</h1>
             <p className="login-subcopy">
-              Create a protected workspace for unanswered patient messages, response-time
-              risk, safe AI-assisted reply drafts (human-reviewed before sending), and
-              owner visibility. No CRM migration required — start with one channel and a
-              work email.
+              Open the command center for unanswered patient messages, SLA risk,
+              human-reviewed AI reply drafts, and owner visibility. Dash Dental stays
+              focused on lead intake and recovery, not clinical records.
             </p>
             <div className="premium-auth-proof">
               <span>
@@ -47,17 +47,17 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
               </span>
               <span>
                 <CreditCard size={15} />
-                14-day guided trial
+                Beta workspace
               </span>
               <span>
                 <Zap size={15} />
-                Setup checklist included
+                Human-reviewed AI drafts
               </span>
             </div>
             <div className="premium-auth-preview">
               <div className="premium-auth-preview-header">
-                <span>Real dashboard preview</span>
-                <strong>Live recovery cockpit</strong>
+                <span>Dashboard preview</span>
+                <strong>Revenue recovery cockpit</strong>
               </div>
               <Image
                 alt="Dash Dental dashboard preview"
