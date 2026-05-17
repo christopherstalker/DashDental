@@ -22,14 +22,14 @@ import {
 import { SupportRequestForm } from "@/features/support/components/support-request-form";
 
 export const metadata: Metadata = {
-  title: "Support â€” Dash Dental",
+  title: "Support - Dash Dental",
   description:
     "Contact Dash Dental support for clinic setup, billing, integrations, privacy/data requests, security reports, bugs, and feature ideas.",
   alternates: {
     canonical: "/support",
   },
   openGraph: {
-    title: "Support â€” Dash Dental",
+    title: "Support - Dash Dental",
     description:
       "Professional support contacts and request forms for Dash Dental clinic setup, bugs, feature ideas, privacy, and security.",
     url: "/support",

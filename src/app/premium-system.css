@@ -61,7 +61,7 @@
 
 :root {
   --radius-control: 12px;
-  --radius-card: 16px;
+  --radius-card: 10px;
   --radius-panel: 20px;
   --page-pad: clamp(16px, 2vw, 24px);
   --section-gap: clamp(18px, 2vw, 24px);
@@ -2334,5 +2334,207 @@ html[data-theme] .dd-final-future-cta > * {
   html[data-theme] .dd-future-plan-grid article,
   html[data-theme] .dd-mission-node {
     transition: none !important;
+  }
+}
+
+/* Product rescue pass: flatter, clearer public surface. */
+html[data-theme] .dd-future-hero {
+  grid-template-columns: minmax(0, 0.86fr) minmax(480px, 1.14fr) !important;
+  gap: clamp(28px, 4rem, 64px) !important;
+  min-height: auto !important;
+  padding: 72px 0 58px !important;
+}
+
+html[data-theme] .dd-future-bg,
+html[data-theme] .dd-orbit,
+html[data-theme] .dd-grid-plane,
+html[data-theme] .dd-future-mark-field {
+  display: none !important;
+}
+
+html[data-theme] .dd-future-hero h1 {
+  max-width: 720px !important;
+  font-size: clamp(3rem, 4.8rem, 4.8rem) !important;
+  letter-spacing: 0 !important;
+  line-height: 0.98 !important;
+}
+
+html[data-theme] .dd-future-section h2,
+html[data-theme] .dd-final-future-cta h2 {
+  font-size: clamp(2.25rem, 3.75rem, 3.75rem) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.04 !important;
+}
+
+html[data-theme] .dd-future-kicker {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+html[data-theme] .dd-command-console,
+html[data-theme] .dd-glow-card,
+html[data-theme] .dd-live-cockpit-panel,
+html[data-theme] .dd-future-plan-grid article,
+html[data-theme] .dd-final-future-cta,
+html[data-theme] .dd-console-active-panel,
+html[data-theme] .dd-console-queue,
+html[data-theme] .dd-console-ai,
+html[data-theme] .dd-cockpit-queue,
+html[data-theme] .dd-cockpit-ai-card,
+html[data-theme] .dd-ai-terminal,
+html[data-theme] .dd-ai-rules,
+html[data-theme] .dd-mission-node {
+  box-shadow: none !important;
+}
+
+html[data-theme] .dd-command-console {
+  border-radius: 14px !important;
+  border-color: var(--border-strong) !important;
+  background: var(--surface-elevated) !important;
+}
+
+html[data-theme] .dd-console-glow,
+html[data-theme] .dd-console-scan {
+  display: none !important;
+}
+
+html[data-theme] .dd-console-active-panel,
+html[data-theme] .dd-console-metrics article,
+html[data-theme] .dd-cockpit-metric-grid article,
+html[data-theme] .dd-console-queue,
+html[data-theme] .dd-console-ai,
+html[data-theme] .dd-cockpit-queue,
+html[data-theme] .dd-cockpit-ai-card,
+html[data-theme] .dd-ai-terminal,
+html[data-theme] .dd-ai-rules {
+  border-radius: 10px !important;
+}
+
+html[data-theme] .dd-leak-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+html[data-theme] .dd-glow-card,
+html[data-theme] .dd-future-plan-grid article,
+html[data-theme] .dd-live-cockpit-panel,
+html[data-theme] .dd-final-future-cta {
+  border-radius: 10px !important;
+  background: var(--surface-elevated) !important;
+}
+
+html[data-theme] .dd-glow-card::before,
+html[data-theme] .dd-future-plan-grid article::before,
+html[data-theme] .dd-live-cockpit-panel::before,
+html[data-theme] .dd-final-future-cta::before {
+  display: none !important;
+}
+
+html[data-theme] .dd-glow-card:hover,
+html[data-theme] .dd-future-plan-grid article:hover,
+html[data-theme] .dd-mission-node.is-active,
+html[data-theme] .dd-mission-node:hover {
+  transform: translateY(-2px) !important;
+}
+
+html[data-theme] .dd-glow-card b {
+  display: block !important;
+  margin-top: 14px !important;
+  border-top: 1px solid var(--border) !important;
+  padding-top: 12px !important;
+  color: var(--text-primary) !important;
+  font-size: 13px !important;
+  font-weight: 760 !important;
+  line-height: 1.45 !important;
+}
+
+html[data-theme] .dd-mission-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+
+html[data-theme] .dd-mission-node {
+  min-height: 192px !important;
+  border-radius: 10px !important;
+  background: var(--surface-elevated) !important;
+}
+
+html[data-theme] .dd-mission-index {
+  border-radius: 8px !important;
+}
+
+html[data-theme] .dd-plan-limits {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 18px 0 0 !important;
+}
+
+html[data-theme] .dd-plan-limits small {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 8px 9px !important;
+  background: var(--surface-muted) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+
+html[data-theme] .dd-plan-note {
+  margin-top: 14px !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 1180px) {
+  html[data-theme] .dd-leak-grid,
+  html[data-theme] .dd-mission-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html[data-theme] .dd-future-hero {
+    grid-template-columns: 1fr !important;
+    padding: 48px 0 42px !important;
+  }
+
+  html[data-theme] .dd-leak-grid,
+  html[data-theme] .dd-mission-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-theme] .dd-future-hero {
+    padding-top: 32px !important;
+    padding-bottom: 34px !important;
+    gap: 24px !important;
+  }
+
+  html[data-theme] .dd-future-hero h1 {
+    font-size: 2.38rem !important;
+    line-height: 1.02 !important;
+  }
+
+  html[data-theme] .dd-future-lede {
+    margin-top: 16px !important;
+    font-size: 0.96rem !important;
+    line-height: 1.48 !important;
+  }
+
+  html[data-theme] .dd-future-actions {
+    margin-top: 22px !important;
+  }
+
+  html[data-theme] .dd-future-trust-row {
+    display: none !important;
+  }
+
+  html[data-theme] .dd-future-microcopy,
+  html[data-theme] .dd-future-trial-link {
+    margin-top: 10px !important;
+  }
+
+  html[data-theme] .dd-future-section h2,
+  html[data-theme] .dd-final-future-cta h2 {
+    font-size: 2.1rem !important;
   }
 }
