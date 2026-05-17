@@ -97,9 +97,9 @@ export function LoginForm({
   return (
     <section className="auth-card">
       <div className="auth-card-heading">
-        <p className="eyebrow">Login</p>
-        <h2>Enter the clinic workspace</h2>
-        <p>Use your owner, admin, or manager account to continue.</p>
+        <p className="eyebrow">Secure sign in</p>
+        <h2>Open your recovery cockpit</h2>
+        <p>Use the owner, admin, or manager account connected to your clinic workspace.</p>
       </div>
 
       {showOauthLogin ? (
@@ -143,7 +143,7 @@ export function LoginForm({
           onTokenChange={setTurnstileToken}
         />
         <button className="primary-button" disabled={isPending} type="submit">
-          {isPending ? "Signing in..." : "Open dashboard"}
+          {isPending ? "Signing in..." : "Enter dashboard"}
           <ArrowRight size={16} />
         </button>
       </form>
@@ -152,7 +152,7 @@ export function LoginForm({
 
       {allowDevLogin && loginProfiles.length > 0 ? (
         <>
-          <div className="login-divider">Demo profiles</div>
+          <div className="login-divider">Local beta profiles</div>
           <div className="login-profile-grid">
             {loginProfiles.slice(0, 4).map((profile) => (
               <button
@@ -182,7 +182,9 @@ export function LoginForm({
       <div className="auth-alt-action">
         <Building2 size={16} />
         <span>New clinic?</span>
-        <a href="/register">Create a workspace</a>
+        <a href="/support?category=Demo%20or%20onboarding%20call&message=Please%20book%20a%20Dash%20Dental%20demo%20for%20my%20clinic.#request">
+          Book a demo
+        </a>
       </div>
     </section>
   );
