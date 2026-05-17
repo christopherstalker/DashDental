@@ -60,7 +60,10 @@ export function WorkspaceLayoutShell({
               />
             </div>
             <div>
-              <strong className="brand-name">Dash Dental</strong>
+              <div className="workspace-brand-row">
+                <strong className="brand-name">Dash Dental</strong>
+                <em className="dd-beta-badge">Beta</em>
+              </div>
               <p className="brand-subtitle">{bootstrap.organization.name}</p>
             </div>
           </div>
