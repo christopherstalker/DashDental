@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { SiteShell } from "@/features/design-system/components/site-shell";
-import { MarketingFooter } from "@/features/marketing/components/marketing-footer";
-import { MarketingNav } from "@/features/marketing/components/marketing-nav";
+import {
+  DashboardPreview,
+  MarketingShell,
+  SectionHeader,
+} from "@/features/marketing/components/landing-system";
 import { SampleDashboardConsole } from "@/features/marketing/components/sample-dashboard-console";
 import {
   pilotCta,
   primaryCta,
 } from "@/features/marketing/content/dash-dental";
+import styles from "@/features/marketing/components/landing-system.module.css";
 
 export const metadata: Metadata = {
   title: "Sample Dashboard - Dash Dental",
@@ -35,52 +39,49 @@ const proofPoints = [
 export default function DemoPage() {
   return (
     <SiteShell>
-      <main className="dd-site dd-demo-page">
-      <MarketingNav launchPage="/demo" />
+      <MarketingShell launchPage="/demo">
+        <section className={styles.pricingHero}>
+          <div>
+            <span className={styles.badge}>Sample recovery cockpit</span>
+            <h1>Try the product workflow before creating an account.</h1>
+            <p>
+              This sample workspace shows how Dash Dental surfaces revenue at risk,
+              unanswered patients, channel pressure, and staff-reviewed AI drafts.
+            </p>
+            <div className={styles.ctaGroup}>
+              <Link className={styles.buttonPrimary} href="/support#request">
+                {primaryCta}
+                <ArrowRight size={16} />
+              </Link>
+              <Link className={styles.buttonSecondary} href="/register">
+                {pilotCta}
+              </Link>
+            </div>
+          </div>
+          <DashboardPreview />
+        </section>
 
-      <section className="dd-demo-intro">
-        <div>
-          <h1>Try the recovery cockpit before creating an account.</h1>
-          <p>
-            This sample workspace shows how Dash Dental surfaces money at risk,
-            unanswered patients, recovery actions, and staff-reviewed AI drafts.
-          </p>
-        </div>
-        <div className="dd-hero-actions">
-          <Link className="dd-button dd-button-primary" href="/support#request">
-            {primaryCta}
-            <ArrowRight size={16} />
-          </Link>
-          <Link className="dd-button dd-button-secondary" href="/register">
-            {pilotCta}
-          </Link>
-        </div>
-      </section>
+        <SampleDashboardConsole />
 
-      <SampleDashboardConsole />
-
-      <section className="dd-section dd-demo-proof">
-        <div className="dd-section-copy">
-          <h2>You can judge the product workflow before registration.</h2>
-          <p>
+        <section className={styles.section}>
+          <SectionHeader
+            eyebrow="Demo boundaries"
+            title="Judge the recovery workflow before connecting live channels."
+          >
             Dash Dental is not trying to replace your CRM. It shows which high-intent
             patient messages are late, unanswered, or ready for recovery.
-          </p>
-        </div>
-        <div className="dd-frontdesk-panel">
-          {proofPoints.map((point) => (
-            <article key={point}>
-              <CheckCircle2 size={16} />
-              <div>
-                <strong>{point}</strong>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <MarketingFooter />
-    </main>
+          </SectionHeader>
+          <div className={styles.trustGrid}>
+            {proofPoints.map((point) => (
+              <article className={styles.trustCard} key={point}>
+                <CheckCircle2 size={20} />
+                <h3>{point}</h3>
+                <p>Designed to keep the evaluation concrete, safe, and buyer-readable.</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      </MarketingShell>
     </SiteShell>
   );
 }

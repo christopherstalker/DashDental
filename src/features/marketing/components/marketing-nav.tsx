@@ -7,8 +7,10 @@ import { ThemeToggle } from "@/features/theme/components/theme-toggle";
 
 export function MarketingNav({
   launchPage,
+  showLanguageSwitcher = false,
 }: {
   launchPage?: string;
+  showLanguageSwitcher?: boolean;
 }) {
   return (
     <nav className="recovery-nav marketing-nav" aria-label="Primary navigation">
@@ -46,7 +48,7 @@ export function MarketingNav({
       </div>
 
       <div className="recovery-nav-actions">
-        <LanguageSwitcher compact tone="dark" />
+        {showLanguageSwitcher ? <LanguageSwitcher compact tone="dark" /> : null}
         <ThemeToggle compact />
         <Link className="recovery-ghost-button" href="/login">
           <LocalizedText fallback="Sign in" k="common.nav.login" />

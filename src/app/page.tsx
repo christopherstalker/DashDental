@@ -3,15 +3,15 @@ import { SiteShell } from "@/features/design-system/components/site-shell";
 import { DashDentalHomepage } from "@/features/marketing/components/dash-dental-homepage";
 
 export const metadata: Metadata = {
-  title: "Dash Dental - Missed-message recovery cockpit for dental clinics",
+  title: "Dash Dental - AI revenue recovery for dental clinics",
   description:
-    "Dash Dental helps dental clinics recover high-intent patient leads from WhatsApp, Instagram, Telegram, and website forms with a prioritized recovery queue and human-reviewed AI drafts.",
+    "Dash Dental shows where dental clinics are losing patients across WhatsApp, Instagram, Telegram, and website forms, then helps recover revenue with SLA risk, priority queues, and human-reviewed AI drafts.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     description:
-      "A premium recovery cockpit for dental clinics: money-at-risk visibility, prioritized patient queues, and staff-reviewed AI reply drafts.",
+      "A premium AI recovery cockpit for dental clinics: money-at-risk visibility, prioritized patient queues, and staff-reviewed AI reply drafts.",
     images: [
       {
         alt: "Dash Dental recovery cockpit preview",
@@ -20,15 +20,15 @@ export const metadata: Metadata = {
         width: 1600,
       },
     ],
-    title: "Dash Dental - Recover missed dental leads before they disappear",
+    title: "Dash Dental - Recover dental revenue before patients disappear",
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
     description:
-      "Recover high-intent dental leads from patient DMs and website forms before they disappear.",
+      "Recover high-intent dental inquiries from patient DMs and website forms before they disappear.",
     images: ["/dashboard-preview.png"],
-    title: "Dash Dental - Missed-message recovery cockpit",
+    title: "Dash Dental - AI dental revenue recovery cockpit",
   },
 };
 
