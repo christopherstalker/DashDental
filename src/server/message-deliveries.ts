@@ -1,4 +1,4 @@
-import type { MessageDeliveryStatus, Prisma } from "@/generated/prisma/client";
+import type { MessageDeliveryStatus, Prisma } from "@/generated/prisma";
 import { isPrismaStorageEnabled } from "./data-store";
 
 export interface DeliveryUpdateInput {

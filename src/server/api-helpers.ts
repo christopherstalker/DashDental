@@ -26,7 +26,13 @@ export function errorResponse(error: unknown): Response {
         status: error.status,
         code: error.code,
       });
+
+      return Response.json(
+        { error: "Unexpected server error", code: error.code },
+        { status: error.status },
+      );
     }
+
     return Response.json(
       {
         error: error.message,

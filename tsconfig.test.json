@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "next-env.d.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "scripts/**/*.ts",
+    "prisma/**/*.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".next-broken",
+    ".next-verify",
+    ".next-codex-*",
+    "backend",
+    ".tmp",
+    ".data",
+    ".vercel",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    "src/generated"
+  ]
+}

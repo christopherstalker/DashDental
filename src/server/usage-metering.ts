@@ -6,7 +6,7 @@ import type { AppState, UsageEvent } from "@/domain/types";
 import { isPrismaStorageEnabled } from "./data-store";
 import { captureError, structuredLog } from "./observability";
 import { prisma } from "./prisma";
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma";
 
 export type UsageMetric = "messages" | "aiRuns" | "users" | "integrations";
 

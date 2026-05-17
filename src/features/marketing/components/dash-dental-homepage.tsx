@@ -20,7 +20,7 @@ import {
   Target,
   Zap,
 } from "lucide-react";
-import { getPlanCatalog } from "@/domain/business-rules";
+import { getPlanCatalog, getPlanLimits } from "@/domain/business-rules";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import { MarketingFooter } from "@/features/marketing/components/marketing-footer";
 import { MarketingLocalizedText } from "@/features/marketing/components/marketing-localized-text";
@@ -104,21 +104,31 @@ const consoleRows = [
 const leakPoints = [
   {
     icon: MessageCircle,
-    title: "Messages get buried",
+    title: "Messages buried across channels",
     impact: "$1.2k cosmetic inquiry",
     text: "WhatsApp, Instagram, Telegram, and website forms all create patient demand. The front desk should not hunt across tabs.",
+    fix: "One prioritized inbox with channel, SLA, value, and next action visible.",
   },
   {
     icon: Clock3,
-    title: "First response slips",
+    title: "Slow first response",
     impact: "38m average response",
     text: "Dash Dental turns waiting time into an operating signal before the patient books somewhere else.",
+    fix: "SLA timers push urgent inquiries to the top before the patient goes cold.",
   },
   {
     icon: Gauge,
-    title: "Owners see loss too late",
+    title: "No owner visibility",
     impact: "$7.8k at risk today",
     text: "The owner sees leakage by channel, urgency, and estimated opportunity while the conversation is still recoverable.",
+    fix: "Revenue at risk, saved revenue, and channel leakage stay visible every day.",
+  },
+  {
+    icon: Target,
+    title: "No follow-up discipline",
+    impact: "12 patients waiting",
+    text: "High-intent patients need a clear owner, a next action, and proof that follow-up actually happened.",
+    fix: "Queue ownership, AI drafts, notes, and outcomes keep the team accountable.",
   },
 ] as const;
 
@@ -149,7 +159,12 @@ const missionFlow = [
     signal: "Review",
   },
   {
-    title: "Owner sees recovery",
+    title: "Patient books",
+    text: "The inquiry is moved from at-risk conversation to confirmed appointment or clear follow-up.",
+    signal: "Booked",
+  },
+  {
+    title: "Owner sees recovered revenue",
     text: "The cockpit shows recovered conversations, response speed, and remaining leakage.",
     signal: "Recovered",
   },
@@ -223,11 +238,11 @@ export function DashDentalHomepage() {
         <div className="dd-future-hero-copy">
           <p className="dd-future-kicker">
             <ScanLine size={16} />
-            AI recovery command center for dental clinics
+            Revenue recovery command center for dental clinics
           </p>
           <h1 id="future-hero-title">
             <LocalizedText
-              fallback="Turn missed messages into booked patients."
+              fallback="Turn missed messages into booked patient appointments."
               k="home.hero.title"
             />
           </h1>
@@ -255,7 +270,9 @@ export function DashDentalHomepage() {
             </Link>
           </div>
 
-          <p className="dd-future-microcopy">No CRM migration required. Start with one channel.</p>
+          <p className="dd-future-microcopy">
+            Lead intake only. No CRM migration required. Start with one channel.
+          </p>
           <p className="dd-hero-tertiary-cta dd-future-trial-link">
             <span>Prefer self-serve?</span>{" "}
             <Link
@@ -285,7 +302,7 @@ export function DashDentalHomepage() {
       <section className="dd-future-section dd-leak-section" id="product">
         <div className="dd-future-section-copy">
           <p className="dd-future-kicker">Leak map</p>
-          <h2>Where clinics quietly lose revenue.</h2>
+          <h2>Where clinics leak revenue.</h2>
           <p>
             High-value patients ask about implants, veneers, emergencies, whitening,
             and pricing across channels. Dash Dental turns that scattered demand into
@@ -299,6 +316,7 @@ export function DashDentalHomepage() {
               <span>{point.impact}</span>
               <h3>{point.title}</h3>
               <p>{point.text}</p>
+              <b>{point.fix}</b>
             </article>
           ))}
         </div>
@@ -461,6 +479,7 @@ export function DashDentalHomepage() {
         <div className="dd-future-plan-grid">
           {pricingPlans.map((plan) => {
             const catalog = getPlanCatalog(plan);
+            const limits = getPlanLimits(plan);
 
             return (
               <article className={plan === "growth" ? "is-recommended" : ""} key={plan}>
@@ -468,6 +487,15 @@ export function DashDentalHomepage() {
                 <span>{catalog.label}</span>
                 <strong>${catalog.monthlyPrice}/mo</strong>
                 <p>{catalog.summary}</p>
+                <div className="dd-plan-limits" aria-label={`${catalog.label} plan limits`}>
+                  <small>{limits.maxIntegrations} channels</small>
+                  <small>{limits.maxUsers} seats</small>
+                  <small>{limits.monthlyMessages.toLocaleString()} messages/mo</small>
+                  <small>{limits.monthlyAiRuns.toLocaleString()} AI runs/mo</small>
+                </div>
+                <p className="dd-plan-note">
+                  14-day guided trial. Over limits are handled by upgrade or manual review.
+                </p>
                 <Link href="/pricing">
                   Compare {catalog.label}
                   <ArrowRight size={14} />

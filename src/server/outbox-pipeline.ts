@@ -1,4 +1,4 @@
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma";
 import type { AppState, Conversation, Lead, Provider } from "@/domain/types";
 import { ApiError } from "./api-error";
 import { sendLiveProviderMessage } from "./channel-integrations";

@@ -34,13 +34,18 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts",
-    ".next-verify/types/**/*.ts",
-    ".next-verify/dev/types/**/*.ts"
+    "**/*.mts"
   ],
   "exclude": [
     "node_modules",
+    ".next",
+    ".next-broken",
+    ".next-verify",
+    ".next-codex-*",
     "backend",
+    "tests",
+    "scripts",
+    "prisma/*.ts",
     ".tmp",
     ".data",
     ".vercel",
@@ -48,6 +53,9 @@
     "playwright-report",
     "test-results",
     "src/generated",
-    "scripts/synthetic-monitor-guard.ts"
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
   ]
 }

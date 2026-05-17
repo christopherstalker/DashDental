@@ -4,8 +4,9 @@
 /.github
 /docs
 .next
-.next-codex-build
-.next-codex-dev
+.next-broken
+.next-verify
+.next-codex-*
 coverage
 playwright-report
 test-results
@@ -14,5 +15,6 @@ scripts/synthetic-monitor-guard.ts
 *.log
 *.err.log
 *.out.log
+master.bundle
 dashboard-*.png
 dashboard-*.txt

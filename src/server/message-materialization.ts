@@ -1,4 +1,4 @@
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma";
 import type { Provider } from "@/domain/types";
 import { isPrismaStorageEnabled } from "./data-store";
 import { refreshConversationProjection } from "./inbox-projections";

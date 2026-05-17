@@ -257,9 +257,10 @@ test("language selector exposes only production-ready localization", async ({ pa
   await expect(page.getByLabel(/choose interface language/i).first()).toBeVisible();
   const languageSelector = page.locator(".language-switcher select").first();
   const optionCount = await languageSelector.locator("option").count();
-  expect(optionCount).toBe(2);
+  expect(optionCount).toBe(3);
   await expect(languageSelector).toContainText("English");
   await expect(languageSelector).toContainText("Українська");
+  await expect(languageSelector).toContainText("Polski");
   await expect(languageSelector).not.toContainText("Russian");
   await expect(languageSelector).not.toContainText("Русский");
 
