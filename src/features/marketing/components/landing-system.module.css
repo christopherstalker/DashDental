@@ -515,6 +515,12 @@
   gap: 14px;
 }
 
+.splitTitle > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .consoleTitle {
   display: flex;
   align-items: center;
@@ -788,6 +794,7 @@
 .panelHeader strong,
 .previewHeader strong,
 .splitTitle strong {
+  display: block;
   color: var(--mk-text);
   font-size: 13px;
   font-weight: 760;
@@ -796,8 +803,10 @@
 .panelHeader span,
 .previewHeader span,
 .splitTitle span {
+  display: block;
   color: var(--mk-dim);
   font-size: 12px;
+  line-height: 1.35;
 }
 
 .queueRow {
@@ -1703,6 +1712,686 @@
   border-bottom: 0;
 }
 
+.trustHero,
+.supportHero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
+  gap: clamp(28px, 5vw, 72px);
+  width: min(var(--mk-max), calc(100% - 32px));
+  align-items: center;
+  margin: 0 auto;
+  padding: clamp(56px, 8vw, 104px) 0 clamp(44px, 6vw, 76px);
+}
+
+.trustHeroCopy {
+  min-width: 0;
+}
+
+.trustHeroCopy h1 {
+  max-width: 840px;
+  margin: 16px 0 0;
+  color: var(--mk-text);
+  font-size: clamp(42px, 6.1vw, 76px);
+  font-weight: 800;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.trustHeroCopy p {
+  max-width: 700px;
+  margin: 22px 0 0;
+  color: var(--mk-muted);
+  font-size: clamp(16px, 1.45vw, 19px);
+  line-height: 1.62;
+}
+
+.trustCommandPanel,
+.supportSignalPanel,
+.scopeColumn,
+.controlCard,
+.aiBoundaryPanel,
+.compliancePanel,
+.incidentPanel,
+.supportPathCard,
+.responsePanel,
+.responseGrid article,
+.checklistPanel,
+.guideGrid article,
+.faqCard,
+.formFrame {
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius-card);
+  background: var(--mk-surface);
+  box-shadow: 0 22px 70px var(--mk-shadow);
+}
+
+.trustCommandPanel,
+.supportSignalPanel {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(18px, 3vw, 28px);
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--mk-cyan) 18%, transparent), transparent 17rem),
+    radial-gradient(circle at 100% 8%, color-mix(in srgb, var(--mk-blue) 15%, transparent), transparent 20rem),
+    var(--mk-surface-strong);
+}
+
+.trustCommandPanel::before,
+.supportSignalPanel::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--mk-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mk-line) 1px, transparent 1px);
+  background-size: 36px 36px;
+  content: "";
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 78%);
+  opacity: 0.16;
+}
+
+.trustCommandPanel > *,
+.supportSignalPanel > * {
+  position: relative;
+}
+
+.trustCommandHeader,
+.supportSignalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--mk-line);
+  padding-bottom: 16px;
+}
+
+.trustCommandHeader span,
+.supportSignalHeader span {
+  color: var(--mk-dim);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.trustCommandHeader strong,
+.supportSignalHeader strong {
+  color: var(--mk-text);
+  font-size: 14px;
+  text-align: right;
+}
+
+.trustBadgeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.trustBadgeGrid span,
+.trustContactStrip a,
+.scopeList span,
+.checkList span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--mk-muted);
+  font-size: 13px;
+  line-height: 1.42;
+}
+
+.trustBadgeGrid span {
+  min-height: 48px;
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--mk-surface-soft);
+}
+
+.trustBadgeGrid svg,
+.trustContactStrip svg,
+.scopeList svg,
+.checkList svg {
+  flex: 0 0 auto;
+  color: var(--mk-cyan);
+}
+
+.trustContactStrip {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  border-top: 1px solid var(--mk-line);
+  padding-top: 18px;
+}
+
+.trustContactStrip a {
+  color: var(--mk-text);
+  text-decoration: none;
+}
+
+.scopeGrid,
+.aiBoundaryPanel,
+.complianceGrid,
+.incidentPanel,
+.supportWorkGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.scopeColumn,
+.checklistPanel {
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.scopeList,
+.checkList {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.warningColumn {
+  border-color: color-mix(in srgb, var(--mk-amber) 28%, var(--mk-line));
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--mk-amber) 9%, transparent), transparent 18rem),
+    var(--mk-surface);
+}
+
+.warningColumn svg {
+  color: var(--mk-amber);
+}
+
+.controlGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.controlCard {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 280px;
+  padding: 18px;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.controlCard:hover,
+.supportPathCard:hover,
+.guideGrid article:hover,
+.faqCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--mk-line-strong);
+  background: var(--mk-surface-strong);
+}
+
+.controlCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.iconTile {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  background: var(--mk-surface-soft);
+  color: var(--mk-cyan);
+}
+
+.statusPill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  padding: 0 10px;
+  color: var(--mk-muted);
+  font-size: 11px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.implemented {
+  border-color: color-mix(in srgb, var(--mk-green) 40%, var(--mk-line));
+  background: color-mix(in srgb, var(--mk-green) 10%, transparent);
+  color: var(--mk-green);
+}
+
+.foundation {
+  border-color: color-mix(in srgb, var(--mk-blue) 36%, var(--mk-line));
+  background: color-mix(in srgb, var(--mk-blue) 9%, transparent);
+  color: var(--mk-blue);
+}
+
+.planned {
+  border-color: color-mix(in srgb, var(--mk-amber) 38%, var(--mk-line));
+  background: color-mix(in srgb, var(--mk-amber) 10%, transparent);
+  color: var(--mk-amber);
+}
+
+.controlCard h3,
+.supportPathCard h3,
+.responseGrid h3,
+.guideGrid strong,
+.faqCard summary {
+  margin: 0;
+  color: var(--mk-text);
+  font-size: 17px;
+  line-height: 1.22;
+}
+
+.controlCard p,
+.supportPathCard p,
+.responseGrid p,
+.guideGrid li,
+.faqCard p,
+.checklistPanel p,
+.incidentPanel p,
+.compliancePanel p,
+.aiBoundaryPanel p {
+  margin: 0;
+  color: var(--mk-muted);
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.controlValue {
+  margin-top: auto;
+  border-top: 1px solid var(--mk-line);
+  padding-top: 12px;
+}
+
+.controlValue span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--mk-dim);
+  font-size: 11px;
+  font-weight: 780;
+  text-transform: uppercase;
+}
+
+.controlValue strong {
+  color: var(--mk-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.aiBoundaryPanel,
+.compliancePanel,
+.incidentPanel,
+.responsePanel {
+  padding: clamp(22px, 4vw, 38px);
+}
+
+.reviewNote {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 18px;
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  padding: 13px;
+  background: var(--mk-surface-soft);
+  color: var(--mk-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reviewNote svg {
+  flex: 0 0 auto;
+  color: var(--mk-blue);
+}
+
+.aiBoundaryGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.aiBoundaryGrid article,
+.complianceGrid article {
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--mk-surface-soft);
+}
+
+.aiBoundaryGrid article > strong,
+.complianceGrid article > strong {
+  display: block;
+  color: var(--mk-text);
+  font-size: 16px;
+}
+
+.compliancePanel .sectionHeader {
+  max-width: 860px;
+}
+
+.complianceGrid {
+  margin-top: 22px;
+}
+
+.incidentPanel {
+  align-items: start;
+}
+
+.incidentGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.incidentGrid article {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  padding: 15px;
+  background: var(--mk-surface-soft);
+}
+
+.incidentGrid svg {
+  color: var(--mk-amber);
+}
+
+.incidentGrid strong {
+  color: var(--mk-text);
+}
+
+.incidentGrid a {
+  color: var(--mk-blue);
+  font-size: 13px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.trustFaqGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.faqCard {
+  padding: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.faqCard summary {
+  cursor: pointer;
+  padding: 17px 18px;
+  list-style: none;
+}
+
+.faqCard summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqCard p {
+  border-top: 1px solid var(--mk-line);
+  padding: 0 18px 18px;
+}
+
+.supportSignalPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.supportSignalPanel article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--mk-surface-soft);
+}
+
+.supportSignalPanel strong {
+  display: block;
+  color: var(--mk-text);
+  font-size: 13px;
+}
+
+.supportSignalPanel small {
+  color: var(--mk-muted);
+  font-size: 12px;
+}
+
+.supportSignalPanel em {
+  color: var(--mk-blue);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 760;
+}
+
+.supportPathGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.supportPathCard {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 260px;
+  padding: 18px;
+  box-shadow: none;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.supportPathCard svg {
+  color: var(--mk-cyan);
+}
+
+.supportPathCard strong {
+  color: var(--mk-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.supportPathCard a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  color: var(--mk-blue);
+  font-size: 13px;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.responsePanel .sectionHeader {
+  max-width: 820px;
+}
+
+.responseGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.responseGrid article {
+  display: grid;
+  gap: 11px;
+  align-content: start;
+  padding: 16px;
+  box-shadow: none;
+}
+
+.responseGrid span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  color: var(--mk-dim);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.responseGrid strong {
+  color: var(--mk-blue);
+  font-size: 13px;
+}
+
+.supportWorkGrid {
+  align-items: start;
+}
+
+.checklistPanel {
+  position: sticky;
+  top: 96px;
+}
+
+.formFrame {
+  padding: 0;
+  overflow: hidden;
+}
+
+.guideGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.guideGrid article {
+  padding: 18px;
+  box-shadow: none;
+}
+
+.guideGrid ol {
+  display: grid;
+  gap: 9px;
+  margin: 14px 0 0;
+  padding-left: 18px;
+}
+
+:global(.support-request-panel) {
+  display: grid;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+  background: transparent;
+}
+
+:global(.support-request-tabs) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  padding: 5px;
+  background: var(--mk-surface-soft);
+}
+
+:global(.support-request-tabs button) {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mk-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+:global(.support-request-tabs button.active) {
+  background: var(--mk-surface-strong);
+  color: var(--mk-text);
+}
+
+:global(.support-request-heading p) {
+  margin: 0 0 8px;
+  color: var(--mk-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+:global(.support-request-heading h2) {
+  margin: 0;
+  color: var(--mk-text);
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.05;
+}
+
+:global(.support-form) {
+  display: grid;
+  gap: 14px;
+}
+
+:global(.support-form-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+:global(.support-form label) {
+  display: grid;
+  gap: 7px;
+  color: var(--mk-text);
+  font-size: 13px;
+  font-weight: 720;
+}
+
+:global(.support-form input),
+:global(.support-form select),
+:global(.support-form textarea) {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--mk-line);
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: var(--mk-surface-strong);
+  color: var(--mk-text);
+  font: inherit;
+  outline: none;
+}
+
+:global(.support-form textarea) {
+  resize: vertical;
+}
+
+:global(.support-form input:focus),
+:global(.support-form select:focus),
+:global(.support-form textarea:focus) {
+  border-color: color-mix(in srgb, var(--mk-blue) 56%, var(--mk-line));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mk-blue) 13%, transparent);
+}
+
+:global(.support-upload-field span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:global(.support-form-privacy-note),
+:global(.support-form-message) {
+  margin: 0;
+  color: var(--mk-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+:global(.support-form-message.success) {
+  color: var(--mk-green);
+}
+
+:global(.support-form-message.error) {
+  color: var(--mk-red);
+}
+
 @keyframes beamDrift {
   0%,
   100% {
@@ -1760,6 +2449,8 @@
 @media (max-width: 1160px) {
   .hero,
   .pricingHero,
+  .trustHero,
+  .supportHero,
   .aiSplit,
   .dashboardPreview {
     grid-template-columns: 1fr;
@@ -1773,7 +2464,10 @@
 
   .leakGrid,
   .integrationGrid,
-  .trustGrid {
+  .trustGrid,
+  .supportPathGrid,
+  .controlGrid,
+  .guideGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1811,14 +2505,28 @@
   .consoleGrid,
   .dashboardMainGrid,
   .timelineDetail,
-  .ruleGrid {
+  .ruleGrid,
+  .scopeGrid,
+  .aiBoundaryPanel,
+  .complianceGrid,
+  .incidentPanel,
+  .responseGrid,
+  .supportWorkGrid,
+  .trustFaqGrid {
     grid-template-columns: 1fr;
   }
 
   .consoleMetrics,
   .dashboardMetrics,
-  .pricingGrid {
+  .pricingGrid,
+  .supportPathGrid,
+  .controlGrid,
+  .guideGrid {
     grid-template-columns: 1fr;
+  }
+
+  .checklistPanel {
+    position: static;
   }
 
   .footer {
@@ -1868,6 +2576,8 @@
   .hero,
   .section,
   .pricingHero,
+  .trustHero,
+  .supportHero,
   .finalCta,
   .footer {
     width: calc(100% - 24px);
@@ -1879,13 +2589,15 @@
   }
 
   .hero h1,
-  .pricingHero h1 {
+  .pricingHero h1,
+  .trustHeroCopy h1 {
     font-size: clamp(34px, 11.2vw, 44px);
     line-height: 1.02;
   }
 
   .heroLead,
-  .pricingHero p {
+  .pricingHero p,
+  .trustHeroCopy p {
     font-size: 15px;
     line-height: 1.52;
   }
@@ -1905,7 +2617,9 @@
   .leakGrid,
   .flowTrack,
   .integrationGrid,
-  .trustGrid {
+  .trustGrid,
+  .trustBadgeGrid,
+  :global(.support-form-grid) {
     grid-template-columns: 1fr;
   }
 

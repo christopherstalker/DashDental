@@ -2,48 +2,44 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { Bug, Lightbulb, Paperclip, Send } from "lucide-react";
+import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
+import { getTrustSupportCopy } from "@/features/marketing/content/trust-support";
 
-type RequestKind = "bug" | "feature";
+type RequestKind = "issue" | "feedback";
 
 interface SupportResponse {
   id?: string;
   error?: string;
 }
 
-const labels: Record<
-  RequestKind,
-  {
-    cta: string;
-    description: string;
-    placeholder: string;
-    title: string;
-  }
-> = {
-  bug: {
-    cta: "Send bug report",
-    description:
-      "Tell support what broke, where it happened, and what you expected instead.",
-    placeholder:
-      "Example: On the dashboard pricing button wraps, browser is Chrome, screenshot attached.",
-    title: "Bug report",
-  },
-  feature: {
-    cta: "Send feature idea",
-    description:
-      "Suggest what should be added, who needs it, and why it helps the clinic.",
-    placeholder:
-      "Example: Add a weekly owner digest with unanswered patients and recovered revenue.",
-    title: "Feature request",
-  },
-};
+function readFormValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function buildDescription(formData: FormData) {
+  const message = readFormValue(formData, "message");
+  const rows = [
+    ["Name", readFormValue(formData, "name")],
+    ["Clinic", readFormValue(formData, "clinic")],
+    ["Category", readFormValue(formData, "category")],
+    ["Urgency", readFormValue(formData, "urgency")],
+    ["Affected channel", readFormValue(formData, "channel")],
+  ].filter(([, value]) => value);
+
+  const context = rows.map(([label, value]) => `${label}: ${value}`).join("\n");
+
+  return [context, "Message:", message].filter(Boolean).join("\n\n");
+}
 
 export function SupportRequestForm() {
-  const [kind, setKind] = useState<RequestKind>("bug");
+  const languageCode = useCurrentLanguageCode();
+  const copy = getTrustSupportCopy(languageCode).support.form;
+  const [kind, setKind] = useState<RequestKind>("issue");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const active = labels[kind];
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,7 +48,8 @@ export function SupportRequestForm() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.set("kind", kind);
+    formData.set("kind", kind === "feedback" ? "feature" : "bug");
+    formData.set("description", buildDescription(formData));
 
     setIsSubmitting(true);
     try {
@@ -63,7 +60,7 @@ export function SupportRequestForm() {
       const payload = (await response.json().catch(() => ({}))) as SupportResponse;
 
       if (!response.ok) {
-        setError(payload.error ?? "Could not send the request. Try again.");
+        setError(payload.error ?? copy.error);
         return;
       }
 
@@ -71,13 +68,9 @@ export function SupportRequestForm() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      setMessage(
-        payload.id
-          ? `Request received. Reference: ${payload.id}.`
-          : "Request received.",
-      );
+      setMessage(payload.id ? `${copy.success} Reference: ${payload.id}.` : copy.success);
     } catch {
-      setError("Could not send the request. Try again.");
+      setError(copy.error);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,48 +80,83 @@ export function SupportRequestForm() {
     <section className="support-request-panel" id="request">
       <div className="support-request-tabs" aria-label="Support request type">
         <button
-          aria-pressed={kind === "bug"}
-          className={kind === "bug" ? "active" : ""}
-          onClick={() => setKind("bug")}
+          aria-pressed={kind === "issue"}
+          className={kind === "issue" ? "active" : ""}
+          onClick={() => setKind("issue")}
           type="button"
         >
           <Bug size={16} />
-          Bug report
+          {copy.tabs.issue}
         </button>
         <button
-          aria-pressed={kind === "feature"}
-          className={kind === "feature" ? "active" : ""}
-          onClick={() => setKind("feature")}
+          aria-pressed={kind === "feedback"}
+          className={kind === "feedback" ? "active" : ""}
+          onClick={() => setKind("feedback")}
           type="button"
         >
           <Lightbulb size={16} />
-          Feature idea
+          {copy.tabs.feedback}
         </button>
       </div>
 
       <div className="support-request-heading">
-        <p>{active.description}</p>
-        <h2>{active.title}</h2>
+        <p>{copy.description}</p>
+        <h2>{copy.title}</h2>
       </div>
 
       <form className="support-form" onSubmit={handleSubmit}>
+        <div className="support-form-grid">
+          <label>
+            <span>{copy.labels.name}</span>
+            <input autoComplete="name" name="name" placeholder={copy.placeholders.name} type="text" />
+          </label>
+
+          <label>
+            <span>{copy.labels.clinic}</span>
+            <input autoComplete="organization" name="clinic" placeholder={copy.placeholders.clinic} type="text" />
+          </label>
+        </div>
+
         <label>
-          <span>Your email</span>
-          <input
-            autoComplete="email"
-            name="email"
-            placeholder="you@clinic.com"
-            required
-            type="email"
-          />
+          <span>{copy.labels.email}</span>
+          <input autoComplete="email" name="email" placeholder={copy.placeholders.email} required type="email" />
+        </label>
+
+        <div className="support-form-grid">
+          <label>
+            <span>{copy.labels.category}</span>
+            <select name="category">
+              {copy.categories.map((category) => (
+                <option key={category}>{category}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>{copy.labels.urgency}</span>
+            <select name="urgency">
+              {copy.urgencies.map((urgency) => (
+                <option key={urgency}>{urgency}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <span>{copy.labels.channel}</span>
+          <select name="channel">
+            {copy.channels.map((channel) => (
+              <option key={channel}>{channel}</option>
+            ))}
+          </select>
         </label>
 
         <label>
-          <span>Description</span>
+          <span>{copy.labels.message}</span>
           <textarea
             minLength={12}
-            name="description"
-            placeholder={active.placeholder}
+            name="message"
+            placeholder={copy.placeholders.message}
             required
             rows={7}
           />
@@ -137,7 +165,7 @@ export function SupportRequestForm() {
         <label className="support-upload-field">
           <span>
             <Paperclip size={15} />
-            Screenshots (optional)
+            {copy.labels.screenshots}
           </span>
           <input
             accept="image/png,image/jpeg,image/webp,image/gif"
@@ -148,8 +176,10 @@ export function SupportRequestForm() {
           />
         </label>
 
+        <p className="support-form-privacy-note">{copy.privacyNote}</p>
+
         <button className="recovery-primary-button" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Sending..." : active.cta}
+          {isSubmitting ? copy.sending : kind === "feedback" ? copy.submitFeedback : copy.submitIssue}
           <Send size={16} />
         </button>
       </form>

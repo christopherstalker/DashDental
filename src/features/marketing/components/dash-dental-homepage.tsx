@@ -11,6 +11,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { HeroConsole } from "@/features/marketing/components/hero-console";
+import { LocalizedText } from "@/features/i18n/components/localized-text";
 import {
   AiAssistPanel,
   CTAGroup,
@@ -86,12 +87,19 @@ export function DashDentalHomepage() {
         <div className={styles.heroCopy}>
           <span className={styles.badge}>
             <RadioTower size={15} />
-            AI revenue recovery for dental clinics
+            <LocalizedText fallback="AI revenue recovery for dental clinics" k="home.hero.kicker" />
           </span>
-          <h1 id="future-hero-title">Turn missed messages into booked patient appointments.</h1>
+          <h1 id="future-hero-title">
+            <LocalizedText
+              fallback="Turn missed messages into booked patient appointments."
+              k="home.hero.title"
+            />
+          </h1>
           <p className={styles.heroLead}>
-            Dash Dental unifies patient inquiries, detects SLA risk, drafts human-reviewed
-            replies, and shows the revenue your clinic can recover today.
+            <LocalizedText
+              fallback="Dash Dental unifies patient inquiries, detects SLA risk, drafts human-reviewed replies, and shows the revenue your clinic can recover today."
+              k="home.hero.body"
+            />
           </p>
 
           <div className={styles.heroActions}>
@@ -103,11 +111,11 @@ export function DashDentalHomepage() {
               data-launch-target="/support#request"
               href="/support#request"
             >
-              {primaryCta}
+              <LocalizedText fallback={primaryCta} k="common.cta.bookDemo" />
               <ArrowRight size={16} />
             </Link>
             <Link className={styles.buttonSecondary} href="/demo">
-              {secondaryCta}
+              <LocalizedText fallback={secondaryCta} k="common.cta.viewDashboard" />
             </Link>
             <Link
               className={styles.buttonGhost}

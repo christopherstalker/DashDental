@@ -1,8 +1,13 @@
 import { generatedDictionaries } from "./generated-translations";
+import { polishCoverageOverrides } from "./pl-coverage-overrides";
 
 export const english = {
   "common.language.label": "Language",
   "common.language.aria": "Choose interface language",
+  "common.theme.dark": "Dark",
+  "common.theme.light": "Light",
+  "common.theme.system": "System",
+  "common.theme.switch": "Switch theme. Current: {current}. Next: {next}.",
   "common.nav.platform": "Platform",
   "common.nav.pricing": "Pricing",
   "common.nav.faq": "Q&A",
@@ -13,6 +18,7 @@ export const english = {
   "common.nav.login": "Sign in",
   "common.nav.startTrial": "Start free trial",
   "common.cta.startTrial3": "Start 14-day guided trial",
+  "common.cta.bookDemo": "Book demo",
   "common.cta.viewPricing": "View pricing",
   "common.cta.viewDashboard": "View dashboard",
   "common.cta.productTour": "Product tour",
@@ -1192,12 +1198,21 @@ export const english = {
 
 export type TranslationKey = keyof typeof english;
 
+const generatedDictionaryMap = generatedDictionaries as Record<
+  string,
+  Partial<Record<TranslationKey, string>>
+>;
+
 const dictionaries: Record<string, Partial<Record<TranslationKey, string>>> = {
   en: english,
-  ...generatedDictionaries,
+  ...generatedDictionaryMap,
   uk: {
     "common.language.label": "Мова",
     "common.language.aria": "Оберіть мову інтерфейсу",
+    "common.theme.dark": "Темна",
+    "common.theme.light": "Світла",
+    "common.theme.system": "Системна",
+    "common.theme.switch": "Змінити тему. Зараз: {current}. Далі: {next}.",
     "common.nav.platform": "Платформа",
     "common.nav.pricing": "Ціни",
     "common.nav.faq": "Q&A",
@@ -2131,7 +2146,8 @@ const dictionaries: Record<string, Partial<Record<TranslationKey, string>>> = {
     "terms.shell.title": "Чіткі правила роблять SaaS безпечнішим для покупки.",
     "terms.shell.description":
       "Plain-language service terms, які задають очікування до trial, підключення каналів або manual invoice.",
-  },};
+  },
+};
 
 const localeOverrides: Record<string, Partial<Record<TranslationKey, string>>> = {
   ru: {
@@ -2988,6 +3004,7 @@ const curatedLocaleOverrides: Record<string, Partial<Record<TranslationKey, stri
     "common.nav.login": "Увійти",
     "common.nav.startTrial": "Почати пробний період",
     "common.cta.startTrial3": "Почати 14-денний пробний період",
+    "common.cta.bookDemo": "Записатися на демо",
     "common.cta.viewPricing": "Переглянути ціни",
     "common.cta.viewDashboard": "Відкрити панель",
     "common.cta.reviewSecurity": "Переглянути безпеку",
@@ -3055,6 +3072,10 @@ const curatedLocaleOverrides: Record<string, Partial<Record<TranslationKey, stri
   pl: {
     "common.language.label": "Język",
     "common.language.aria": "Wybierz język interfejsu",
+    "common.theme.dark": "Ciemny",
+    "common.theme.light": "Jasny",
+    "common.theme.system": "Systemowy",
+    "common.theme.switch": "Zmień motyw. Teraz: {current}. Następny: {next}.",
     "common.nav.platform": "Platforma",
     "common.nav.pricing": "Cennik",
     "common.nav.faq": "Q&A",
@@ -3065,6 +3086,7 @@ const curatedLocaleOverrides: Record<string, Partial<Record<TranslationKey, stri
     "common.nav.login": "Zaloguj się",
     "common.nav.startTrial": "Rozpocznij okres próbny",
     "common.cta.startTrial3": "Rozpocznij 14-dniowy okres próbny",
+    "common.cta.bookDemo": "Umów demo",
     "common.cta.viewPricing": "Zobacz cennik",
     "common.cta.viewDashboard": "Otwórz panel",
     "common.cta.reviewSecurity": "Zobacz bezpieczeństwo",
@@ -3131,11 +3153,16 @@ const curatedLocaleOverrides: Record<string, Partial<Record<TranslationKey, stri
   },
 };
 
+const coverageLocaleOverrides: Record<string, Partial<Record<TranslationKey, string>>> = {
+  pl: polishCoverageOverrides,
+};
+
 const activeDictionaryCodes = new Set([
   ...Object.keys(dictionaries),
   ...Object.keys(localeOverrides),
   ...Object.keys(workspaceLocaleOverrides),
   ...Object.keys(curatedLocaleOverrides),
+  ...Object.keys(coverageLocaleOverrides),
 ]);
 
 const disabledLanguageCodes = new Set(["ru"]);
@@ -3160,7 +3187,9 @@ export function translate(key: TranslationKey, languageCode: string): string {
     curatedLocaleOverrides[normalized]?.[key] ??
     workspaceLocaleOverrides[normalized]?.[key] ??
     localeOverrides[normalized]?.[key] ??
+    coverageLocaleOverrides[normalized]?.[key] ??
     dictionaries[normalized]?.[key] ??
+    generatedDictionaryMap[normalized]?.[key] ??
     english[key]
   );
 }
@@ -3171,7 +3200,9 @@ export function getMergedDictionary(
   const normalized = normalizeLanguageCode(languageCode);
 
   return {
+    ...generatedDictionaryMap[normalized],
     ...dictionaries[normalized],
+    ...coverageLocaleOverrides[normalized],
     ...localeOverrides[normalized],
     ...workspaceLocaleOverrides[normalized],
     ...curatedLocaleOverrides[normalized],

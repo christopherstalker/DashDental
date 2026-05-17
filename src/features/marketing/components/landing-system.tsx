@@ -109,7 +109,7 @@ export function LandingNav({ launchPage }: { launchPage?: string }) {
           data-launch-target="/support#request"
           href="/support#request"
         >
-          Book demo
+          <LocalizedText fallback="Book demo" k="common.cta.bookDemo" />
         </Link>
       </div>
     </nav>
@@ -570,7 +570,9 @@ export function LandingFooter() {
       </nav>
       <nav aria-label="Trust footer links">
         <strong>Trust</strong>
-        <Link href="/security">Security</Link>
+        <Link href="/security">
+          <LocalizedText fallback="Security" k="common.nav.security" />
+        </Link>
         <Link href="/privacy">Privacy</Link>
         <Link href="/terms">Terms</Link>
         <Link href={`mailto:${supportEmail}`}>{supportEmail}</Link>

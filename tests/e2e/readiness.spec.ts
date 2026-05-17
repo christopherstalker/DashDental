@@ -29,6 +29,7 @@ const publicBuyerRoutes = [
   "/demo",
   "/trial",
   "/security",
+  "/support",
   "/privacy",
   "/terms",
 ];
@@ -267,6 +268,36 @@ test("language selector exposes only production-ready localization", async ({ pa
   await languageSelector.selectOption("uk");
   await expect(languageSelector).toHaveValue("uk");
   await expect(page.locator("body")).toContainText(/Панель|Платформа|Підтримка/i);
+});
+
+test("trust and support pages localize without exposing unsupported languages", async ({ page }) => {
+  await page.context().clearCookies();
+  await page.goto("/security", { waitUntil: "domcontentloaded" });
+  await page.evaluate((code) => {
+    window.localStorage.setItem(
+      "dental-recovery:language:v1",
+      JSON.stringify({ code, version: 1 }),
+    );
+  }, "pl");
+  await page.reload({ waitUntil: "domcontentloaded" });
+
+  const languageSelector = page.locator(".language-switcher select").first();
+  await expect(page.locator("body")).toContainText(/Centrum zaufania|Bezpieczeństwo/i);
+  await expect(page.locator("body")).not.toContainText(/security\.shell|support\.hero|support\.paths/i);
+  await expect(languageSelector).not.toContainText(/Arabic|Hebrew|Русский|Russian/i);
+
+  await page.goto("/support", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("body")).toContainText(/Centrum wsparcia|Pomoc przy uruchamianiu/i);
+
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      "dental-recovery:language:v1",
+      JSON.stringify({ code: "uk", version: 1 }),
+    );
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator("body")).toContainText(/Центр підтримки|Отримайте допомогу/i);
+  await expect(page.locator("body")).not.toContainText(/security\.shell|support\.hero|support\.paths/i);
 });
 
 test("public trust, health, and fallback pages render safely", async ({ page }) => {

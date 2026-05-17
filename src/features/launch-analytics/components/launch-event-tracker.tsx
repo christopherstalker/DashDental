@@ -76,6 +76,10 @@ export function sendLaunchEvent(payload: LaunchEventPayload) {
 export function LaunchEventTracker() {
   useEffect(() => {
     function handleClick(event: MouseEvent) {
+      if ((event as MouseEvent & { __dashLaunchTracked?: boolean }).__dashLaunchTracked) {
+        return;
+      }
+
       const element = (event.target as HTMLElement | null)?.closest<HTMLElement>(
         "[data-launch-event]",
       );
@@ -87,6 +91,10 @@ export function LaunchEventTracker() {
     }
 
     function handleSubmit(event: SubmitEvent) {
+      if ((event as SubmitEvent & { __dashLaunchTracked?: boolean }).__dashLaunchTracked) {
+        return;
+      }
+
       const element = (event.target as HTMLElement | null)?.closest<HTMLElement>(
         "[data-launch-event]",
       );
