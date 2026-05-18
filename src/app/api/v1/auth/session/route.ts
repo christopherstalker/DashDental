@@ -14,24 +14,48 @@ import {
   decodeSession,
   encodeSession,
   getSessionCookieOptions,
+  resolveAuthenticatedUser,
   resolveSessionContext,
   SESSION_COOKIE_NAME,
+  toAccountSession,
   toClientSession,
 } from "@/server/session";
-import { resolvePasswordLogin, touchUserLastLogin } from "@/server/user-credentials";
+import {
+  activateInvitedUserOnLogin,
+  resolvePasswordLogin,
+  touchUserLastLogin,
+} from "@/server/user-credentials";
 import { optionalString, requiredString } from "@/server/validation";
 
 export async function GET() {
   try {
     const state = await readAppState();
     const cookieStore = await cookies();
-    const context = resolveSessionContext(
-      state,
-      decodeSession(cookieStore.get(SESSION_COOKIE_NAME)?.value),
-      "manager",
-    );
+    const sessionPayload = decodeSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+    const user = resolveAuthenticatedUser(state, sessionPayload);
+
+    if (!sessionPayload?.organizationId) {
+      return Response.json({
+        account: toAccountSession(state, user),
+        session: {
+          organizationId: null,
+          role: null,
+          isSuperAdmin: false,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            avatar: user.avatar,
+          },
+        },
+        state: null,
+      });
+    }
+
+    const context = resolveSessionContext(state, sessionPayload, "manager");
 
     return Response.json({
+      account: toAccountSession(state, user, context.organizationId),
       session: toClientSession(context),
       state: stateForContext(state, context),
     });
@@ -45,7 +69,7 @@ export async function POST(request: Request) {
     const currentState = await readAppState();
     const payload = await readJsonObject(request);
     let userId: string;
-    let organizationId: string;
+    let organizationId: string | undefined;
 
     const email = optionalString(payload, "email");
     const password = optionalString(payload, "password");
@@ -68,7 +92,7 @@ export async function POST(request: Request) {
       organizationId = login.organizationId;
     } else if (isDevLoginEnabled()) {
       userId = requiredString(payload, "userId");
-      organizationId = requiredString(payload, "organizationId");
+      organizationId = optionalString(payload, "organizationId");
     } else {
       assertPublicAuthRateLimit(request, { action: "login" });
       await assertPublicAuthBotProtection({
@@ -85,9 +109,9 @@ export async function POST(request: Request) {
       );
     }
 
+    await activateInvitedUserOnLogin(userId);
     const state = await touchUserLastLogin(userId);
     const sessionPayload = createSessionPayload({ userId, organizationId });
-    const context = resolveSessionContext(state, sessionPayload, "manager");
     const cookieStore = await cookies();
 
     cookieStore.set({
@@ -96,7 +120,28 @@ export async function POST(request: Request) {
       value: encodeSession(sessionPayload),
     });
 
+    if (!organizationId) {
+      const user = resolveAuthenticatedUser(state, sessionPayload);
+      return Response.json({
+        account: toAccountSession(state, user),
+        session: {
+          organizationId: null,
+          role: null,
+          isSuperAdmin: false,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            avatar: user.avatar,
+          },
+        },
+        state: null,
+      });
+    }
+
+    const context = resolveSessionContext(state, sessionPayload, "manager");
     return Response.json({
+      account: toAccountSession(state, context.user, context.organizationId),
       session: toClientSession(context),
       state: stateForContext(state, context),
     });
