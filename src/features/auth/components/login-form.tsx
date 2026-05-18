@@ -34,9 +34,11 @@ export function LoginForm({
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState<string | null>(
-    authError ? authErrorMessages[authError] ?? "Authentication failed." : null,
+    authError && (authError !== "oauth_not_configured" || oauthLogin.enabled)
+      ? authErrorMessages[authError] ?? "Authentication failed."
+      : null,
   );
-  const showOauthLogin = oauthLogin.enabled || oauthLogin.label.toLowerCase().includes("google");
+  const showOauthLogin = oauthLogin.enabled;
 
   function friendlyAuthError(code?: string, fallback = "Could not sign in.") {
     if (code === "bot_protection_required") {
