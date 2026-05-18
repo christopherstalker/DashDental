@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+﻿import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { readAppState } from "@/server/data-store";
 import {
@@ -8,7 +8,7 @@ import {
   fetchOAuthUserInfo,
   getOAuthProviderConfig,
   OAUTH_STATE_COOKIE_NAME,
-  resolveOAuthSessionContext,
+  resolveOAuthUser,
 } from "@/server/oauth";
 import {
   createSessionPayload,
@@ -16,6 +16,7 @@ import {
   getSessionCookieOptions,
   SESSION_COOKIE_NAME,
 } from "@/server/session";
+import { activateInvitedUserOnLogin } from "@/server/user-credentials";
 
 function redirectWithError(requestUrl: string, code: string) {
   const response = NextResponse.redirect(buildAuthErrorRedirect(requestUrl, code));
@@ -52,21 +53,20 @@ export async function GET(request: Request) {
     const token = await exchangeOAuthCode({ code, config: providerConfig, statePayload });
     const userInfo = await fetchOAuthUserInfo(providerConfig, token.access_token as string);
     const appState = await readAppState();
-    const context = resolveOAuthSessionContext({
+    const user = resolveOAuthUser({
       state: appState,
       userInfo,
       providerConfig,
-      organizationId: statePayload.organizationId,
     });
-    const response = NextResponse.redirect(new URL("/dashboard", request.url));
+    await activateInvitedUserOnLogin(user.id);
+    const response = NextResponse.redirect(new URL("/workspaces", request.url));
 
     response.cookies.set({
       ...getSessionCookieOptions(),
       name: SESSION_COOKIE_NAME,
       value: encodeSession(
         createSessionPayload({
-          userId: context.userId,
-          organizationId: context.organizationId,
+          userId: user.id,
         }),
       ),
     });
