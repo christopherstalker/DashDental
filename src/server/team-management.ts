@@ -3,7 +3,13 @@ import type { AppState, Membership, Role, User } from "@/domain/types";
 import { ApiError } from "./api-error";
 import { mutateAppState } from "./data-store";
 import { addAudit } from "./state-mutations";
-import { hashPassword, setPasswordHash } from "./user-credentials";
+import {
+  createTeamInviteInState,
+  markInviteEmailDelivery,
+  sendTeamInviteEmail,
+  type CreatedTeamInvite,
+  type TeamInviteEmailDelivery,
+} from "./team-invites";
 
 type TeamRole = Exclude<Role, "super_admin">;
 
@@ -82,9 +88,9 @@ export async function createClinicTeamMember(input: {
   email: string;
   name: string;
   organizationId: string;
-  password: string;
+  requestUrl: string;
   role: Role;
-}): Promise<AppState> {
+}): Promise<{ inviteDelivery?: TeamInviteEmailDelivery; state: AppState }> {
   const email = normalizeEmail(input.email);
   const name = input.name.trim();
   const role = assertTeamRole(input.role);
@@ -101,8 +107,8 @@ export async function createClinicTeamMember(input: {
     throw new ApiError(403, "Only owners can add another owner", "forbidden");
   }
 
-  const passwordHash = await hashPassword(input.password);
-  let targetUserId = "";
+  let createdInvite: CreatedTeamInvite | undefined;
+  let inviteClinicName = "";
 
   const state = await mutateAppState((current) => {
     const organization = current.organizations.find((item) => item.id === input.organizationId);
@@ -134,28 +140,29 @@ export async function createClinicTeamMember(input: {
       });
     }
 
-    const nowIso = new Date().toISOString();
-    targetUserId = existingUser?.id ?? createRuntimeId("user");
+    const targetUserId = existingUser?.id ?? createRuntimeId("user");
+    const isRegisteredUser = existingUser?.status === "active";
     const nextUser: User = existingUser
       ? {
           ...existingUser,
           name,
           avatar: sanitizeAvatar(name),
-          status: "active",
+          status: existingUser.status === "disabled" ? "invited" : existingUser.status,
         }
       : {
           id: targetUserId,
           email,
           name,
           avatar: sanitizeAvatar(name),
-          status: "active",
-          lastLoginAt: nowIso,
+          status: "invited",
+          lastLoginAt: "",
         };
+    const membershipStatus: Membership["status"] = isRegisteredUser ? "active" : "invited";
     const nextMembership: Membership = existingMembership
       ? {
           ...existingMembership,
           role,
-          status: "active",
+          status: membershipStatus,
           invitedBy: input.actorUserId,
         }
       : {
@@ -163,7 +170,7 @@ export async function createClinicTeamMember(input: {
           userId: targetUserId,
           organizationId: input.organizationId,
           role,
-          status: "active",
+          status: membershipStatus,
           invitedBy: input.actorUserId,
         };
 
@@ -183,21 +190,75 @@ export async function createClinicTeamMember(input: {
     nextState = addAudit(nextState, {
       organizationId: input.organizationId,
       actorUserId: input.actorUserId,
-      action: existingMembership ? "team.member_reactivated" : "team.member_created",
+      action: existingMembership ? "team.member_reinvited" : "team.member_invited",
       entityType: "membership",
       entityId: nextMembership.id,
       metadataJson: {
         email,
         role,
+        status: nextMembership.status,
         seatCount: countUsedSeats(nextState, input.organizationId),
       },
     });
 
+    if (nextMembership.status === "invited") {
+      const inviteResult = createTeamInviteInState(nextState, {
+        actorUserId: input.actorUserId,
+        email,
+        membershipId: nextMembership.id,
+        organizationId: input.organizationId,
+        requestUrl: input.requestUrl,
+        role,
+      });
+      createdInvite = inviteResult.invite;
+      inviteClinicName = organization.name;
+      nextState = inviteResult.state;
+    }
+
     return nextState;
   });
 
-  await setPasswordHash(targetUserId, passwordHash);
-  return state;
+  if (!createdInvite) {
+    return { state };
+  }
+
+  try {
+    const delivery = await sendTeamInviteEmail({
+      clinicName: inviteClinicName,
+      email,
+      inviteUrl: createdInvite.inviteUrl,
+      role,
+    });
+    const deliveryState = await markInviteEmailDelivery({
+      error: delivery.error,
+      inviteId: createdInvite.invite.id,
+      status: delivery.status,
+    });
+
+    return {
+      inviteDelivery: {
+        devInviteUrl: delivery.status === "skipped" ? createdInvite.inviteUrl : undefined,
+        error: delivery.error,
+        status: delivery.status,
+      },
+      state: deliveryState,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invite email delivery failed.";
+    const deliveryState = await markInviteEmailDelivery({
+      error: message,
+      inviteId: createdInvite.invite.id,
+      status: "failed",
+    });
+
+    return {
+      inviteDelivery: {
+        error: message,
+        status: "failed",
+      },
+      state: deliveryState,
+    };
+  }
 }
 
 export async function deactivateClinicTeamMember(input: {

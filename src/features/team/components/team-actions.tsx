@@ -12,6 +12,11 @@ type TeamRole = Exclude<Role, "super_admin">;
 
 interface TeamActionResponse {
   error?: string;
+  inviteDelivery?: {
+    devInviteUrl?: string;
+    error?: string;
+    status: "failed" | "sent" | "skipped";
+  };
 }
 
 export function TeamMemberForm({
@@ -27,7 +32,6 @@ export function TeamMemberForm({
   const [feedback, setFeedback] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [role, setRole] = useState<TeamRole>("manager");
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -42,7 +46,6 @@ export function TeamMemberForm({
             email,
             name,
             organizationId,
-            password,
             role,
           }),
         });
@@ -53,10 +56,19 @@ export function TeamMemberForm({
           return;
         }
 
-        setFeedback(`${name} ${translate("team.form.activeSeat", languageCode)}`);
+        if (payload.inviteDelivery?.status === "sent") {
+          setFeedback(`${name} was invited. Resend delivered the setup link.`);
+        } else if (payload.inviteDelivery?.devInviteUrl) {
+          setFeedback(`Invite created. Local setup link: ${payload.inviteDelivery.devInviteUrl}`);
+        } else if (payload.inviteDelivery?.status === "failed") {
+          setFeedback(
+            `Invite created, but email delivery failed: ${payload.inviteDelivery.error ?? "unknown error"}`,
+          );
+        } else {
+          setFeedback(`${name} can now sign in if they already have an account.`);
+        }
         setName("");
         setEmail("");
-        setPassword("");
         setRole("manager");
         router.refresh();
       } catch {
@@ -95,20 +107,6 @@ export function TeamMemberForm({
       </label>
       <label className="login-field">
         <span>
-          <LocalizedText k="team.form.password" />
-        </span>
-        <input
-          disabled={disabled || isPending}
-          minLength={10}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder={translate("team.form.passwordPlaceholder", languageCode)}
-          required
-          type="password"
-          value={password}
-        />
-      </label>
-      <label className="login-field">
-        <span>
           <LocalizedText k="team.form.role" />
         </span>
         <select
@@ -123,7 +121,7 @@ export function TeamMemberForm({
       </label>
       <button className="primary-button" disabled={disabled || isPending} type="submit">
         <UserPlus size={16} />
-        {isPending ? <LocalizedText k="team.form.adding" /> : <LocalizedText k="team.form.addSeat" />}
+        {isPending ? <LocalizedText k="team.form.adding" /> : "Invite member"}
       </button>
       {feedback ? <p className="form-help team-form-feedback">{feedback}</p> : null}
     </form>

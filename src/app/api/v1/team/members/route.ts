@@ -34,17 +34,23 @@ export async function POST(request: Request) {
       context,
       requiredString(payload, "organizationId"),
     );
-    const state = await createClinicTeamMember({
+    const result = await createClinicTeamMember({
       actorRole: context.role,
       actorUserId: context.userId,
       email: requiredString(payload, "email"),
       name: requiredString(payload, "name"),
       organizationId,
-      password: requiredString(payload, "password"),
+      requestUrl: request.url,
       role: requiredTeamRole(payload),
     });
 
-    return Response.json(stateForContext(state, context), { status: 201 });
+    return Response.json(
+      {
+        inviteDelivery: result.inviteDelivery,
+        state: stateForContext(result.state, context),
+      },
+      { status: 201 },
+    );
   } catch (error) {
     return errorResponse(error);
   }
