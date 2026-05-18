@@ -383,3 +383,36 @@ export function resolveOAuthSessionContext(input: {
     "manager",
   );
 }
+
+export function resolveOAuthUser(input: {
+  state: AppState;
+  userInfo: OAuthUserInfo;
+  providerConfig: OAuthProviderConfig;
+}) {
+  if (input.userInfo.email_verified === false) {
+    throw new ApiError(403, "OAuth email is not verified", "oauth_email_unverified");
+  }
+
+  const email = input.userInfo.email?.toLowerCase();
+  if (!email) {
+    throw new ApiError(403, "OAuth profile did not include an email", "oauth_email_missing");
+  }
+
+  if (input.providerConfig.allowedEmailDomains.length > 0) {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain || !input.providerConfig.allowedEmailDomains.includes(domain)) {
+      throw new ApiError(403, "OAuth email domain is not allowed", "oauth_domain_forbidden");
+    }
+  }
+
+  const user = input.state.users.find(
+    (item) =>
+      item.email.toLowerCase() === email &&
+      (item.status === "active" || item.status === "invited"),
+  );
+  if (!user) {
+    throw new ApiError(403, "OAuth user has no active invitation", "oauth_user_not_invited");
+  }
+
+  return user;
+}
