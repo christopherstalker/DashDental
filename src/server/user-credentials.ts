@@ -4,8 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { FREE_TRIAL_DAYS, getFreeTrialPeriod, getPlanLimits } from "@/domain/business-rules";
-import { isDemoOrganizationId } from "@/domain/seed-data";
-import type { AppState, Organization, Role, Subscription, UsageLimits } from "@/domain/types";
+import type { AppState, Organization, Subscription, UsageLimits } from "@/domain/types";
 import { prisma } from "./prisma";
 import { addAudit } from "./state-mutations";
 import { createDefaultClinicDbContract } from "./data-access-contracts";
@@ -18,11 +17,6 @@ const scryptAsync = promisify(crypto.scrypt);
 interface CredentialRecord {
   userId: string;
   passwordHash: string;
-}
-
-interface ActiveMembership {
-  organizationId: string;
-  role: Role;
 }
 
 type DefaultIntegrationProvider = "telegram" | "web_form" | "instagram" | "whatsapp" | "clinic_database";
@@ -65,33 +59,6 @@ function normalizeClinicSlug(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return slug || "clinic";
-}
-
-function roleRank(role: Role): number {
-  switch (role) {
-    case "owner":
-      return 1;
-    case "admin":
-      return 2;
-    case "manager":
-      return 3;
-    case "super_admin":
-      return 4;
-  }
-}
-
-function choosePrimaryMembership(memberships: ActiveMembership[]): ActiveMembership | undefined {
-  return memberships
-    .toSorted((left, right) => {
-      const leftDemo = isDemoOrganizationId(left.organizationId) ? 1 : 0;
-      const rightDemo = isDemoOrganizationId(right.organizationId) ? 1 : 0;
-
-      if (leftDemo !== rightDemo) {
-        return leftDemo - rightDemo;
-      }
-
-      return roleRank(left.role) - roleRank(right.role);
-    })[0];
 }
 
 function validatePasswordStrength(password: string) {
@@ -204,10 +171,12 @@ export async function resolvePasswordLogin(input: {
   email: string;
   password: string;
   organizationId?: string;
-}): Promise<{ userId: string; organizationId: string }> {
+}): Promise<{ userId: string; organizationId?: string }> {
   const email = normalizeEmail(input.email);
   const user = input.state.users.find(
-    (item) => item.email.toLowerCase() === email && item.status === "active",
+    (item) =>
+      item.email.toLowerCase() === email &&
+      (item.status === "active" || item.status === "invited"),
   );
   if (!user) {
     throw new ApiError(401, "Invalid email or password", "invalid_credentials");
@@ -221,20 +190,23 @@ export async function resolvePasswordLogin(input: {
 
   const memberships = input.state.memberships
     .filter(
-      (membership) => membership.userId === user.id && membership.status === "active",
+      (membership) =>
+        membership.userId === user.id &&
+        (membership.status === "active" || membership.status === "invited"),
     )
     .map((membership) => ({
       organizationId: membership.organizationId,
       role: membership.role,
+      status: membership.status,
     }));
 
-  if (memberships.length === 0) {
-    throw new ApiError(403, "No active clinic membership was found", "membership_missing");
+  if (!input.organizationId) {
+    return { userId: user.id };
   }
 
-  const membership = input.organizationId
-    ? memberships.find((item) => item.organizationId === input.organizationId)
-    : choosePrimaryMembership(memberships);
+  const membership = memberships.find(
+    (item) => item.organizationId === input.organizationId,
+  );
 
   if (!membership) {
     throw new ApiError(403, "Requested clinic access is not allowed", "forbidden");
@@ -244,6 +216,60 @@ export async function resolvePasswordLogin(input: {
     userId: user.id,
     organizationId: membership.organizationId,
   };
+}
+
+export async function activateInvitedUserOnLogin(
+  userId: string,
+  nowIso = new Date().toISOString(),
+): Promise<AppState> {
+  return mutateAppState((state) => {
+    const user = state.users.find((item) => item.id === userId);
+    if (!user || user.status !== "invited") {
+      return state;
+    }
+
+    const activatedMembershipIds = state.memberships
+      .filter((membership) => membership.userId === userId && membership.status === "invited")
+      .map((membership) => membership.id);
+
+    let nextState: AppState = {
+      ...state,
+      users: state.users.map((item) =>
+        item.id === userId
+          ? {
+              ...item,
+              status: "active",
+              lastLoginAt: nowIso,
+            }
+          : item,
+      ),
+      memberships: state.memberships.map((membership) =>
+        activatedMembershipIds.includes(membership.id)
+          ? {
+              ...membership,
+              status: "active",
+            }
+          : membership,
+      ),
+    };
+
+    for (const membershipId of activatedMembershipIds) {
+      const membership = nextState.memberships.find((item) => item.id === membershipId);
+      nextState = addAudit(nextState, {
+        organizationId: membership?.organizationId,
+        actorUserId: userId,
+        action: "team.invitation_accepted",
+        entityType: "membership",
+        entityId: membershipId,
+        metadataJson: {
+          email: user.email,
+          role: membership?.role,
+        },
+      });
+    }
+
+    return nextState;
+  });
 }
 
 function createStarterSubscription(
