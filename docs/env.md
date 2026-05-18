@@ -20,6 +20,8 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 | `SUPPORT_OWNER_EMAIL` | server | yes | Launch support owner inbox. | `support@dashdental.space`. |
 | `SECURITY_CONTACT_EMAIL` | server | yes | Security report contact. | `security@dashdental.space`. |
 | `INCIDENT_ESCALATION_EMAIL` | server | yes | Urgent incident escalation. | Security/support routing. |
+| `RESEND_API_KEY` | server | yes | Sends clinic team invitation emails. | Resend API key vault. |
+| `EMAIL_FROM` | server | yes | Verified sender used for team invites. | Resend verified domain/sender. |
 | `BILLING_PROVIDER` | server | yes | `manual`, `stripe`, or `hybrid`. | Release decision. |
 
 ## Launch approval gates
