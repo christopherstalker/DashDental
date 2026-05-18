@@ -251,26 +251,16 @@ test("pricing cards explain plans and limits without confusion", async ({ page }
   await expect(page.locator("body")).toContainText(/over-limit/i);
 });
 
-test("language selector exposes only production-ready localization", async ({ page }) => {
+test("language selector exposes only English during beta", async ({ page }) => {
   await page.context().clearCookies();
   await page.goto("/");
 
-  await expect(page.getByLabel(/choose interface language/i).first()).toBeVisible();
-  const languageSelector = page.locator(".language-switcher select").first();
-  const optionCount = await languageSelector.locator("option").count();
-  expect(optionCount).toBe(3);
-  await expect(languageSelector).toContainText("English");
-  await expect(languageSelector).toContainText("Українська");
-  await expect(languageSelector).toContainText("Polski");
-  await expect(languageSelector).not.toContainText("Russian");
-  await expect(languageSelector).not.toContainText("Русский");
-
-  await languageSelector.selectOption("uk");
-  await expect(languageSelector).toHaveValue("uk");
-  await expect(page.locator("body")).toContainText(/Панель|Платформа|Підтримка/i);
+  await expect(page.locator(".language-switcher")).toHaveCount(0);
+  await expect(page.locator("body")).toContainText(/Product|Pricing|Support/i);
+  await expect(page.locator("body")).not.toContainText(/Polski|Ukrainian|Russian/i);
 });
 
-test("trust and support pages localize without exposing unsupported languages", async ({ page }) => {
+test("trust and support pages stay English when stale locales exist", async ({ page }) => {
   await page.context().clearCookies();
   await page.goto("/security", { waitUntil: "domcontentloaded" });
   await page.evaluate((code) => {
@@ -281,13 +271,13 @@ test("trust and support pages localize without exposing unsupported languages", 
   }, "pl");
   await page.reload({ waitUntil: "domcontentloaded" });
 
-  const languageSelector = page.locator(".language-switcher select").first();
-  await expect(page.locator("body")).toContainText(/Centrum zaufania|Bezpieczeństwo/i);
+  await expect(page.locator(".language-switcher")).toHaveCount(0);
+  await expect(page.locator("body")).toContainText(/Trust center|Security, privacy/i);
   await expect(page.locator("body")).not.toContainText(/security\.shell|support\.hero|support\.paths/i);
-  await expect(languageSelector).not.toContainText(/Arabic|Hebrew|Русский|Russian/i);
+  await expect(page.locator("body")).not.toContainText(/Arabic|Hebrew|Polski|Russian/i);
 
   await page.goto("/support", { waitUntil: "domcontentloaded" });
-  await expect(page.locator("body")).toContainText(/Centrum wsparcia|Pomoc przy uruchamianiu/i);
+  await expect(page.locator("body")).toContainText(/Support center|Get help launching/i);
 
   await page.evaluate(() => {
     window.localStorage.setItem(
@@ -296,7 +286,7 @@ test("trust and support pages localize without exposing unsupported languages", 
     );
   });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator("body")).toContainText(/Центр підтримки|Отримайте допомогу/i);
+  await expect(page.locator("body")).toContainText(/Support center|Get help launching/i);
   await expect(page.locator("body")).not.toContainText(/security\.shell|support\.hero|support\.paths/i);
 });
 

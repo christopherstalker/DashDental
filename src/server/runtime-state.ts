@@ -211,6 +211,7 @@ export function sanitizeRuntimeState(state: AppState): AppState {
       organizationIds.has(membership.organizationId) &&
       userIds.has(membership.userId),
   );
+  const membershipIds = new Set(memberships.map((membership) => membership.id));
   const activeUserIds = new Set(
     memberships
       .filter((membership) => membership.status === "active")
@@ -312,11 +313,17 @@ export function sanitizeRuntimeState(state: AppState): AppState {
   const billingEvents = (state.billingEvents ?? []).filter((event) =>
     !event.organizationId || organizationIds.has(event.organizationId),
   );
+  const inviteTokens = (state.inviteTokens ?? []).filter(
+    (invite) =>
+      organizationIds.has(invite.organizationId) &&
+      membershipIds.has(invite.membershipId),
+  );
 
   return {
     users: visibleUsers,
     organizations,
     memberships,
+    inviteTokens,
     leads,
     leadStatusHistory,
     conversations,

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { RegisterForm } from "@/features/auth/components/register-form";
+import { getPublicAuthTurnstileSiteKey } from "@/server/public-auth-bot-protection";
 
 export const metadata: Metadata = {
   title: "Start Trial — Dash Dental",
@@ -9,6 +10,6 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <RegisterForm turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()} />
+    <RegisterForm turnstileSiteKey={getPublicAuthTurnstileSiteKey()} />
   );
 }

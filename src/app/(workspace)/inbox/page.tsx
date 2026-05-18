@@ -202,6 +202,24 @@ export default async function InboxPage() {
       session={bootstrap.session}
       title={<LocalizedText k="inbox.header.title" />}
     >
+      {projections.length === 0 ? (
+        <section className="empty-state inbox-empty-actions">
+          <Inbox size={34} />
+          <h2>No patient conversations yet.</h2>
+          <p>
+            Connect a channel or send a website-form test lead to start tracking
+            response time, unanswered patients, and recoverable revenue.
+          </p>
+          <div className="account-workspace-actions">
+            <Link className="primary-button" href="/integrations">
+              Connect channel
+            </Link>
+            <Link className="secondary-button" href="/integrations">
+              Send test lead
+            </Link>
+          </div>
+        </section>
+      ) : (
       <section className="inbox-layout">
         <aside className="queue-panel conversation-list" aria-label="Live conversations">
           <div className="section-heading">
@@ -413,6 +431,7 @@ export default async function InboxPage() {
           )}
         </aside>
       </section>
+      )}
     </SectionBlueprintPage>
   );
 }

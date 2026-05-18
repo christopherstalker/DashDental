@@ -31,6 +31,22 @@ export function isPublicAuthBotProtectionRequired(
   return env.REQUIRE_PUBLIC_AUTH_BOT_PROTECTION === "true";
 }
 
+export function getPublicAuthTurnstileSiteKey(
+  env: BotProtectionEnv = process.env,
+) {
+  if (!isPublicAuthBotProtectionRequired(env)) {
+    return undefined;
+  }
+
+  const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+  const secret = env.TURNSTILE_SECRET_KEY?.trim();
+  if (!siteKey || !secret) {
+    return undefined;
+  }
+
+  return siteKey;
+}
+
 async function verifyTurnstileToken({
   remoteIp,
   secret,

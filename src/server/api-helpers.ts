@@ -80,6 +80,7 @@ export function stateForContext(state: AppState, context: RequestContext): AppSt
 
   return {
     ...scopedState,
+    inviteTokens: [],
     integrations: scopedState.integrations.map((integration) => ({
       ...integration,
       encryptedCredentials: integration.encryptedCredentials ? "__configured__" : "",

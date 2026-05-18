@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Loader2, ShieldCheck } from "lucide-react";
 import type { OAuthPublicConfig } from "@/server/oauth";
 import type { LoginProfile } from "@/server/session";
 import { TurnstileChallenge } from "./turnstile-challenge";
@@ -29,6 +29,7 @@ export function LoginForm({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
@@ -39,6 +40,7 @@ export function LoginForm({
       : null,
   );
   const showOauthLogin = oauthLogin.enabled;
+  const isBusy = isSubmitting || isPending;
 
   function friendlyAuthError(code?: string, fallback = "Could not sign in.") {
     if (code === "bot_protection_required") {
@@ -62,33 +64,43 @@ export function LoginForm({
       return;
     }
 
-    const response = await fetch("/api/v1/auth/session", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(
-        options?.requiresChallenge
-          ? {
-              ...payload,
-              turnstileToken,
-            }
-          : payload,
-      ),
-    });
-    const result = (await response.json().catch(() => ({}))) as {
-      code?: string;
-      error?: string;
-    };
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/v1/auth/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(
+          options?.requiresChallenge
+            ? {
+                ...payload,
+                turnstileToken,
+              }
+            : payload,
+        ),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        code?: string;
+        error?: string;
+      };
 
-    if (!response.ok) {
-      setError(friendlyAuthError(result.code, result.error ?? "Could not sign in."));
+      if (!response.ok) {
+        setError(friendlyAuthError(result.code, result.error ?? "Could not sign in."));
+        setTurnstileResetKey((value) => value + 1);
+        return;
+      }
+
+      startTransition(() => {
+        router.replace("/workspaces");
+        router.refresh();
+      });
+
+      window.location.assign("/workspaces");
+    } catch {
+      setError("Sign-in request did not reach Dash Dental. Check the connection and try again.");
       setTurnstileResetKey((value) => value + 1);
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    startTransition(() => {
-      router.replace("/workspaces");
-      router.refresh();
-    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -118,11 +130,14 @@ export function LoginForm({
         <label className="login-field">
           <span>Email</span>
           <input
+            autoCapitalize="none"
             autoComplete="email"
+            inputMode="email"
             name="email"
             onChange={(event) => setEmail(event.target.value)}
             placeholder="owner@clinic.com"
             required
+            spellCheck={false}
             type="email"
             value={email}
           />
@@ -147,9 +162,9 @@ export function LoginForm({
           onError={setError}
           onTokenChange={setTurnstileToken}
         />
-        <button className="primary-button" disabled={isPending} type="submit">
-          {isPending ? "Signing in..." : "Continue to workspaces"}
-          <ArrowRight size={16} />
+        <button className="primary-button" disabled={isBusy} type="submit">
+          {isBusy ? "Checking access..." : "Continue to workspaces"}
+          {isBusy ? <Loader2 className="login-spin" size={16} /> : <ArrowRight size={16} />}
         </button>
       </form>
 

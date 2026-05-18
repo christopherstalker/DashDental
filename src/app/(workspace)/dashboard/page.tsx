@@ -5,16 +5,19 @@ import { ShieldCheck } from "lucide-react";
 import {
   canAccess,
   formatCurrency,
+  formatProvider,
   getLeadRiskLevel,
   minutesBetween,
 } from "@/domain/business-rules";
 import type { Lead, Provider } from "@/domain/types";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
 import {
-  RecoveryCockpit,
-  type CockpitMetric,
-  type CockpitQueueRow,
-} from "@/features/dashboard/components/recovery-cockpit";
+  DashboardScreen,
+  type DashboardActivityRow,
+  type DashboardChannelRow,
+  type DashboardMetric,
+  type DashboardQueueRow,
+} from "@/features/dashboard/components/dashboard-screen";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 const riskRank = {
   critical: 4,
@@ -77,73 +80,132 @@ export default async function DashboardPage() {
   );
   const firstName = bootstrap.session?.user.name.split(" ")[0] ?? "team";
 
-  const dashboardMetrics: CockpitMetric[] = [
+  const dashboardMetrics: DashboardMetric[] = [
     {
-      helperKey: "dashboard.metric.revenueAtRiskSub",
-      labelKey: "dashboard.metric.revenueAtRisk",
+      detail: "Estimated treatment opportunity that still needs staff action.",
+      label: "Revenue at risk",
       tone: "risk",
       value: formatCurrency(recoverableRevenue, organization),
     },
     {
-      helperKey: "dashboard.metric.unansweredSub",
-      labelKey: "dashboard.metric.unanswered",
+      detail: "Patients waiting for a first human reply.",
+      label: "Unanswered patients",
       tone: "warning",
       value: String(bootstrap.overview.unanswered),
     },
     {
-      helperKey: "dashboard.metric.avgResponseSub",
-      labelKey: "dashboard.metric.avgResponse",
+      detail: "Measured from inbound message to first staff response.",
+      label: "Avg first response",
       tone: "default",
       value: `${bootstrap.overview.averageResponseMinutes}m`,
     },
     {
-      helperKey: "dashboard.metric.recoveredSub",
-      labelKey: "dashboard.metric.recovered",
+      detail: "Marked booked in the current visible workspace data.",
+      label: "Booked patients",
       tone: "success",
       value: String(bookedLeads.length),
     },
     {
-      helperKey: "dashboard.metric.activeChannelsSub",
-      labelKey: "dashboard.metric.activeChannels",
+      detail: "Configured channels with current workspace visibility.",
+      label: "Active channels",
       tone: "active",
       value: String(activeIntegrations.length),
     },
   ];
 
-  const dashboardQueueRows: CockpitQueueRow[] = triageLeads.slice(0, 4).map((item) => ({
+  const dashboardQueueRows: DashboardQueueRow[] = triageLeads.slice(0, 6).map((item) => ({
     action: "Review the thread, confirm the safest callback path, and offer appointment options.",
     channel: providerDisplayName(item.lead.source),
-    draft:
-      "Thanks for reaching out. Our front desk can help with booking options today. Can you confirm the best callback number and preferred time?",
-    excerpt: "I would like to book a visit and understand the next available options.",
-    initials: patientInitials(item.lead.name),
     intent: recoveryIntentLabel(item.lead),
-    riskReason:
-      item.risk === "critical"
-        ? "High-priority patient message is outside the clinic response target."
-        : "Unanswered patient intent is visible in the recovery queue before it goes cold.",
-    status: item.risk === "critical" ? "Needs staff reply" : "AI draft ready",
-    urgency: riskDisplayName(item.risk),
+    patient: item.lead.name,
+    risk: riskDisplayName(item.risk),
     value: formatCurrency(item.lead.estimatedValue, organization),
     waiting: formatWaiting(item.waitingMinutes),
   }));
+  const dashboardChannels: DashboardChannelRow[] = ([
+    "whatsapp",
+    "instagram",
+    "telegram",
+    "web_form",
+  ] as Provider[]).map((provider) => {
+    const integration = bootstrap.state.integrations.find(
+      (item) => item.organizationId === organization.id && item.provider === provider,
+    );
+    const events = bootstrap.state.integrationEvents
+      .filter((event) => event.provider === provider)
+      .toSorted(
+        (left, right) =>
+          Date.parse(right.processedAt ?? right.createdAt) -
+          Date.parse(left.processedAt ?? left.createdAt),
+      );
+    const messages = bootstrap.state.conversations.filter(
+      (conversation) => conversation.provider === provider,
+    ).length;
+    const hasProcessed = events.some((event) => event.status === "processed");
+
+    return {
+      detail:
+        integration?.errorState ??
+        (hasProcessed
+          ? "Inbound events are landing in the workspace."
+          : "No inbound event has been seen yet."),
+      label: formatProvider(provider),
+      lastEvent: events[0]
+        ? formatActivityTime(events[0].processedAt ?? events[0].createdAt)
+        : "No event",
+      state: !integration
+        ? "setup"
+        : integration.status === "degraded"
+          ? "degraded"
+          : integration.status === "disconnected"
+            ? "disconnected"
+            : integration.status === "active" && hasProcessed
+              ? "receiving"
+              : integration.status === "active"
+                ? "configured"
+                : "setup",
+      volume: `${messages} thread${messages === 1 ? "" : "s"}`,
+    };
+  });
+  const dashboardActivities: DashboardActivityRow[] = [
+    ...bootstrap.state.messages
+      .toSorted((left, right) => Date.parse(right.sentAt) - Date.parse(left.sentAt))
+      .slice(0, 3)
+      .map((message) => ({
+        label: message.direction === "inbound" ? "Inbound message" : "Reply queued",
+        meta: `${message.text.slice(0, 82)}${message.text.length > 82 ? "..." : ""}`,
+        tone: message.direction === "inbound" ? "warning" : "active",
+      }) satisfies DashboardActivityRow),
+    ...bootstrap.state.integrationEvents.slice(0, 2).map((event) => ({
+      label: `${formatProvider(event.provider)} event ${event.status}`,
+      meta: event.errorMessage ?? formatActivityTime(event.processedAt ?? event.createdAt),
+      tone: event.status === "failed" ? "risk" : "default",
+    }) satisfies DashboardActivityRow),
+  ].slice(0, 5);
+  const topQueue = dashboardQueueRows[0];
 
   return (
-    <RecoveryCockpit
-      activeChannels={String(activeIntegrations.length)}
-      ctaHref="/inbox"
-      ctaLabelKey="dashboard.hero.openInbox"
-      embedded
-      embeddedContext={{
-        atRisk: bootstrap.overview.atRisk,
-        clinicName: organization.name,
-        firstName,
-        unanswered: bootstrap.overview.unanswered,
+    <DashboardScreen
+      activities={dashboardActivities}
+      aiRecommendation={{
+        title: topQueue
+          ? `Reply to ${topQueue.patient} first`
+          : "Connect a channel to start recovery",
+        body: topQueue
+          ? `${topQueue.patient} is waiting through ${topQueue.channel}. Offer two appointment windows, confirm callback details, and keep clinical guidance out of the draft.`
+          : "No urgent patient thread is visible yet. Activate the website form or a messaging channel, then send a test lead to validate inbox materialization.",
       }}
+      channels={dashboardChannels}
+      clinicName={organization.name}
       metrics={dashboardMetrics}
-      queueRows={dashboardQueueRows}
-      userLabel={`${firstName} Â· ${bootstrap.session?.role ?? "manager"}`}
-      workspaceName={organization.name}
+      queue={dashboardQueueRows}
+      role={bootstrap.session?.role ?? "manager"}
+      summary={{
+        atRisk: bootstrap.overview.atRisk,
+        revenueAtRisk: formatCurrency(recoverableRevenue, organization),
+        waiting: bootstrap.overview.unanswered + bootstrap.overview.atRisk,
+      }}
+      userName={firstName}
     />
   );
 }
@@ -180,17 +242,6 @@ function WorkspaceAccessRequired({ requiredRole }: { requiredRole: string }) {
   );
 }
 
-function patientInitials(name: string) {
-  return (
-    name
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((chunk) => chunk[0]?.toUpperCase())
-      .join("") || "PT"
-  );
-}
-
 function providerDisplayName(provider: Provider) {
   const names: Record<Provider, string> = {
     clinic_database: "Clinic DB",
@@ -201,6 +252,13 @@ function providerDisplayName(provider: Provider) {
   };
 
   return names[provider];
+}
+
+function formatActivityTime(iso: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(iso));
 }
 
 function recoveryIntentLabel(lead: Lead) {

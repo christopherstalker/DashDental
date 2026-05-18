@@ -58,7 +58,7 @@ function getIntegrationErrorKey(errorState?: string | null): TranslationKey | un
 function getIntegrationStatusKey(status: Integration["status"] | "pending"): TranslationKey {
   switch (status) {
     case "active":
-      return "integrations.status.live";
+      return "integrations.status.configured";
     case "degraded":
       return "integrations.status.needsAttention";
     case "disconnected":

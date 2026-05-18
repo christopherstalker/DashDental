@@ -83,7 +83,7 @@ export function configureWebFormIntegration(
       encryptedCredentials,
       webhookSecret,
       status: "active",
-      errorState: "Website form webhook is active. Send a test lead before go-live.",
+      errorState: "Website form webhook is configured. Send a test lead before go-live.",
       healthScore: 92,
       lastSyncAt: nowIso,
     }),

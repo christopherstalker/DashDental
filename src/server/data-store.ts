@@ -185,6 +185,7 @@ async function readAppStateFromFile(): Promise<AppState> {
         ...fallback,
         ...parsed,
         dataAccessContracts: parsed.dataAccessContracts ?? fallback.dataAccessContracts,
+        inviteTokens: parsed.inviteTokens ?? fallback.inviteTokens ?? [],
         teamNotes: parsed.teamNotes ?? fallback.teamNotes,
       } as AppState),
   );

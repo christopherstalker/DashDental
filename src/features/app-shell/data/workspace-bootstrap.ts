@@ -20,9 +20,13 @@ import { stateForContext } from "@/server/api-helpers";
 import { readAppState } from "@/server/data-store";
 import {
   decodeSession,
+  listUserWorkspaces,
+  resolveAuthenticatedUser,
   resolveSessionContext,
   SESSION_COOKIE_NAME,
+  toAccountSession,
   toClientSession,
+  type AccountSession,
   type ClientSession,
 } from "@/server/session";
 
@@ -55,6 +59,12 @@ const fallbackOrganization: Organization = {
 export interface WorkspaceShellBootstrap {
   state: AppState;
   session: ClientSession | null;
+  account: AccountSession | null;
+  access:
+    | { status: "ready" }
+    | { status: "unauthenticated" }
+    | { status: "workspace_required"; workspaceCount: number }
+    | { status: "forbidden"; message: string };
   organization: Organization;
   subscription: Subscription | null;
   billing: {
@@ -83,21 +93,43 @@ export const getWorkspaceShellBootstrap = cache(
     );
 
     let session: ClientSession | null = null;
+    let account: AccountSession | null = null;
+    let access: WorkspaceShellBootstrap["access"] = { status: "unauthenticated" };
     let scopedState = createEmptyAppState();
     let organization = fallbackOrganization;
     let subscription: Subscription | null = null;
 
     if (sessionPayload) {
       try {
-        const context = resolveSessionContext(state, sessionPayload, requiredRole);
-        session = toClientSession(context);
-        scopedState = stateForContext(state, context);
-        organization = scopedState.organizations[0] ?? fallbackOrganization;
-        subscription =
-          scopedState.subscriptions.find((item) => item.organizationId === organization.id) ??
-          null;
-      } catch {
+        const user = resolveAuthenticatedUser(state, sessionPayload);
+        account = toAccountSession(state, user, sessionPayload.organizationId);
+
+        if (!sessionPayload.organizationId) {
+          access = {
+            status: "workspace_required",
+            workspaceCount: listUserWorkspaces(state, user.id).length,
+          };
+        } else {
+          const context = resolveSessionContext(state, sessionPayload, requiredRole);
+          session = toClientSession(context);
+          scopedState = stateForContext(state, context);
+          organization = scopedState.organizations[0] ?? fallbackOrganization;
+          subscription =
+            scopedState.subscriptions.find((item) => item.organizationId === organization.id) ??
+            null;
+          access = { status: "ready" };
+        }
+      } catch (error) {
         scopedState = createEmptyAppState();
+        access = sessionPayload.organizationId
+          ? {
+              status: "forbidden",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "This account cannot open the selected clinic workspace.",
+            }
+          : { status: "unauthenticated" };
       }
     }
 
@@ -139,6 +171,8 @@ export const getWorkspaceShellBootstrap = cache(
     return {
       state: scopedState,
       session,
+      account,
+      access,
       organization,
       subscription,
       billing: {

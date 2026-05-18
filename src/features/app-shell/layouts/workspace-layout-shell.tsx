@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import { SubscriptionGate } from "@/features/billing/components/subscription-gate";
 import { LanguageSwitcher } from "@/features/i18n/components/language-switcher";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
@@ -26,6 +28,10 @@ export function WorkspaceLayoutShell({
   bootstrap: WorkspaceShellBootstrap;
   children: ReactNode;
 }) {
+  if (!bootstrap.session) {
+    return <WorkspaceAccessGate bootstrap={bootstrap} />;
+  }
+
   const role = bootstrap.session?.role ?? "manager";
   const userName = bootstrap.session?.user.name ?? "Guest clinic";
   const setupProgress = Math.round(
@@ -145,5 +151,43 @@ export function WorkspaceLayoutShell({
         </main>
       </div>
     </WorkspaceStateProvider>
+  );
+}
+
+function WorkspaceAccessGate({ bootstrap }: { bootstrap: WorkspaceShellBootstrap }) {
+  const signedInUser = bootstrap.account?.user;
+  const isWorkspaceRequired = bootstrap.access.status === "workspace_required";
+  const isForbidden = bootstrap.access.status === "forbidden";
+  const title = isWorkspaceRequired
+    ? "Choose a clinic workspace before opening the dashboard."
+    : isForbidden
+      ? "This account cannot open the selected clinic workspace."
+      : "Sign in to open a clinic workspace.";
+  const body = isWorkspaceRequired
+    ? "Your user session is valid, but no clinic dashboard has been selected. Dash Dental only shows clinic data after a verified membership is selected."
+    : bootstrap.access.status === "forbidden"
+      ? bootstrap.access.message
+      : "Dash Dental keeps clinic dashboards tenant-scoped. Sign in first, then choose a clinic where your email has been added.";
+
+  return (
+    <main className="account-workspace-shell">
+      <section className="account-no-workspace account-workspace-panel">
+        <ShieldCheck size={34} />
+        <p className="eyebrow">Clinic access</p>
+        <h1>{title}</h1>
+        <p>{body}</p>
+        {signedInUser ? (
+          <p className="account-signed-in-copy">Signed in as {signedInUser.email}</p>
+        ) : null}
+        <div className="account-workspace-actions">
+          <Link className="primary-button" href={signedInUser ? "/workspaces" : "/login"}>
+            {signedInUser ? "Choose workspace" : "Go to login"}
+          </Link>
+          <Link className="secondary-button" href="/support#request">
+            Contact support
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   CreditCard,
+  MessageCircle,
   ShieldCheck,
   Sparkles,
+  TimerReset,
   Zap,
 } from "lucide-react";
 
@@ -33,12 +35,12 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
 
         <div className="premium-auth-grid">
           <div className="login-copy premium-auth-copy">
-            <p className="premium-auth-kicker">Clinic revenue recovery cockpit</p>
-            <h1>Sign in to the dashboard that finds missed patients first.</h1>
+            <p className="premium-auth-kicker">Secure beta access</p>
+            <h1>Open the recovery cockpit your clinic assigned to you.</h1>
             <p className="login-subcopy">
-              Open the command center for unanswered patient messages, SLA risk,
-              human-reviewed AI reply drafts, and owner visibility. Dash Dental stays
-              focused on lead intake and recovery, not clinical records.
+              Dash Dental separates your personal account from clinic data. Sign in,
+              choose an assigned workspace, and recover missed inquiries without mixing
+              patient intake with clinical records.
             </p>
             <div className="premium-auth-proof">
               <span>
@@ -54,26 +56,55 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
                 Human-reviewed AI drafts
               </span>
             </div>
-            <div className="premium-auth-preview">
+
+            <div className="premium-auth-console" aria-label="Dash Dental access preview">
               <div className="premium-auth-preview-header">
-                <span>Dashboard preview</span>
+                <span>Access preview</span>
                 <strong>Revenue recovery cockpit</strong>
               </div>
-              <Image
-                alt="Dash Dental dashboard preview"
-                height={1080}
-                priority
-                src="/dashboard-preview.png"
-                unoptimized
-                width={1600}
-              />
-              <div className="premium-auth-float one">
-                <Sparkles size={16} />
-                <span>AI brief ready</span>
+              <div className="premium-auth-console-grid">
+                <div className="premium-auth-console-card accent">
+                  <span>
+                    <BarChart3 size={15} />
+                    Revenue at risk
+                  </span>
+                  <strong>$7.8k</strong>
+                  <em>4 patients need action</em>
+                </div>
+                <div className="premium-auth-console-card">
+                  <span>
+                    <TimerReset size={15} />
+                    Avg first response
+                  </span>
+                  <strong>11m</strong>
+                  <em>inside target</em>
+                </div>
               </div>
-              <div className="premium-auth-float two">
-                <ArrowRight size={16} />
-                <span>$1.8k recoverable</span>
+              <div className="premium-auth-queue">
+                {[
+                  ["WhatsApp", "Implant consult waiting", "High SLA risk"],
+                  ["Instagram", "Whitening quote request", "AI draft ready"],
+                  ["Web form", "Emergency appointment", "Owner visible"],
+                ].map(([channel, intent, status]) => (
+                  <div className="premium-auth-queue-row" key={intent}>
+                    <span>
+                      <MessageCircle size={14} />
+                      {channel}
+                    </span>
+                    <strong>{intent}</strong>
+                    <em>{status}</em>
+                  </div>
+                ))}
+              </div>
+              <div className="premium-auth-console-footer">
+                <span>
+                  <Sparkles size={15} />
+                  Human approval required
+                </span>
+                <strong>
+                  Open priority queue
+                  <ArrowRight size={14} />
+                </strong>
               </div>
             </div>
           </div>

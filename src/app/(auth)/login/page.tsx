@@ -4,6 +4,7 @@ import { isDevLoginEnabled } from "@/server/feature-flags";
 import { buildLoginProfiles } from "@/server/session";
 import { readAppState } from "@/server/data-store";
 import { LoginForm } from "@/features/auth/components/login-form";
+import { getPublicAuthTurnstileSiteKey } from "@/server/public-auth-bot-protection";
 
 export const metadata: Metadata = {
   title: "Login — Dash Dental",
@@ -29,7 +30,7 @@ export default async function LoginPage({
       authError={authError}
       loginProfiles={allowDevLogin && state ? buildLoginProfiles(state) : []}
       oauthLogin={getOAuthPublicConfig()}
-      turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()}
+      turnstileSiteKey={getPublicAuthTurnstileSiteKey()}
     />
   );
 }

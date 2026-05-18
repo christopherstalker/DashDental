@@ -17,6 +17,7 @@ import type {
   Organization,
   Subscription,
   TeamNote,
+  TeamInviteToken,
   UsageEvent,
   UsageLimits,
   User,
@@ -46,6 +47,7 @@ type AppStateCollectionName =
   | "users"
   | "organizations"
   | "memberships"
+  | "inviteTokens"
   | "leads"
   | "leadStatusHistory"
   | "conversations"
@@ -68,6 +70,7 @@ type PrismaModelName =
   | "user"
   | "organization"
   | "membership"
+  | "teamInviteToken"
   | "lead"
   | "leadStatusHistory"
   | "conversation"
@@ -140,6 +143,25 @@ function serializeMembership(membership: Membership) {
     role: membership.role,
     status: membership.status,
     invitedBy: membership.invitedBy ?? null,
+  };
+}
+
+function serializeTeamInviteToken(invite: TeamInviteToken) {
+  return {
+    id: invite.id,
+    membershipId: invite.membershipId,
+    email: invite.email,
+    organizationId: invite.organizationId,
+    role: invite.role,
+    tokenHash: invite.tokenHash,
+    invitedByUserId: invite.invitedByUserId ?? null,
+    expiresAt: new Date(invite.expiresAt),
+    acceptedAt: toDate(invite.acceptedAt) ?? null,
+    emailSentAt: toDate(invite.emailSentAt) ?? null,
+    emailDeliveryStatus: invite.emailDeliveryStatus ?? null,
+    emailError: invite.emailError ?? null,
+    createdAt: new Date(invite.createdAt),
+    updatedAt: new Date(invite.updatedAt),
   };
 }
 
@@ -393,6 +415,11 @@ const orderedUpsertSpecs = [
   createEntitySpec<User>("users", "user", serializeUser),
   createEntitySpec<Organization>("organizations", "organization", serializeOrganization),
   createEntitySpec<Membership>("memberships", "membership", serializeMembership),
+  createEntitySpec<TeamInviteToken>(
+    "inviteTokens",
+    "teamInviteToken",
+    serializeTeamInviteToken,
+  ),
   createEntitySpec<Integration>("integrations", "integration", serializeIntegration),
   createEntitySpec<DataAccessContract>(
     "dataAccessContracts",
@@ -485,6 +512,7 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
     users,
     organizations,
     memberships,
+    inviteTokens,
     leads,
     leadStatusHistory,
     conversations,
@@ -504,6 +532,7 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
     client.user.findMany({ orderBy: { createdAt: "asc" } }),
     client.organization.findMany({ orderBy: { createdAt: "asc" } }),
     client.membership.findMany({ orderBy: { createdAt: "asc" } }),
+    client.teamInviteToken.findMany({ orderBy: { createdAt: "desc" } }),
     client.lead.findMany({ orderBy: { createdAt: "desc" } }),
     client.leadStatusHistory.findMany({ orderBy: { createdAt: "desc" } }),
     client.conversation.findMany({ orderBy: { lastMessageAt: "desc" } }),
@@ -551,6 +580,24 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
         role: membership.role,
         status: membership.status as Membership["status"],
         invitedBy: membership.invitedBy ?? undefined,
+      }),
+    ),
+    inviteTokens: inviteTokens.map(
+      (invite): TeamInviteToken => ({
+        id: invite.id,
+        membershipId: invite.membershipId,
+        email: invite.email,
+        organizationId: invite.organizationId,
+        role: invite.role,
+        tokenHash: invite.tokenHash,
+        invitedByUserId: invite.invitedByUserId ?? undefined,
+        expiresAt: invite.expiresAt.toISOString(),
+        acceptedAt: toIso(invite.acceptedAt),
+        emailSentAt: toIso(invite.emailSentAt),
+        emailDeliveryStatus: (invite.emailDeliveryStatus as TeamInviteToken["emailDeliveryStatus"]) ?? undefined,
+        emailError: invite.emailError ?? undefined,
+        createdAt: invite.createdAt.toISOString(),
+        updatedAt: invite.updatedAt.toISOString(),
       }),
     ),
     leads: leads.map(
@@ -800,6 +847,7 @@ export async function writeAppStateToPrisma(
     await tx.teamNote.deleteMany();
     await tx.message.deleteMany();
     await tx.integrationEvent.deleteMany();
+    await tx.teamInviteToken.deleteMany();
     await tx.leadStatusHistory.deleteMany();
     await tx.conversation.deleteMany();
     await tx.lead.deleteMany();
@@ -842,6 +890,9 @@ export async function writeAppStateToPrisma(
         status: membership.status,
         invitedBy: membership.invitedBy,
       })),
+    });
+    await tx.teamInviteToken.createMany({
+      data: (state.inviteTokens ?? []).map((invite) => serializeTeamInviteToken(invite)),
     });
     await tx.lead.createMany({
       data: state.leads.map((lead) => ({
