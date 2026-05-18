@@ -201,6 +201,27 @@ model Membership {
   @@index([organizationId, role])
 }
 
+model TeamInviteToken {
+  id                  String   @id @default(cuid())
+  membershipId        String
+  email               String
+  organizationId      String
+  role                Role
+  tokenHash           String   @unique
+  invitedByUserId     String?
+  expiresAt           DateTime
+  acceptedAt          DateTime?
+  emailSentAt         DateTime?
+  emailDeliveryStatus String?
+  emailError          String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([membershipId])
+  @@index([organizationId, email])
+  @@index([expiresAt])
+}
+
 model Lead {
   id                   String              @id @default(cuid())
   organizationId        String
