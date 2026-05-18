@@ -85,6 +85,23 @@ export interface Membership {
   invitedBy?: string;
 }
 
+export interface TeamInviteToken {
+  id: string;
+  membershipId: string;
+  email: string;
+  organizationId: string;
+  role: Role;
+  tokenHash: string;
+  invitedByUserId?: string;
+  expiresAt: string;
+  acceptedAt?: string;
+  emailSentAt?: string;
+  emailDeliveryStatus?: "pending" | "sent" | "skipped" | "failed";
+  emailError?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Lead {
   id: string;
   organizationId: string;
@@ -310,6 +327,7 @@ export interface AppState {
   users: User[];
   organizations: Organization[];
   memberships: Membership[];
+  inviteTokens?: TeamInviteToken[];
   leads: Lead[];
   leadStatusHistory: LeadStatusHistory[];
   conversations: Conversation[];

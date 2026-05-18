@@ -738,6 +738,7 @@ export function getInitialAppState(): AppState {
     users,
     organizations,
     memberships,
+    inviteTokens: [],
     leads,
     leadStatusHistory,
     conversations,

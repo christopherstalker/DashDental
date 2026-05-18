@@ -5,6 +5,7 @@ export function createEmptyAppState(): AppState {
     users: [],
     organizations: [],
     memberships: [],
+    inviteTokens: [],
     leads: [],
     leadStatusHistory: [],
     conversations: [],

@@ -28,6 +28,7 @@ export function scopeAppStateToOrganization(
     memberships: state.memberships.filter(
       (membership) => membership.organizationId === organizationId,
     ),
+    inviteTokens: [],
     leads: state.leads.filter((lead) => lead.organizationId === organizationId),
     leadStatusHistory: state.leadStatusHistory.filter((history) =>
       leadIds.has(history.leadId),
