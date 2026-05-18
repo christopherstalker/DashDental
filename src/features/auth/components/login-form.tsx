@@ -84,7 +84,7 @@ export function LoginForm({
     }
 
     startTransition(() => {
-      router.replace("/dashboard");
+      router.replace("/workspaces");
       router.refresh();
     });
   }
@@ -98,8 +98,11 @@ export function LoginForm({
     <section className="auth-card">
       <div className="auth-card-heading">
         <p className="eyebrow">Secure sign in</p>
-        <h2>Open your recovery cockpit</h2>
-        <p>Use the owner, admin, or manager account connected to your clinic workspace.</p>
+        <h2>Sign in to your Dash Dental account</h2>
+        <p>
+          After sign-in, choose a clinic workspace where your email has been
+          added by an owner or admin.
+        </p>
       </div>
 
       {showOauthLogin ? (
@@ -143,7 +146,7 @@ export function LoginForm({
           onTokenChange={setTurnstileToken}
         />
         <button className="primary-button" disabled={isPending} type="submit">
-          {isPending ? "Signing in..." : "Enter dashboard"}
+          {isPending ? "Signing in..." : "Continue to workspaces"}
           <ArrowRight size={16} />
         </button>
       </form>
