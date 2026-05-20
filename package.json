@@ -17,6 +17,7 @@
     "monitor:preview": "tsx scripts/synthetic-monitor-safety.ts && playwright test tests/e2e/public-preview.spec.ts",
     "rehearsal:first-clinic": "playwright test tests/e2e/first-clinic-rehearsal.spec.ts",
     "go-live:check": "tsx scripts/go-live-readiness.ts",
+    "vercel:build": "tsx scripts/vercel-build.ts",
     "stripe:rehearsal": "tsx scripts/stripe-live-rehearsal.ts",
     "prisma:generate": "prisma generate",
     "build": "prisma generate && next build",

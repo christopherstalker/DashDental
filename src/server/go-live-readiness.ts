@@ -56,8 +56,28 @@ function isStrongSecret(value?: string) {
   );
 }
 
+function isConfiguredProductionValue(value?: string) {
+  const trimmed = value?.trim() ?? "";
+
+  return (
+    trimmed.length > 0 &&
+    !/replace|placeholder|example|changeme|todo|your[-_ ]/i.test(trimmed)
+  );
+}
+
 function isEmail(value?: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value?.trim() ?? "");
+}
+
+function extractEmailAddress(value?: string) {
+  const trimmed = value?.trim() ?? "";
+  const mailbox = trimmed.match(/<([^<>]+)>$/);
+
+  return mailbox?.[1]?.trim() ?? trimmed;
+}
+
+function isEmailFrom(value?: string) {
+  return isConfiguredProductionValue(value) && isEmail(extractEmailAddress(value));
 }
 
 function databaseUrlHasSslParams(value?: string) {
@@ -192,6 +212,16 @@ export function buildGoLiveReadinessPlan({
       description: "Turnstile secret key is configured server-side.",
       id: "turnstile_secret_configured",
       remediation: "Set TURNSTILE_SECRET_KEY from the Cloudflare Turnstile widget.",
+    }),
+    check(isConfiguredProductionValue(env.RESEND_API_KEY), {
+      description: "Transactional email API key is configured for launch invites.",
+      id: "email_delivery_api_key_configured",
+      remediation: "Set RESEND_API_KEY from the verified production email provider.",
+    }),
+    check(isEmailFrom(env.EMAIL_FROM), {
+      description: "Transactional email sender is configured as a valid mailbox.",
+      id: "email_from_configured",
+      remediation: "Set EMAIL_FROM to a verified sender, for example Dash Dental <noreply@dashdental.space>.",
     }),
     check(isEmail(env.SUPPORT_OWNER_EMAIL), {
       description: "Named support owner email is configured.",

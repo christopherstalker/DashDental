@@ -26,21 +26,25 @@ jobs:
     name: Build, check, and rehearse launch
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: Staging
     env:
       APP_URL: ${{ inputs.staging_url }}
       PLAYWRIGHT_BASE_URL: ${{ inputs.staging_url }}
       SYNTHETIC_MONITOR_BASE_URL: ${{ inputs.staging_url }}
       SYNTHETIC_MONITOR_MODE: ${{ inputs.monitor_mode }}
       SYNTHETIC_MONITOR_ALLOW_PRODUCTION: ${{ inputs.allow_production && 'true' || 'false' }}
-      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-      REDIS_URL: ${{ secrets.STAGING_REDIS_URL }}
-      SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET }}
-      JWT_ACCESS_SECRET: ${{ secrets.STAGING_JWT_ACCESS_SECRET }}
-      JWT_REFRESH_SECRET: ${{ secrets.STAGING_JWT_REFRESH_SECRET }}
-      INTEGRATION_SECRET: ${{ secrets.STAGING_INTEGRATION_SECRET }}
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL || secrets.DATABASE_URL }}
+      REDIS_URL: ${{ secrets.STAGING_REDIS_URL || secrets.REDIS_URL }}
+      SESSION_SECRET: ${{ secrets.STAGING_SESSION_SECRET || secrets.SESSION_SECRET }}
+      JWT_ACCESS_SECRET: ${{ secrets.STAGING_JWT_ACCESS_SECRET || secrets.JWT_ACCESS_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.STAGING_JWT_REFRESH_SECRET || secrets.JWT_REFRESH_SECRET }}
+      INTEGRATION_SECRET: ${{ secrets.STAGING_INTEGRATION_SECRET || secrets.INTEGRATION_SECRET }}
+      RESEND_API_KEY: ${{ secrets.STAGING_RESEND_API_KEY || secrets.RESEND_API_KEY }}
+      EMAIL_FROM: ${{ vars.STAGING_EMAIL_FROM || vars.EMAIL_FROM }}
       REQUIRE_PUBLIC_AUTH_BOT_PROTECTION: "true"
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
       TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      SUPPORT_OWNER_NAME: ${{ vars.SUPPORT_OWNER_NAME }}
       SUPPORT_OWNER_EMAIL: support@dashdental.space
       SECURITY_CONTACT_EMAIL: security@dashdental.space
       INCIDENT_ESCALATION_EMAIL: security@dashdental.space
@@ -86,6 +90,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Regression tests
+        run: npm run test:regression
 
       - name: Build
         run: npm run build

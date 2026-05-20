@@ -17,6 +17,7 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 | `REQUIRE_PUBLIC_AUTH_BOT_PROTECTION` | server | yes | Forces Turnstile on public auth. | Set to `true` after widget setup. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public | yes | Turnstile widget site key. | Cloudflare Turnstile. |
 | `TURNSTILE_SECRET_KEY` | server | yes | Turnstile verification secret. | Cloudflare Turnstile. |
+| `SUPPORT_OWNER_NAME` | server | yes | Named launch owner for support triage. | Launch owner. |
 | `SUPPORT_OWNER_EMAIL` | server | yes | Launch support owner inbox. | `support@dashdental.space`. |
 | `SECURITY_CONTACT_EMAIL` | server | yes | Security report contact. | `security@dashdental.space`. |
 | `INCIDENT_ESCALATION_EMAIL` | server | yes | Urgent incident escalation. | Security/support routing. |
@@ -58,6 +59,6 @@ routing is verified inside the app unless a real receipt test has been run.
 
 - `.env.example` is local/development-oriented.
 - `.env.production.example` is the clean production template.
-- `.env.staging.example` should mirror production with staging domains and test
-  resources. If that file is unreadable locally, repair the filesystem first,
-  then recreate it from `.env.production.example` with staging values.
+- `.env.staging.template` mirrors production with staging domains and test
+  resources. Use it as the tracked staging source of truth; `.env.staging*`
+  files remain local-only and may contain real secrets.

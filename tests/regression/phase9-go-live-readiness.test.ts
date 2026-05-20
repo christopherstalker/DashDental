@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import {
   buildGoLiveReadinessPlan,
@@ -17,6 +18,7 @@ const readyManualEnv = {
   DPA_APPROVED: "true",
   EDGE_PROTECTION_DEPLOYED: "true",
   EDGE_RATE_LIMIT_PROFILE: "launch",
+  EMAIL_FROM: "Dash Dental <noreply@dashdental.space>",
   ENABLE_DEV_BILLING: "false",
   ENABLE_DEV_LOGIN: "false",
   FIRST_CLINIC_REHEARSAL_APPROVED: "true",
@@ -34,6 +36,7 @@ const readyManualEnv = {
   PRODUCTION_MONITOR_POLICY_APPROVED: "true",
   REDIS_URL: "redis://prod-redis:6379",
   REQUIRE_PUBLIC_AUTH_BOT_PROTECTION: "true",
+  RESEND_API_KEY: "re_live_key_with_more_than_12_chars",
   SECURITY_CONTACT_EMAIL: "security@dashdental.space",
   SESSION_SECRET: "prod-session-secret-with-more-than-32-characters",
   SUBPROCESSORS_APPROVED: "true",
@@ -132,4 +135,40 @@ test("repository wires launch monitors and Turnstile-ready auth forms", async ()
   assert.match(loginForm, /turnstileToken/);
   assert.match(registerForm, /turnstileToken/);
   assert.match(turnstile, /challenges.cloudflare.com\/turnstile/);
+});
+
+test("go-live readiness CLI reports blockers without scanning ignored build artifacts", () => {
+  const result = spawnSync(
+    process.execPath,
+    ["--import", "tsx", "scripts/go-live-readiness.ts"],
+    {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        APP_URL: "http://localhost:3000",
+        BILLING_PROVIDER: "manual",
+        DATABASE_BACKUPS_CONFIRMED: "",
+        DATABASE_URL: "postgresql://local",
+        EDGE_PROTECTION_DEPLOYED: "",
+        EDGE_RATE_LIMIT_PROFILE: "",
+        ENABLE_DEV_BILLING: "false",
+        ENABLE_DEV_LOGIN: "false",
+        INTEGRATION_SECRET: "",
+        JWT_ACCESS_SECRET: "",
+        JWT_REFRESH_SECRET: "",
+        LEGAL_REVIEW_APPROVED: "",
+        REDIS_URL: "redis://local",
+        REQUIRE_PUBLIC_AUTH_BOT_PROTECTION: "",
+        SESSION_SECRET: "dev-secret",
+        SYNTHETIC_MONITOR_BASE_URL: "",
+        SYNTHETIC_MONITOR_SCHEDULED: "",
+      },
+    },
+  );
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /Dental Recovery go-live readiness/);
+  assert.match(result.stdout, /Status: blocked/);
+  assert.doesNotMatch(result.stderr, /scandir|node:fs|UNKNOWN|ENOENT/);
 });

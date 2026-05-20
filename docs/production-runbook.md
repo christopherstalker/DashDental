@@ -45,7 +45,7 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 
 ## Staging Rehearsal
 
-Use `docs/env.md`, `.env.production.example`, and `.env.staging.example` as
+Use `docs/env.md`, `.env.production.example`, and `.env.staging.template` as
 operator-facing sources for staging variables. Example files intentionally keep
 secrets blank and keep external confirmations set to `false` until the matching
 provider setup is complete.
@@ -54,14 +54,20 @@ provider setup is complete.
    incident, manual billing, and Turnstile values.
 2. Apply the CDN and webhook rules from `docs/edge-protection.md`, then set
    `EDGE_PROTECTION_DEPLOYED=true`.
-3. Configure GitHub Actions variables and secrets used by
-   `.github/workflows/go-live-rehearsal.yml` or the fallback
+3. Configure GitHub Actions `Staging` and `Production` environments, including
+   required reviewers for `production`, then set variables and secrets used by
+   `.github/workflows/go-live-rehearsal-fixed.yml` and
    `.github/workflows/go-live-rescue.yml`.
 4. Run the `Go-Live Rehearsal` workflow manually against the staging hostname.
 5. Treat `docs/launch-checklist.json` as the machine-readable launch contract:
    every blocker in it needs evidence before paid traffic.
 6. Use `docs/first-clinic-launch-plan.md` for the fake-clinic rehearsal before
    the first real clinic gets live data.
+7. Keep production runtime secrets in the Vercel project environment. Vercel
+   uses `npm run vercel:build`, which runs `npm run go-live:check` only for
+   `VERCEL_ENV=production` before the production build is allowed to continue.
+   Do not rely on `vercel env pull` as proof for sensitive values; sensitive
+   values may be listed by name without being readable by local tooling.
 
 ## Smoke Tests
 

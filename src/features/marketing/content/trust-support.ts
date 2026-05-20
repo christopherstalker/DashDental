@@ -326,8 +326,8 @@ const english: TrustSupportCopy = {
         "Dash Dental is designed with controls that support future compliance readiness, but certifications require formal audits, legal agreements, and operating procedures.",
       currentTitle: "Current posture",
       current: [
-        "Not currently SOC 2 certified",
-        "Not currently ISO 27001 certified",
+        "SOC 2 audit is not complete",
+        "ISO 27001 audit is not complete",
         "No HIPAA/BAA claim without a separate signed agreement",
         "Not intended to store full medical records",
       ],
@@ -1359,8 +1359,8 @@ const polish: TrustSupportCopy = {
         "Dash Dental jest projektowany z kontrolami wspierającymi przyszłą gotowość compliance, ale certyfikacje wymagają formalnych audytów, umów i procedur operacyjnych.",
       currentTitle: "Aktualnie",
       current: [
-        "Brak deklaracji SOC 2 certified",
-        "Brak deklaracji ISO 27001 certified",
+        "Audyt SOC 2 nie jest ukończony",
+        "Audyt ISO 27001 nie jest ukończony",
         "Brak deklaracji HIPAA/BAA bez osobnej podpisanej umowy",
         "Produkt nie służy do przechowywania pełnej dokumentacji medycznej",
       ],

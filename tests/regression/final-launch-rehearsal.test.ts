@@ -66,6 +66,10 @@ test("launch rehearsal workflows use guarded monitors and expose required env ga
     ".github/workflows/go-live-rehearsal.yml",
     ".github/workflows/go-live-rehearsal-fixed.yml",
   );
+  const rescueWorkflow = await readFile(
+    ".github/workflows/go-live-rescue.yml",
+    "utf8",
+  );
 
   assert.match(packageJson, /"monitor:synthetic:guarded"/);
   assert.match(packageJson, /"monitor:preview"/);
@@ -73,25 +77,38 @@ test("launch rehearsal workflows use guarded monitors and expose required env ga
   assert.match(syntheticWorkflow, /npm run monitor:preview/);
   assert.match(syntheticWorkflow, /npm run monitor:synthetic:guarded/);
   assert.match(syntheticWorkflow, /allow_production/);
+  assert.match(rehearsalWorkflow, /environment:\s+Staging/);
   assert.match(rehearsalWorkflow, /npm run go-live:check/);
   assert.match(rehearsalWorkflow, /npm run monitor:preview/);
   assert.match(rehearsalWorkflow, /npm run monitor:synthetic:guarded/);
   assert.match(rehearsalWorkflow, /STAGING_DATABASE_URL/);
   assert.match(rehearsalWorkflow, /TURNSTILE_SECRET_KEY/);
+  assert.match(rehearsalWorkflow, /RESEND_API_KEY/);
+  assert.match(rehearsalWorkflow, /EMAIL_FROM/);
+  assert.match(rehearsalWorkflow, /SUPPORT_OWNER_NAME/);
   assert.match(rehearsalWorkflow, /LEGAL_REVIEW_APPROVED/);
+  assert.match(rescueWorkflow, /production-gate:/);
+  assert.match(rescueWorkflow, /needs:\s+validate/);
+  assert.match(rescueWorkflow, /environment:\s+Production/);
+  assert.match(rescueWorkflow, /Verify Vercel production build gate is wired/);
 });
 
-test("staging template and checklist cover paid launch blockers", async () => {
-  const stagingEnv = await readLaunchArtifact(
-    ".env.staging.example",
-    ".env.staging.repaired.example",
-  );
+test("production env template and checklist cover paid launch blockers", async () => {
+  const envTemplate = await readFile(".env.production.example", "utf8");
+  const stagingTemplate = await readFile(".env.staging.template", "utf8");
   const checklist = JSON.parse(
     await readFile("docs/launch-checklist.json", "utf8"),
   ) as {
     forbiddenClaims: string[];
     requiredChecks: Array<{ id: string }>;
   };
+  const packageJson = JSON.parse(await readFile("package.json", "utf8")) as {
+    scripts: Record<string, string>;
+  };
+  const vercelConfig = JSON.parse(await readFile("vercel.json", "utf8")) as {
+    buildCommand: string;
+  };
+  const vercelBuild = await readFile("scripts/vercel-build.ts", "utf8");
   const runbook = await readFile("docs/production-runbook.md", "utf8");
 
   for (const requiredEnv of [
@@ -99,6 +116,9 @@ test("staging template and checklist cover paid launch blockers", async () => {
     "REQUIRE_PUBLIC_AUTH_BOT_PROTECTION",
     "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
     "TURNSTILE_SECRET_KEY",
+    "RESEND_API_KEY",
+    "EMAIL_FROM",
+    "SUPPORT_OWNER_NAME",
     "SUPPORT_OWNER_EMAIL",
     "SECURITY_CONTACT_EMAIL",
     "INCIDENT_ESCALATION_EMAIL",
@@ -115,7 +135,8 @@ test("staging template and checklist cover paid launch blockers", async () => {
     "DATABASE_BACKUPS_CONFIRMED",
     "MANUAL_INVOICE_TEMPLATE_APPROVED",
   ]) {
-    assert.match(stagingEnv, new RegExp(`^${requiredEnv}=`, "m"));
+    assert.match(envTemplate, new RegExp(`^${requiredEnv}=`, "m"));
+    assert.match(stagingTemplate, new RegExp(`^${requiredEnv}=`, "m"));
   }
 
   const requiredCheckIds = new Set(checklist.requiredChecks.map((item) => item.id));
@@ -145,7 +166,12 @@ test("staging template and checklist cover paid launch blockers", async () => {
     "HIPAA compliant",
     "ISO 27001 certified",
   ]);
+  assert.equal(packageJson.scripts["vercel:build"], "tsx scripts/vercel-build.ts");
+  assert.equal(vercelConfig.buildCommand, "npm run vercel:build");
+  assert.match(vercelBuild, /VERCEL_ENV === "production"/);
+  assert.match(vercelBuild, /"go-live:check"/);
   assert.match(runbook, /Staging Rehearsal/);
+  assert.match(runbook, /VERCEL_ENV=production/);
   assert.match(runbook, /production monitor\s+tenant and cleanup policy/i);
   assert.doesNotMatch(runbook, /SOC 2 certified|HIPAA compliant|ISO 27001 certified/i);
 });

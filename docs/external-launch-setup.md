@@ -31,17 +31,31 @@ Set `EDGE_PROTECTION_DEPLOYED=true` only after those rules are live.
 
 ## GitHub Actions Monitors
 
-When this project is attached to a GitHub repo, configure Actions secrets and
-variables:
+When this project is attached to a GitHub repo, configure two GitHub
+Environments:
+
+- `Staging`: used by `.github/workflows/go-live-rehearsal-fixed.yml`.
+- `Production`: used by the `Production deployment gate contract` job in
+  `.github/workflows/go-live-rescue.yml`; configure required reviewers before
+  enabling the production deployment contract.
+
+Configure Actions secrets and variables in those environments when GitHub is the
+source of a check. Production runtime secrets should stay in Vercel project
+environment variables; Vercel runs `npm run vercel:build`, which executes
+`npm run go-live:check` only when `VERCEL_ENV=production`.
 
 - Secret `SYNTHETIC_MONITOR_BASE_URL`: preview or staging HTTPS hostname.
 - Variable `SYNTHETIC_MONITOR_MODE`: `preview` for public smoke, `full` for
   controlled staging.
 - Variable `SYNTHETIC_MONITOR_SCHEDULED`: `true` only after the scheduled
   workflow is enabled and passing.
-- For full go-live rehearsal, also set `STAGING_DATABASE_URL`,
-  `STAGING_REDIS_URL`, `STAGING_SESSION_SECRET`, `TURNSTILE_SECRET_KEY`, and any
-  Stripe secrets used by the selected billing mode.
+- For full go-live rehearsal, set `DATABASE_URL`, `REDIS_URL`,
+  `SESSION_SECRET`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`,
+  `INTEGRATION_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`,
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`,
+  `SUPPORT_OWNER_NAME`, and the approval variables used by
+  `npm run go-live:check`. The staging workflow still accepts legacy
+  `STAGING_*` secret names as a fallback.
 
 ## Legal Approval
 

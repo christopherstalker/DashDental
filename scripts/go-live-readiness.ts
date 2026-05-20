@@ -1,12 +1,17 @@
-import "dotenv/config";
-
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import nextEnv from "@next/env";
 import {
   buildGoLiveReadinessPlan,
   requiredLaunchDocs,
   requiredLegalDocs,
 } from "../src/server/go-live-readiness";
+
+const { loadEnvConfig } = nextEnv;
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "production";
+}
+loadEnvConfig(process.cwd(), process.env.NODE_ENV === "development");
 
 const legalDocs = new Set<string>(
   requiredLegalDocs.filter((filePath) => existsSync(filePath)),
@@ -76,19 +81,25 @@ function readResult(filePath: string) {
 
 function listTextFiles(root: string) {
   const ignoredDirectoryNames = new Set([
+    ".cursor",
+    ".data",
     ".git",
-    ".next",
-    ".next-codex-browser",
-    ".next-codex-build",
-    ".next-codex-e2e",
-    ".next-codex-i18n-dev",
-    ".next-codex-launch",
+    ".tmp",
     ".vercel",
+    "build",
+    "coverage",
+    "dist",
     "node_modules",
+    "out",
     "playwright-report",
     "scripts",
     "test-results",
     "tests",
+  ]);
+  const ignoredRelativeDirectories = new Set([
+    "backend/dist",
+    "docs/superpowers",
+    "src/generated",
   ]);
   const ignoredExactFiles = new Set([
     "scripts/synthetic-monitor-guard.ts",
@@ -110,13 +121,21 @@ function listTextFiles(root: string) {
   ]);
   const files: string[] = [];
 
+  function shouldIgnoreDirectory(entryName: string, relativePath: string) {
+    return (
+      entryName.startsWith(".next") ||
+      ignoredDirectoryNames.has(entryName) ||
+      ignoredRelativeDirectories.has(relativePath)
+    );
+  }
+
   function walk(current: string) {
     for (const entry of readdirSync(current, { withFileTypes: true })) {
       const fullPath = path.join(current, entry.name);
       const relativePath = path.relative(root, fullPath).replace(/\\/g, "/");
 
       if (entry.isDirectory()) {
-        if (!ignoredDirectoryNames.has(entry.name) && relativePath !== "docs/superpowers") {
+        if (!shouldIgnoreDirectory(entry.name, relativePath)) {
           walk(fullPath);
         }
         continue;
@@ -167,14 +186,42 @@ function hasRequiredText(filePath: string, snippets: string[]) {
   };
 }
 
+function hasRequiredTextAcross(filePaths: string[], snippets: string[]) {
+  const results = filePaths.map((filePath) => ({ filePath, result: readResult(filePath) }));
+  const unreadable = results.filter((item) => !item.result.ok);
+  if (unreadable.length > 0) {
+    return {
+      ok: false,
+      reason: unreadable
+        .map((item) =>
+          item.result.ok ? "" : `${item.filePath} is unreadable: ${item.result.error}`,
+        )
+        .filter(Boolean)
+        .join("; "),
+    };
+  }
+
+  const content = results
+    .map((item) => (item.result.ok ? item.result.content : ""))
+    .join("\n");
+  const missing = snippets.filter((snippet) => !content.includes(snippet));
+
+  return {
+    ok: missing.length === 0,
+    reason: missing.length
+      ? `${filePaths.join(", ")} missing: ${missing.join(", ")}`
+      : "",
+  };
+}
+
 function buildRepositoryChecks(): ScriptCheck[] {
   const root = process.cwd();
   const checks: ScriptCheck[] = [];
   const requiredReadableFiles = [
     ".env.example",
     ".env.production.example",
-    ".env.staging.example",
-    ".github/workflows/go-live-rehearsal.yml",
+    ".env.staging.template",
+    ".github/workflows/go-live-rehearsal-fixed.yml",
     ".github/workflows/synthetic-monitor.yml",
   ];
 
@@ -281,11 +328,22 @@ function buildRepositoryChecks(): ScriptCheck[] {
         ),
   );
 
-  const sampleDashboard = hasRequiredText("src/features/marketing/components/sample-dashboard-console.tsx", [
-    "Sample data only",
-    "Draft only - staff review required",
-    "This dashboard uses illustrative data and does not show real patients.",
-  ]);
+  const sampleDashboard = hasRequiredTextAcross(
+    [
+      "src/features/marketing/components/sample-dashboard-console.tsx",
+      "src/features/dashboard/components/recovery-cockpit.tsx",
+      "src/features/i18n/translations.ts",
+    ],
+    [
+      "sampleMode",
+      "dashboard.cockpit.sampleNoticeTitle",
+      "dashboard.cockpit.sampleNoticeBody",
+      "dashboard.cockpit.draftNotice",
+      "Sample data only",
+      "Draft only - staff review required",
+      "This dashboard uses illustrative data and does not show real patients.",
+    ],
+  );
   checks.push(
     sampleDashboard.ok
       ? pass("sample_dashboard_disclosures_present", "Sample dashboard has sample-data and human-review disclosures.")
@@ -296,7 +354,7 @@ function buildRepositoryChecks(): ScriptCheck[] {
         ),
   );
 
-  const workflow = hasRequiredText(".github/workflows/go-live-rehearsal.yml", [
+  const workflow = hasRequiredText(".github/workflows/go-live-rehearsal-fixed.yml", [
     "npm run lint",
     "npm run typecheck",
     "npm run test:regression",
@@ -308,7 +366,7 @@ function buildRepositoryChecks(): ScriptCheck[] {
       : block(
           "go_live_workflow_validates_core_commands",
           workflow.reason,
-          "Repair .github/workflows/go-live-rehearsal.yml with lint/typecheck/test/go-live steps.",
+          "Repair .github/workflows/go-live-rehearsal-fixed.yml with lint/typecheck/test/go-live steps.",
         ),
   );
 
@@ -317,18 +375,34 @@ function buildRepositoryChecks(): ScriptCheck[] {
     "DATABASE_URL=",
     "REDIS_URL=",
     "SESSION_SECRET=",
+    "RESEND_API_KEY=",
+    "EMAIL_FROM=",
     "NEXT_PUBLIC_TURNSTILE_SITE_KEY=",
     "TURNSTILE_SECRET_KEY=",
+    "SUPPORT_OWNER_NAME=",
+    "support@dashdental.space",
+    "security@dashdental.space",
+  ]);
+  const stagingTemplate = hasRequiredText(".env.staging.template", [
+    "APP_URL=",
+    "DATABASE_URL=",
+    "REDIS_URL=",
+    "SESSION_SECRET=",
+    "RESEND_API_KEY=",
+    "EMAIL_FROM=",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY=",
+    "TURNSTILE_SECRET_KEY=",
+    "SUPPORT_OWNER_NAME=",
     "support@dashdental.space",
     "security@dashdental.space",
   ]);
   checks.push(
-    envExample.ok
-      ? pass("production_env_example_complete", "Production env example covers required launch variables.")
+    envExample.ok && stagingTemplate.ok
+      ? pass("launch_env_templates_complete", "Production and staging env templates cover required launch variables.")
       : block(
-          "production_env_example_complete",
-          envExample.reason,
-          "Repair .env.production.example with safe placeholders for required launch variables.",
+          "launch_env_templates_complete",
+          [envExample.reason, stagingTemplate.reason].filter(Boolean).join("; "),
+          "Repair .env.production.example and .env.staging.template with safe placeholders for required launch variables.",
         ),
   );
 
