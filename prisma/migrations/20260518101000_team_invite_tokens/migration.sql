@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS "TeamInviteToken" (
+CREATE TABLE IF NOT EXISTS "TeamInviteToken" (
     "id" TEXT NOT NULL,
     "membershipId" TEXT NOT NULL,
     "email" TEXT NOT NULL,

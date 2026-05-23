@@ -71,18 +71,15 @@ if (isProductionDeployment) {
 }
 
 if (shouldRecoverPreviewMigration) {
-  runNpm(
-    [
-      "exec",
-      "--",
-      "prisma",
-      "migrate",
-      "resolve",
-      "--rolled-back",
-      "20260502060000_phase5_billing_usage_hardening",
-    ],
-    { allowFailure: true },
-  );
+  for (const migrationName of [
+    "20260502060000_phase5_billing_usage_hardening",
+    "20260518101000_team_invite_tokens",
+  ]) {
+    runNpm(
+      ["exec", "--", "prisma", "migrate", "resolve", "--rolled-back", migrationName],
+      { allowFailure: true },
+    );
+  }
 }
 
 if (shouldDeployPrismaMigrations) {
