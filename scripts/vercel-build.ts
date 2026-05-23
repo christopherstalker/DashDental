@@ -8,6 +8,7 @@ const shouldDeployPrismaMigrations =
   process.env.VERCEL === "1" && Boolean(process.env.DATABASE_URL?.trim());
 const shouldRecoverPreviewMigration =
   shouldDeployPrismaMigrations && process.env.VERCEL_ENV !== "production";
+const BASELINE_MIGRATION_NAME = "20260430000000_baseline";
 
 type PrismaMigrationRecord = {
   migration_name: string;
@@ -155,14 +156,42 @@ function hasPendingLocalMigrations(records: PrismaMigrationRecord[] | undefined)
   );
 }
 
+function baselineNeedsResolve(records: PrismaMigrationRecord[] | undefined) {
+  if (!records?.length) {
+    return false;
+  }
+
+  const recordsByName = new Map(records.map((record) => [record.migration_name, record]));
+  if (recordsByName.has(BASELINE_MIGRATION_NAME)) {
+    return false;
+  }
+
+  return records.some(
+    (record) => record.migration_name > BASELINE_MIGRATION_NAME && migrationIsApplied(record),
+  );
+}
+
 async function main() {
   if (isProductionDeployment) {
     runNpm(["run", "go-live:check"]);
   }
 
-  const migrationRecords = shouldDeployPrismaMigrations
+  let migrationRecords = shouldDeployPrismaMigrations
     ? await readPrismaMigrationRecords()
     : undefined;
+
+  if (shouldDeployPrismaMigrations && baselineNeedsResolve(migrationRecords)) {
+    await runNpmWithRetry([
+      "exec",
+      "--",
+      "prisma",
+      "migrate",
+      "resolve",
+      "--applied",
+      BASELINE_MIGRATION_NAME,
+    ]);
+    migrationRecords = await readPrismaMigrationRecords();
+  }
 
   if (shouldRecoverPreviewMigration) {
     const recordsByName = new Map(
