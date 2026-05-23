@@ -31,7 +31,7 @@ test.describe("public preview monitor: routes, health secrecy, and trial signup"
 
       expect(response?.status(), `${path} should stay public`).toBeLessThan(400);
       expect(response?.status(), `${path} should not be forbidden`).not.toBe(403);
-      await expect(page.locator("body")).toContainText(/Dental Recovery/i);
+      await expect(page.locator("body")).toContainText(/Dash Dental/i);
     }
 
     const health = await page.request.get("/api/v1/health/storage");
