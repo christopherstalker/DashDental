@@ -1,4 +1,4 @@
-﻿CREATE TABLE "TeamInviteToken" (
+﻿CREATE TABLE IF NOT EXISTS "TeamInviteToken" (
     "id" TEXT NOT NULL,
     "membershipId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -17,7 +17,8 @@
     CONSTRAINT "TeamInviteToken_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "TeamInviteToken_tokenHash_key" ON "TeamInviteToken"("tokenHash");
-CREATE INDEX "TeamInviteToken_membershipId_idx" ON "TeamInviteToken"("membershipId");
-CREATE INDEX "TeamInviteToken_organizationId_email_idx" ON "TeamInviteToken"("organizationId", "email");
-CREATE INDEX "TeamInviteToken_expiresAt_idx" ON "TeamInviteToken"("expiresAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "TeamInviteToken_tokenHash_key" ON "TeamInviteToken"("tokenHash");
+CREATE INDEX IF NOT EXISTS "TeamInviteToken_membershipId_idx" ON "TeamInviteToken"("membershipId");
+CREATE INDEX IF NOT EXISTS "TeamInviteToken_organizationId_email_idx" ON "TeamInviteToken"("organizationId", "email");
+CREATE INDEX IF NOT EXISTS "TeamInviteToken_expiresAt_idx" ON "TeamInviteToken"("expiresAt");
+

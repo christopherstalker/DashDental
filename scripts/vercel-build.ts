@@ -5,6 +5,8 @@ import path from "node:path";
 const isProductionDeployment = process.env.VERCEL_ENV === "production";
 const shouldDeployPrismaMigrations =
   process.env.VERCEL === "1" && Boolean(process.env.DATABASE_URL?.trim());
+const shouldRecoverPreviewMigration =
+  shouldDeployPrismaMigrations && process.env.VERCEL_ENV !== "production";
 
 function getNpmInvocation() {
   if (process.env.npm_execpath) {
@@ -37,7 +39,7 @@ function getNpmInvocation() {
   };
 }
 
-function runNpm(args: string[]) {
+function runNpm(args: string[], options: { allowFailure?: boolean } = {}) {
   const npmInvocation = getNpmInvocation();
   const command = npmInvocation.command;
   const commandArgs = [...npmInvocation.prefixArgs, ...args];
@@ -48,17 +50,39 @@ function runNpm(args: string[]) {
 
   if (result.error) {
     console.error(result.error.message);
+    if (options.allowFailure) {
+      return;
+    }
     process.exit(1);
   }
 
   process.exitCode = result.status ?? 1;
   if (process.exitCode !== 0) {
+    if (options.allowFailure) {
+      process.exitCode = 0;
+      return;
+    }
     process.exit(process.exitCode);
   }
 }
 
 if (isProductionDeployment) {
   runNpm(["run", "go-live:check"]);
+}
+
+if (shouldRecoverPreviewMigration) {
+  runNpm(
+    [
+      "exec",
+      "--",
+      "prisma",
+      "migrate",
+      "resolve",
+      "--rolled-back",
+      "20260502060000_phase5_billing_usage_hardening",
+    ],
+    { allowFailure: true },
+  );
 }
 
 if (shouldDeployPrismaMigrations) {
