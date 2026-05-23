@@ -1,11 +1,11 @@
 import {
-  createDeterministicAiSummary,
   deriveLeadStatus,
   getCurrentCalendarMonthPeriod,
   getMessagesForConversation,
   getPlanLimits,
 } from "@/domain/business-rules";
 import { isDemoOrganizationId } from "@/domain/seed-data";
+import { createConversationAiSummary } from "@/server/ai-provider";
 import type {
   AiInsight,
   AppState,
@@ -496,10 +496,10 @@ export function updateIntegrationStatus(
   return nextState;
 }
 
-export function generateConversationSummary(
+export async function generateConversationSummary(
   state: AppState,
   input: { conversationId: string; actorUserId?: string; nowIso?: string },
-): AppState {
+): Promise<AppState> {
   const conversation = state.conversations.find((item) => item.id === input.conversationId);
   if (!conversation) {
     return state;
@@ -512,13 +512,13 @@ export function generateConversationSummary(
   }
 
   const conversationMessages = getMessagesForConversation(state.messages, conversation.id);
-  const insight: AiInsight = createDeterministicAiSummary(
-    conversation.organizationId,
+  const insight: AiInsight = await createConversationAiSummary({
+    organizationId: conversation.organizationId,
     lead,
-    conversation.id,
-    conversationMessages,
-    input.nowIso ?? new Date().toISOString(),
-  );
+    conversationId: conversation.id,
+    messages: conversationMessages,
+    nowIso: input.nowIso ?? new Date().toISOString(),
+  });
 
   let nextState: AppState = {
     ...state,

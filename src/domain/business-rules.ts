@@ -291,7 +291,7 @@ export function createDeterministicAiSummary(
           ? "Reply with one available slot and ask for a phone number now."
           : "Confirm availability and move the patient to a booked appointment.",
     },
-    model: "gpt-5.4-mini",
+    model: "deterministic-summary-v1",
     promptVersion: "summary-v1",
     confidence: riskScore >= 70 ? 0.88 : 0.81,
     costEstimate: estimateAiInsightCost(messages),
