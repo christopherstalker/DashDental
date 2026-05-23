@@ -3,6 +3,8 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 const isProductionDeployment = process.env.VERCEL_ENV === "production";
+const shouldDeployPrismaMigrations =
+  process.env.VERCEL === "1" && Boolean(process.env.DATABASE_URL?.trim());
 
 function getNpmInvocation() {
   if (process.env.npm_execpath) {
@@ -57,6 +59,10 @@ function runNpm(args: string[]) {
 
 if (isProductionDeployment) {
   runNpm(["run", "go-live:check"]);
+}
+
+if (shouldDeployPrismaMigrations) {
+  runNpm(["exec", "--", "prisma", "migrate", "deploy"]);
 }
 
 runNpm(["run", "build"]);
