@@ -1,11 +1,44 @@
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 const isProductionDeployment = process.env.VERCEL_ENV === "production";
-const npmCli = process.env.npm_execpath;
+
+function getNpmInvocation() {
+  if (process.env.npm_execpath) {
+    return {
+      command: process.execPath,
+      prefixArgs: [process.env.npm_execpath],
+    };
+  }
+
+  if (process.platform === "win32") {
+    const bundledNpmCli = path.join(
+      path.dirname(process.execPath),
+      "node_modules",
+      "npm",
+      "bin",
+      "npm-cli.js",
+    );
+
+    if (existsSync(bundledNpmCli)) {
+      return {
+        command: process.execPath,
+        prefixArgs: [bundledNpmCli],
+      };
+    }
+  }
+
+  return {
+    command: "npm",
+    prefixArgs: [],
+  };
+}
 
 function runNpm(args: string[]) {
-  const command = npmCli ? process.execPath : "npm";
-  const commandArgs = npmCli ? [npmCli, ...args] : args;
+  const npmInvocation = getNpmInvocation();
+  const command = npmInvocation.command;
+  const commandArgs = [...npmInvocation.prefixArgs, ...args];
   const result = spawnSync(command, commandArgs, {
     env: process.env,
     stdio: "inherit",
