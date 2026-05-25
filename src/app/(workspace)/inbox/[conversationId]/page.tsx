@@ -17,6 +17,7 @@ import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import type { TranslationKey } from "@/features/i18n/translations";
 import { ReplyComposer } from "@/features/inbox/components/reply-composer";
+import { ConversationOpsPanel } from "@/features/inbox/components/conversation-ops-panel";
 import { listInboxConversationProjections } from "@/server/inbox-projections";
 
 const providerLabelKeys: Record<Provider, TranslationKey> = {
@@ -153,6 +154,27 @@ export default async function InboxConversationPage({
     (message) => message.direction === "outbound",
   );
   const lastOutbound = outboundMessages.at(-1);
+  const staff = bootstrap.state.memberships
+    .filter(
+      (membership) =>
+        membership.organizationId === organization.id &&
+        membership.status === "active" &&
+        membership.role !== "super_admin",
+    )
+    .map((membership) => bootstrap.state.users.find((user) => user.id === membership.userId))
+    .filter((user): user is NonNullable<typeof user> => Boolean(user));
+  const teamNotes = bootstrap.state.teamNotes.filter(
+    (note) => note.conversationId === conversation.id || note.leadId === lead.id,
+  );
+  const reminders = (bootstrap.state.conversationReminders ?? []).filter(
+    (reminder) => reminder.conversationId === conversation.id,
+  );
+  const templates = (bootstrap.state.replyTemplates ?? []).filter(
+    (template) => template.organizationId === organization.id,
+  );
+  const featureFlags = (bootstrap.state.featureFlags ?? []).filter(
+    (flag) => flag.organizationId === organization.id,
+  );
   const suggestedReplyKeys: TranslationKey[] = [
     "inbox.detail.suggestedReply1",
     "inbox.detail.suggestedReply2",
@@ -260,8 +282,10 @@ export default async function InboxConversationPage({
 
           <ReplyComposer
             conversationId={conversation.id}
+            lastOutboundMessage={lastOutbound}
             patientName={lead.name}
             suggestedReplyKeys={suggestedReplyKeys}
+            templates={templates}
           />
         </article>
 
@@ -344,6 +368,28 @@ export default async function InboxConversationPage({
             <p>
               <LocalizedText k="inbox.context.aiBoundaryCopy" />
             </p>
+          </div>
+
+          <ConversationOpsPanel
+            assignedTo={lead.assignedTo}
+            conversationId={conversation.id}
+            featureFlags={featureFlags}
+            leadId={lead.id}
+            reminders={reminders}
+            staff={staff}
+            templates={templates}
+            teamNotes={teamNotes}
+          />
+
+          <div className="ops-mini-list">
+            <strong>Internal notes</strong>
+            {teamNotes.length > 0 ? (
+              teamNotes.slice(0, 4).map((note) => (
+                <span key={note.id}>{note.body}</span>
+              ))
+            ) : (
+              <span>No staff notes yet.</span>
+            )}
           </div>
         </aside>
       </section>

@@ -39,6 +39,24 @@ export function scopeAppStateToOrganization(
     messages: state.messages.filter((message) =>
       conversationIds.has(message.conversationId),
     ),
+    replyTemplates: (state.replyTemplates ?? []).filter(
+      (template) => template.organizationId === organizationId,
+    ),
+    conversationReminders: (state.conversationReminders ?? []).filter(
+      (reminder) => reminder.organizationId === organizationId,
+    ),
+    featureFlags: (state.featureFlags ?? []).filter(
+      (flag) => flag.organizationId === organizationId,
+    ),
+    outgoingWebhookEndpoints: (state.outgoingWebhookEndpoints ?? []).filter(
+      (endpoint) => endpoint.organizationId === organizationId,
+    ),
+    partnerApiKeys: (state.partnerApiKeys ?? []).filter(
+      (key) => key.organizationId === organizationId,
+    ),
+    weeklyDigests: (state.weeklyDigests ?? []).filter(
+      (digest) => digest.organizationId === organizationId,
+    ),
     teamNotes: state.teamNotes.filter(
       (note) => note.organizationId === organizationId,
     ),

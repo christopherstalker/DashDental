@@ -16,6 +16,8 @@ import { SectionBlueprintPage } from "@/features/app-shell/components/section-bl
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import type { TranslationKey } from "@/features/i18n/translations";
+import { BulkActionsBar } from "@/features/inbox/components/bulk-actions-bar";
+import { SlaAlertRuntime } from "@/features/inbox/components/sla-alert-runtime";
 import { listInboxConversationProjections } from "@/server/inbox-projections";
 
 const providerLabelKeys: Record<Provider, TranslationKey> = {
@@ -143,6 +145,12 @@ export default async function InboxPage() {
   const selectedMessages = selectedConversation
     ? messagesByConversation.get(selectedConversation.id) ?? []
     : [];
+  const featureFlags = (bootstrap.state.featureFlags ?? []).filter(
+    (flag) => flag.organizationId === organization.id,
+  );
+  const atRiskCount = projections.filter(
+    (projection) => projection.responseState === "overdue" || projection.responseState === "warning",
+  ).length;
 
   return (
     <SectionBlueprintPage
@@ -202,6 +210,7 @@ export default async function InboxPage() {
       session={bootstrap.session}
       title={<LocalizedText k="inbox.header.title" />}
     >
+      <SlaAlertRuntime atRiskCount={atRiskCount} featureFlags={featureFlags} />
       {projections.length === 0 ? (
         <section className="empty-state inbox-empty-actions">
           <Inbox size={34} />
@@ -270,6 +279,7 @@ export default async function InboxPage() {
               </Link>
             );
           })}
+          <BulkActionsBar conversationIds={projections.map((projection) => projection.conversationId)} />
         </aside>
 
         <article className="queue-panel thread-panel">

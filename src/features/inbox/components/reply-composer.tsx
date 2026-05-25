@@ -3,6 +3,7 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
+import type { Message, ReplyTemplate } from "@/domain/types";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import {
   translate,
@@ -14,10 +15,14 @@ export function ReplyComposer({
   conversationId,
   patientName,
   suggestedReplyKeys,
+  templates = [],
+  lastOutboundMessage,
 }: {
   conversationId: string;
+  lastOutboundMessage?: Message;
   patientName: string;
   suggestedReplyKeys: TranslationKey[];
+  templates?: ReplyTemplate[];
 }) {
   const router = useRouter();
   const languageCode = useCurrentLanguageCode();
@@ -26,6 +31,7 @@ export function ReplyComposer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastQueuedText, setLastQueuedText] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [editText, setEditText] = useState(lastOutboundMessage?.text ?? "");
   const t = (key: TranslationKey) => translate(key, languageCode);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -64,6 +70,35 @@ export function ReplyComposer({
     });
   }
 
+  async function handleRecentMessage(action: "edit" | "undo") {
+    if (!lastOutboundMessage) {
+      return;
+    }
+
+    setError(null);
+    setIsSubmitting(true);
+    const response = await fetch(
+      `/api/v1/conversations/${conversationId}/messages/${lastOutboundMessage.id}`,
+      {
+        body: action === "edit" ? JSON.stringify({ text: editText }) : undefined,
+        credentials: "same-origin",
+        headers: action === "edit" ? { "content-type": "application/json" } : undefined,
+        method: action === "edit" ? "PATCH" : "DELETE",
+      },
+    );
+    const result = (await response.json().catch(() => ({}))) as { error?: string };
+    setIsSubmitting(false);
+
+    if (!response.ok) {
+      setError(result.error ?? t("inbox.reply.error.queue"));
+      return;
+    }
+
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
   return (
     <section className="reply-composer-panel" aria-label={t("inbox.reply.formAria")}>
       <div className="section-heading compact-heading">
@@ -89,6 +124,16 @@ export function ReplyComposer({
             type="button"
           >
             {t(replyKey)}
+          </button>
+        ))}
+        {templates.slice(0, 4).map((template) => (
+          <button
+            className="suggestion-chip"
+            key={template.id}
+            onClick={() => setText(template.body.replaceAll("{patientName}", patientName))}
+            type="button"
+          >
+            {template.title}
           </button>
         ))}
       </div>
@@ -128,6 +173,37 @@ export function ReplyComposer({
             <LocalizedText k="inbox.reply.success" />
           </span>
           <strong>{lastQueuedText}</strong>
+        </div>
+      ) : null}
+
+      {lastOutboundMessage ? (
+        <div className="recent-message-tools">
+          <label className="reply-field" htmlFor="edit-recent-message">
+            <span>Edit last sent message</span>
+            <input
+              id="edit-recent-message"
+              onChange={(event) => setEditText(event.target.value)}
+              value={editText}
+            />
+          </label>
+          <div className="recent-message-actions">
+            <button
+              className="secondary-button compact-button"
+              disabled={isSubmitting || isRefreshing}
+              onClick={() => void handleRecentMessage("edit")}
+              type="button"
+            >
+              Save edit
+            </button>
+            <button
+              className="secondary-button compact-button"
+              disabled={isSubmitting || isRefreshing}
+              onClick={() => void handleRecentMessage("undo")}
+              type="button"
+            >
+              Undo send
+            </button>
+          </div>
         </div>
       ) : null}
 

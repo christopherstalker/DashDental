@@ -183,6 +183,12 @@ model Organization {
   billingEvents       BillingEvent[]
   dataLifecycleRuns   DataLifecycleRun[]
   teamNotes           TeamNote[]
+  replyTemplates      ReplyTemplate[]
+  conversationReminders ConversationReminder[]
+  featureFlags        FeatureFlag[]
+  outgoingWebhookEndpoints OutgoingWebhookEndpoint[]
+  partnerApiKeys      PartnerApiKey[]
+  weeklyDigests       WeeklyDigest[]
 }
 
 model Membership {
@@ -309,6 +315,100 @@ model Message {
 
   @@unique([conversationId, providerMessageId])
   @@index([conversationId, sentAt])
+}
+
+model ReplyTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  title          String
+  body           String
+  category       String       @default("custom")
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, category])
+}
+
+model ConversationReminder {
+  id             String       @id @default(cuid())
+  organizationId String
+  conversationId String
+  leadId         String
+  assignedTo     String?
+  note           String
+  remindAt       DateTime
+  status         String       @default("scheduled")
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, status, remindAt])
+  @@index([conversationId, remindAt])
+}
+
+model FeatureFlag {
+  id             String       @id @default(cuid())
+  organizationId String
+  key            String
+  enabled        Boolean      @default(false)
+  updatedBy      String
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, key])
+}
+
+model OutgoingWebhookEndpoint {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  url            String
+  eventsJson     Json
+  status         String       @default("active")
+  lastAttemptAt  DateTime?
+  lastSuccessAt  DateTime?
+  lastError      String?
+  secretPreview  String
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, status])
+}
+
+model PartnerApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  keyPrefix      String
+  scopesJson     Json
+  status         String       @default("active")
+  lastUsedAt     DateTime?
+  createdBy      String
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, status])
+}
+
+model WeeklyDigest {
+  id             String       @id @default(cuid())
+  organizationId String
+  periodStart    DateTime
+  periodEnd      DateTime
+  recipientEmail String
+  subject        String
+  status         String       @default("draft")
+  metricsJson    Json
+  createdAt      DateTime     @default(now())
+  sentAt         DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, periodEnd])
 }
 
 model MessageDelivery {

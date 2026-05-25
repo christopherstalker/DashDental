@@ -26,6 +26,7 @@ import {
   trustCards,
 } from "@/features/marketing/components/landing-system";
 import { RecoveryFlow } from "@/features/marketing/components/recovery-flow";
+import { ConversionSections } from "@/features/marketing/components/conversion-sections";
 import {
   integrationRows,
   primaryCta,
@@ -191,6 +192,8 @@ export function DashDentalHomepage() {
         </SectionHeader>
         <AiAssistPanel />
       </section>
+
+      <ConversionSections />
 
       <section className={styles.section}>
         <SectionHeader

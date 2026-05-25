@@ -2469,13 +2469,128 @@
   }
 }
 
+.walkthroughGrid,
+.gtmGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.walkthroughGrid article,
+.gtmGrid article,
+.beforeAfterPanel {
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius-card);
+  padding: clamp(18px, 3vw, 28px);
+  background: color-mix(in srgb, var(--mk-surface-strong) 78%, transparent);
+  box-shadow: 0 22px 70px var(--mk-shadow);
+}
+
+.walkthroughGrid svg {
+  color: var(--mk-cyan);
+}
+
+.walkthroughGrid h2,
+.gtmGrid h3 {
+  margin: 14px 0 0;
+  color: var(--mk-text);
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.08;
+}
+
+.gtmGrid h3 {
+  font-size: 22px;
+}
+
+.walkthroughGrid p,
+.gtmGrid p {
+  color: var(--mk-muted);
+  line-height: 1.58;
+}
+
+.walkthroughGrid span,
+.walkthroughGrid strong {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  padding: 0 10px;
+  color: var(--mk-cyan);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.beforeAfterHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.beforeAfterHeader h2 {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: var(--mk-text);
+  font-size: clamp(32px, 4vw, 54px);
+  line-height: 1.04;
+}
+
+.segmentedControl {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(92px, 1fr));
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  background: var(--mk-surface-soft);
+}
+
+.segmentedControl button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mk-muted);
+  cursor: pointer;
+  font-weight: 760;
+}
+
+.segmentedControl button[aria-pressed="true"] {
+  background: var(--mk-surface-strong);
+  color: var(--mk-text);
+}
+
+.beforeAfterPanel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.beforeAfterPanel span {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--mk-muted);
+  line-height: 1.45;
+}
+
+.beforeAfterPanel svg {
+  flex: 0 0 auto;
+  color: var(--mk-green);
+}
+
 @media (max-width: 1160px) {
   .hero,
   .pricingHero,
   .trustHero,
   .supportHero,
   .aiSplit,
-  .dashboardPreview {
+  .dashboardPreview,
+  .walkthroughGrid,
+  .gtmGrid {
     grid-template-columns: 1fr;
   }
 
@@ -2529,6 +2644,7 @@
   .dashboardMainGrid,
   .timelineDetail,
   .ruleGrid,
+  .beforeAfterPanel,
   .scopeGrid,
   .aiBoundaryPanel,
   .complianceGrid,

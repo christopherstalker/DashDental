@@ -7,7 +7,9 @@ import type {
   BillingEvent,
   BusinessHours,
   Conversation,
+  ConversationReminder,
   DataAccessContract,
+  FeatureFlag,
   Integration,
   IntegrationEvent,
   Lead,
@@ -15,12 +17,16 @@ import type {
   Membership,
   Message,
   Organization,
+  OutgoingWebhookEndpoint,
+  PartnerApiKey,
+  ReplyTemplate,
   Subscription,
   TeamNote,
   TeamInviteToken,
   UsageEvent,
   UsageLimits,
   User,
+  WeeklyDigest,
 } from "@/domain/types";
 import { prisma } from "./prisma";
 import { getRuntimeSeedState } from "./runtime-state";
@@ -52,6 +58,12 @@ type AppStateCollectionName =
   | "leadStatusHistory"
   | "conversations"
   | "messages"
+  | "replyTemplates"
+  | "conversationReminders"
+  | "featureFlags"
+  | "outgoingWebhookEndpoints"
+  | "partnerApiKeys"
+  | "weeklyDigests"
   | "teamNotes"
   | "integrations"
   | "dataAccessContracts"
@@ -75,6 +87,12 @@ type PrismaModelName =
   | "leadStatusHistory"
   | "conversation"
   | "message"
+  | "replyTemplate"
+  | "conversationReminder"
+  | "featureFlag"
+  | "outgoingWebhookEndpoint"
+  | "partnerApiKey"
+  | "weeklyDigest"
   | "teamNote"
   | "integration"
   | "dataAccessContract"
@@ -225,6 +243,93 @@ function serializeMessage(message: Message) {
     sentAt: new Date(message.sentAt),
     deliveredAt: toDate(message.deliveredAt) ?? null,
     readAt: toDate(message.readAt) ?? null,
+  };
+}
+
+function serializeReplyTemplate(template: ReplyTemplate) {
+  return {
+    id: template.id,
+    organizationId: template.organizationId,
+    title: template.title,
+    body: template.body,
+    category: template.category,
+    createdBy: template.createdBy,
+    createdAt: new Date(template.createdAt),
+    updatedAt: new Date(template.updatedAt),
+  };
+}
+
+function serializeConversationReminder(reminder: ConversationReminder) {
+  return {
+    id: reminder.id,
+    organizationId: reminder.organizationId,
+    conversationId: reminder.conversationId,
+    leadId: reminder.leadId,
+    assignedTo: reminder.assignedTo ?? null,
+    note: reminder.note,
+    remindAt: new Date(reminder.remindAt),
+    status: reminder.status,
+    createdBy: reminder.createdBy,
+    createdAt: new Date(reminder.createdAt),
+    updatedAt: new Date(reminder.updatedAt),
+  };
+}
+
+function serializeFeatureFlag(flag: FeatureFlag) {
+  return {
+    id: flag.id,
+    organizationId: flag.organizationId,
+    key: flag.key,
+    enabled: flag.enabled,
+    updatedBy: flag.updatedBy,
+    updatedAt: new Date(flag.updatedAt),
+  };
+}
+
+function serializeOutgoingWebhookEndpoint(endpoint: OutgoingWebhookEndpoint) {
+  return {
+    id: endpoint.id,
+    organizationId: endpoint.organizationId,
+    name: endpoint.name,
+    url: endpoint.url,
+    eventsJson: jsonArrayOrObject(endpoint.events),
+    status: endpoint.status,
+    lastAttemptAt: toDate(endpoint.lastAttemptAt) ?? null,
+    lastSuccessAt: toDate(endpoint.lastSuccessAt) ?? null,
+    lastError: endpoint.lastError ?? null,
+    secretPreview: endpoint.secretPreview,
+    createdBy: endpoint.createdBy,
+    createdAt: new Date(endpoint.createdAt),
+    updatedAt: new Date(endpoint.updatedAt),
+  };
+}
+
+function serializePartnerApiKey(key: PartnerApiKey) {
+  return {
+    id: key.id,
+    organizationId: key.organizationId,
+    name: key.name,
+    keyPrefix: key.keyPrefix,
+    scopesJson: jsonArrayOrObject(key.scopes),
+    status: key.status,
+    lastUsedAt: toDate(key.lastUsedAt) ?? null,
+    createdBy: key.createdBy,
+    createdAt: new Date(key.createdAt),
+  };
+}
+
+function serializeWeeklyDigest(digest: WeeklyDigest) {
+  return {
+    id: digest.id,
+    organizationId: digest.organizationId,
+    periodStart: new Date(digest.periodStart),
+    periodEnd: new Date(digest.periodEnd),
+    recipientEmail: digest.recipientEmail,
+    subject: digest.subject,
+    status: digest.status,
+    metricsJson: jsonArrayOrObject(digest.metricsJson),
+    createdAt: new Date(digest.createdAt),
+    sentAt: toDate(digest.sentAt) ?? null,
   };
 }
 
@@ -442,6 +547,20 @@ const orderedUpsertSpecs = [
   ),
   createEntitySpec<Conversation>("conversations", "conversation", serializeConversation),
   createEntitySpec<Message>("messages", "message", serializeMessage),
+  createEntitySpec<ReplyTemplate>("replyTemplates", "replyTemplate", serializeReplyTemplate),
+  createEntitySpec<ConversationReminder>(
+    "conversationReminders",
+    "conversationReminder",
+    serializeConversationReminder,
+  ),
+  createEntitySpec<FeatureFlag>("featureFlags", "featureFlag", serializeFeatureFlag),
+  createEntitySpec<OutgoingWebhookEndpoint>(
+    "outgoingWebhookEndpoints",
+    "outgoingWebhookEndpoint",
+    serializeOutgoingWebhookEndpoint,
+  ),
+  createEntitySpec<PartnerApiKey>("partnerApiKeys", "partnerApiKey", serializePartnerApiKey),
+  createEntitySpec<WeeklyDigest>("weeklyDigests", "weeklyDigest", serializeWeeklyDigest),
   createEntitySpec<TeamNote>("teamNotes", "teamNote", serializeTeamNote),
   createEntitySpec<AiInsight>("aiInsights", "aiInsight", serializeAiInsight),
   createEntitySpec<AuditLog>("auditLogs", "auditLog", serializeAuditLog),
@@ -517,6 +636,12 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
     leadStatusHistory,
     conversations,
     messages,
+    replyTemplates,
+    conversationReminders,
+    featureFlags,
+    outgoingWebhookEndpoints,
+    partnerApiKeys,
+    weeklyDigests,
     teamNotes,
     integrations,
     dataAccessContracts,
@@ -537,6 +662,12 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
     client.leadStatusHistory.findMany({ orderBy: { createdAt: "desc" } }),
     client.conversation.findMany({ orderBy: { lastMessageAt: "desc" } }),
     client.message.findMany({ orderBy: { sentAt: "asc" } }),
+    client.replyTemplate.findMany({ orderBy: { createdAt: "asc" } }),
+    client.conversationReminder.findMany({ orderBy: { remindAt: "asc" } }),
+    client.featureFlag.findMany({ orderBy: { updatedAt: "desc" } }),
+    client.outgoingWebhookEndpoint.findMany({ orderBy: { createdAt: "asc" } }),
+    client.partnerApiKey.findMany({ orderBy: { createdAt: "asc" } }),
+    client.weeklyDigest.findMany({ orderBy: { periodEnd: "desc" } }),
     client.teamNote.findMany({ orderBy: { createdAt: "desc" } }),
     client.integration.findMany({ orderBy: { createdAt: "asc" } }),
     client.dataAccessContract.findMany({ orderBy: { createdAt: "asc" } }),
@@ -655,6 +786,91 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
         sentAt: message.sentAt.toISOString(),
         deliveredAt: toIso(message.deliveredAt),
         readAt: toIso(message.readAt),
+      }),
+    ),
+    replyTemplates: replyTemplates.map(
+      (template): ReplyTemplate => ({
+        id: template.id,
+        organizationId: template.organizationId,
+        title: template.title,
+        body: template.body,
+        category: template.category as ReplyTemplate["category"],
+        createdBy: template.createdBy,
+        createdAt: template.createdAt.toISOString(),
+        updatedAt: template.updatedAt.toISOString(),
+      }),
+    ),
+    conversationReminders: conversationReminders.map(
+      (reminder): ConversationReminder => ({
+        id: reminder.id,
+        organizationId: reminder.organizationId,
+        conversationId: reminder.conversationId,
+        leadId: reminder.leadId,
+        assignedTo: reminder.assignedTo ?? undefined,
+        note: reminder.note,
+        remindAt: reminder.remindAt.toISOString(),
+        status: reminder.status as ConversationReminder["status"],
+        createdBy: reminder.createdBy,
+        createdAt: reminder.createdAt.toISOString(),
+        updatedAt: reminder.updatedAt.toISOString(),
+      }),
+    ),
+    featureFlags: featureFlags.map(
+      (flag): FeatureFlag => ({
+        id: flag.id,
+        organizationId: flag.organizationId,
+        key: flag.key as FeatureFlag["key"],
+        enabled: flag.enabled,
+        updatedBy: flag.updatedBy,
+        updatedAt: flag.updatedAt.toISOString(),
+      }),
+    ),
+    outgoingWebhookEndpoints: outgoingWebhookEndpoints.map(
+      (endpoint): OutgoingWebhookEndpoint => ({
+        id: endpoint.id,
+        organizationId: endpoint.organizationId,
+        name: endpoint.name,
+        url: endpoint.url,
+        events: Array.isArray(endpoint.eventsJson)
+          ? endpoint.eventsJson.filter((item): item is string => typeof item === "string")
+          : [],
+        status: endpoint.status as OutgoingWebhookEndpoint["status"],
+        lastAttemptAt: toIso(endpoint.lastAttemptAt),
+        lastSuccessAt: toIso(endpoint.lastSuccessAt),
+        lastError: endpoint.lastError ?? undefined,
+        secretPreview: endpoint.secretPreview,
+        createdBy: endpoint.createdBy,
+        createdAt: endpoint.createdAt.toISOString(),
+        updatedAt: endpoint.updatedAt.toISOString(),
+      }),
+    ),
+    partnerApiKeys: partnerApiKeys.map(
+      (key): PartnerApiKey => ({
+        id: key.id,
+        organizationId: key.organizationId,
+        name: key.name,
+        keyPrefix: key.keyPrefix,
+        scopes: Array.isArray(key.scopesJson)
+          ? key.scopesJson.filter((item): item is string => typeof item === "string")
+          : [],
+        status: key.status as PartnerApiKey["status"],
+        lastUsedAt: toIso(key.lastUsedAt),
+        createdBy: key.createdBy,
+        createdAt: key.createdAt.toISOString(),
+      }),
+    ),
+    weeklyDigests: weeklyDigests.map(
+      (digest): WeeklyDigest => ({
+        id: digest.id,
+        organizationId: digest.organizationId,
+        periodStart: digest.periodStart.toISOString(),
+        periodEnd: digest.periodEnd.toISOString(),
+        recipientEmail: digest.recipientEmail,
+        subject: digest.subject,
+        status: digest.status as WeeklyDigest["status"],
+        metricsJson: jsonObject(digest.metricsJson),
+        createdAt: digest.createdAt.toISOString(),
+        sentAt: toIso(digest.sentAt),
       }),
     ),
     teamNotes: teamNotes.map(
@@ -845,6 +1061,12 @@ export async function writeAppStateToPrisma(
     await tx.usageEvent.deleteMany();
     await tx.usageRollup.deleteMany();
     await tx.teamNote.deleteMany();
+    await tx.weeklyDigest.deleteMany();
+    await tx.partnerApiKey.deleteMany();
+    await tx.outgoingWebhookEndpoint.deleteMany();
+    await tx.featureFlag.deleteMany();
+    await tx.conversationReminder.deleteMany();
+    await tx.replyTemplate.deleteMany();
     await tx.message.deleteMany();
     await tx.integrationEvent.deleteMany();
     await tx.teamInviteToken.deleteMany();
@@ -952,6 +1174,28 @@ export async function writeAppStateToPrisma(
         deliveredAt: toDate(message.deliveredAt),
         readAt: toDate(message.readAt),
       })),
+    });
+    await tx.replyTemplate.createMany({
+      data: (state.replyTemplates ?? []).map((template) => serializeReplyTemplate(template)),
+    });
+    await tx.conversationReminder.createMany({
+      data: (state.conversationReminders ?? []).map((reminder) =>
+        serializeConversationReminder(reminder),
+      ),
+    });
+    await tx.featureFlag.createMany({
+      data: (state.featureFlags ?? []).map((flag) => serializeFeatureFlag(flag)),
+    });
+    await tx.outgoingWebhookEndpoint.createMany({
+      data: (state.outgoingWebhookEndpoints ?? []).map((endpoint) =>
+        serializeOutgoingWebhookEndpoint(endpoint),
+      ),
+    });
+    await tx.partnerApiKey.createMany({
+      data: (state.partnerApiKeys ?? []).map((key) => serializePartnerApiKey(key)),
+    });
+    await tx.weeklyDigest.createMany({
+      data: (state.weeklyDigests ?? []).map((digest) => serializeWeeklyDigest(digest)),
     });
     await tx.teamNote.createMany({
       data: state.teamNotes.map((note) => ({

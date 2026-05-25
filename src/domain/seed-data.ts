@@ -13,7 +13,13 @@ import type {
   Membership,
   Message,
   Organization,
+  ConversationReminder,
+  FeatureFlag,
+  OutgoingWebhookEndpoint,
+  PartnerApiKey,
+  ReplyTemplate,
   Subscription,
+  WeeklyDigest,
   UsageEvent,
   UsageLimits,
   User,
@@ -409,6 +415,131 @@ export const messages: Message[] = [
   },
 ];
 
+export const replyTemplates: ReplyTemplate[] = [
+  {
+    id: "template-booking-001",
+    organizationId: defaultOrganizationId,
+    title: "Offer two appointment times",
+    body: "Hi {patientName}, we can help. Would {slotA} or {slotB} work for you?",
+    category: "booking",
+    createdBy: "user-admin",
+    createdAt: "2026-04-22T08:40:00.000Z",
+    updatedAt: "2026-04-22T08:40:00.000Z",
+  },
+  {
+    id: "template-callback-001",
+    organizationId: defaultOrganizationId,
+    title: "Ask for callback number",
+    body: "Thanks for reaching out. What is the best phone number for our coordinator to call today?",
+    category: "callback",
+    createdBy: "user-manager",
+    createdAt: "2026-04-22T08:42:00.000Z",
+    updatedAt: "2026-04-22T08:42:00.000Z",
+  },
+  {
+    id: "template-pricing-001",
+    organizationId: defaultOrganizationId,
+    title: "Price range with consult CTA",
+    body: "Pricing depends on the exam, but we can give you a clear range during a short consult. Would you like an appointment this week?",
+    category: "pricing",
+    createdBy: "user-manager",
+    createdAt: "2026-04-22T08:44:00.000Z",
+    updatedAt: "2026-04-22T08:44:00.000Z",
+  },
+];
+
+export const conversationReminders: ConversationReminder[] = [
+  {
+    id: "reminder-001",
+    organizationId: defaultOrganizationId,
+    conversationId: "conv-002",
+    leadId: "lead-002",
+    assignedTo: "user-manager",
+    note: "Call tomorrow if implant consult has not replied.",
+    remindAt: "2026-04-23T09:30:00.000Z",
+    status: "scheduled",
+    createdBy: "user-manager",
+    createdAt: "2026-04-22T09:33:00.000Z",
+    updatedAt: "2026-04-22T09:33:00.000Z",
+  },
+];
+
+export const featureFlags: FeatureFlag[] = [
+  {
+    id: "flag-sla-push",
+    organizationId: defaultOrganizationId,
+    key: "sla_push_alerts",
+    enabled: true,
+    updatedBy: "user-owner",
+    updatedAt: "2026-04-22T08:35:00.000Z",
+  },
+  {
+    id: "flag-sound-alerts",
+    organizationId: defaultOrganizationId,
+    key: "sound_alerts",
+    enabled: true,
+    updatedBy: "user-owner",
+    updatedAt: "2026-04-22T08:35:00.000Z",
+  },
+  {
+    id: "flag-webhooks",
+    organizationId: defaultOrganizationId,
+    key: "webhooks",
+    enabled: true,
+    updatedBy: "user-owner",
+    updatedAt: "2026-04-22T08:35:00.000Z",
+  },
+];
+
+export const outgoingWebhookEndpoints: OutgoingWebhookEndpoint[] = [
+  {
+    id: "webhook-zapier-001",
+    organizationId: defaultOrganizationId,
+    name: "Zapier booked-lead sync",
+    url: "https://hooks.zapier.com/hooks/catch/demo/dash-dental",
+    events: ["lead.booked", "conversation.sla_breached"],
+    status: "active",
+    lastAttemptAt: "2026-04-22T09:18:00.000Z",
+    lastSuccessAt: "2026-04-22T09:18:01.000Z",
+    secretPreview: "whsec_...a91",
+    createdBy: "user-owner",
+    createdAt: "2026-04-21T12:00:00.000Z",
+    updatedAt: "2026-04-22T09:18:01.000Z",
+  },
+];
+
+export const partnerApiKeys: PartnerApiKey[] = [
+  {
+    id: "api-key-001",
+    organizationId: defaultOrganizationId,
+    name: "Clinic BI export",
+    keyPrefix: "dd_live_8f4a",
+    scopes: ["conversations:read", "leads:read"],
+    status: "active",
+    createdBy: "user-owner",
+    createdAt: "2026-04-21T12:05:00.000Z",
+  },
+];
+
+export const weeklyDigests: WeeklyDigest[] = [
+  {
+    id: "digest-001",
+    organizationId: defaultOrganizationId,
+    periodStart: "2026-04-15T00:00:00.000Z",
+    periodEnd: "2026-04-22T00:00:00.000Z",
+    recipientEmail: "maya@smilestudio.example",
+    subject: "Dash Dental weekly recovery digest",
+    status: "draft",
+    metricsJson: {
+      unanswered: 2,
+      booked: 2,
+      revenueAtRisk: 1240,
+      averageResponseMinutes: 18,
+    },
+    createdAt: "2026-04-22T08:00:00.000Z",
+  },
+];
+
 export const integrations: Integration[] = [
   {
     id: "int-telegram",
@@ -743,6 +874,12 @@ export function getInitialAppState(): AppState {
     leadStatusHistory,
     conversations,
     messages,
+    replyTemplates,
+    conversationReminders,
+    featureFlags,
+    outgoingWebhookEndpoints,
+    partnerApiKeys,
+    weeklyDigests,
     teamNotes,
     integrations,
     dataAccessContracts,

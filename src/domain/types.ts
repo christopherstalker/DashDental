@@ -51,6 +51,15 @@ export type AutomationTrigger =
   | "outside_business_hours"
   | "sla_warning";
 
+export type ConversationAction = "mark_booked" | "archive" | "snooze";
+
+export type FeatureFlagKey =
+  | "sla_push_alerts"
+  | "sound_alerts"
+  | "reply_templates"
+  | "webhooks"
+  | "partner_api";
+
 export interface BusinessHours {
   start: string;
   end: string;
@@ -153,6 +162,81 @@ export interface Message {
   sentAt: string;
   deliveredAt?: string;
   readAt?: string;
+}
+
+export interface ReplyTemplate {
+  id: string;
+  organizationId: string;
+  title: string;
+  body: string;
+  category: "booking" | "pricing" | "callback" | "aftercare" | "custom";
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConversationReminder {
+  id: string;
+  organizationId: string;
+  conversationId: string;
+  leadId: string;
+  assignedTo?: string;
+  note: string;
+  remindAt: string;
+  status: "scheduled" | "completed" | "canceled";
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeatureFlag {
+  id: string;
+  organizationId: string;
+  key: FeatureFlagKey;
+  enabled: boolean;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export interface OutgoingWebhookEndpoint {
+  id: string;
+  organizationId: string;
+  name: string;
+  url: string;
+  events: string[];
+  status: "active" | "paused" | "failed";
+  lastAttemptAt?: string;
+  lastSuccessAt?: string;
+  lastError?: string;
+  secretPreview: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PartnerApiKey {
+  id: string;
+  organizationId: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  status: "active" | "revoked";
+  lastUsedAt?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface WeeklyDigest {
+  id: string;
+  organizationId: string;
+  periodStart: string;
+  periodEnd: string;
+  recipientEmail: string;
+  subject: string;
+  status: "draft" | "queued" | "sent" | "failed";
+  metricsJson: Record<string, unknown>;
+  createdAt: string;
+  sentAt?: string;
 }
 
 export interface TeamNote {
@@ -332,6 +416,12 @@ export interface AppState {
   leadStatusHistory: LeadStatusHistory[];
   conversations: Conversation[];
   messages: Message[];
+  replyTemplates: ReplyTemplate[];
+  conversationReminders: ConversationReminder[];
+  featureFlags: FeatureFlag[];
+  outgoingWebhookEndpoints: OutgoingWebhookEndpoint[];
+  partnerApiKeys: PartnerApiKey[];
+  weeklyDigests: WeeklyDigest[];
   teamNotes: TeamNote[];
   integrations: Integration[];
   dataAccessContracts: DataAccessContract[];

@@ -238,6 +238,27 @@ export function sanitizeRuntimeState(state: AppState): AppState {
       conversationIds.has(message.conversationId) &&
       !DEMO_MESSAGE_IDS.has(message.id),
   );
+  const replyTemplates = (state.replyTemplates ?? []).filter((template) =>
+    organizationIds.has(template.organizationId),
+  );
+  const conversationReminders = (state.conversationReminders ?? []).filter(
+    (reminder) =>
+      organizationIds.has(reminder.organizationId) &&
+      conversationIds.has(reminder.conversationId) &&
+      leadIds.has(reminder.leadId),
+  );
+  const featureFlags = (state.featureFlags ?? []).filter((flag) =>
+    organizationIds.has(flag.organizationId),
+  );
+  const outgoingWebhookEndpoints = (state.outgoingWebhookEndpoints ?? []).filter((endpoint) =>
+    organizationIds.has(endpoint.organizationId),
+  );
+  const partnerApiKeys = (state.partnerApiKeys ?? []).filter((key) =>
+    organizationIds.has(key.organizationId),
+  );
+  const weeklyDigests = (state.weeklyDigests ?? []).filter((digest) =>
+    organizationIds.has(digest.organizationId),
+  );
   const teamNotes = (state.teamNotes ?? []).filter(
     (note) =>
       organizationIds.has(note.organizationId) &&
@@ -328,6 +349,12 @@ export function sanitizeRuntimeState(state: AppState): AppState {
     leadStatusHistory,
     conversations,
     messages,
+    replyTemplates,
+    conversationReminders,
+    featureFlags,
+    outgoingWebhookEndpoints,
+    partnerApiKeys,
+    weeklyDigests,
     teamNotes,
     integrations,
     dataAccessContracts,

@@ -44,6 +44,13 @@ const comparisonRows = [
   ["Launch help", "Guided setup", "Priority onboarding", "Rollout planning"],
 ] as const;
 
+const monetizationRows = [
+  ["Annual billing", "17% discount for clinics that commit after the beta workflow is proven."],
+  ["Guided onboarding", "$200-500 setup fee for channel connection, templates, and staff training."],
+  ["Extra seats", "$15 per additional front-desk or manager seat beyond plan limit."],
+  ["Enterprise", "$500+/mo for clinic groups, white-label needs, and rollout support."],
+] as const;
+
 const trustCards = [
   {
     icon: Target,
@@ -130,6 +137,29 @@ export default function PricingPage() {
             plan limits, upgrade manually, or pause paid actions without losing read
             access to core setup and billing context.
           </p>
+        </section>
+
+        <section className={styles.section}>
+          <SectionHeader
+            eyebrow="Commercial model"
+            title="Keep pricing simple, then charge for launch effort and scale."
+          >
+            Dash Dental monetization should match the work clinics actually value:
+            annual certainty, guided onboarding, extra staff seats, and clinic-group
+            rollout support.
+          </SectionHeader>
+          <div className={styles.comparisonWrap}>
+            <table className={styles.comparisonTable}>
+              <tbody>
+                {monetizationRows.map(([label, value]) => (
+                  <tr key={label}>
+                    <th scope="row">{label}</th>
+                    <td>{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className={styles.section}>

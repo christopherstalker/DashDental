@@ -186,6 +186,13 @@ async function readAppStateFromFile(): Promise<AppState> {
         ...parsed,
         dataAccessContracts: parsed.dataAccessContracts ?? fallback.dataAccessContracts,
         inviteTokens: parsed.inviteTokens ?? fallback.inviteTokens ?? [],
+        replyTemplates: parsed.replyTemplates ?? fallback.replyTemplates ?? [],
+        conversationReminders: parsed.conversationReminders ?? fallback.conversationReminders ?? [],
+        featureFlags: parsed.featureFlags ?? fallback.featureFlags ?? [],
+        outgoingWebhookEndpoints:
+          parsed.outgoingWebhookEndpoints ?? fallback.outgoingWebhookEndpoints ?? [],
+        partnerApiKeys: parsed.partnerApiKeys ?? fallback.partnerApiKeys ?? [],
+        weeklyDigests: parsed.weeklyDigests ?? fallback.weeklyDigests ?? [],
         teamNotes: parsed.teamNotes ?? fallback.teamNotes,
       } as AppState),
   );

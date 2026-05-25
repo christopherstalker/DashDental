@@ -10,6 +10,7 @@ import type {
   AiInsight,
   AppState,
   AutomationRule,
+  ConversationAction,
   IntegrationStatus,
   Lead,
   LeadStatus,
@@ -34,6 +35,10 @@ interface CreateLeadInput {
   messageText?: string;
   actorUserId?: string;
   nowIso?: string;
+}
+
+function addHoursIso(value: string, hours: number): string {
+  return new Date(Date.parse(value) + hours * 60 * 60_000).toISOString();
 }
 
 function createRuntimeId(prefix: string): string {
@@ -394,6 +399,277 @@ export function sendConversationMessage(
   });
 
   return nextState;
+}
+
+export function assignConversation(
+  state: AppState,
+  input: {
+    conversationId: string;
+    assignedTo?: string;
+    actorUserId?: string;
+    nowIso?: string;
+  },
+): AppState {
+  const conversation = state.conversations.find((item) => item.id === input.conversationId);
+  if (!conversation) {
+    return state;
+  }
+
+  const lead = state.leads.find((item) => item.id === conversation.leadId);
+  if (!lead) {
+    return state;
+  }
+
+  const nowIso = input.nowIso ?? new Date().toISOString();
+  let nextState: AppState = {
+    ...state,
+    leads: state.leads.map((item) =>
+      item.id === lead.id
+        ? {
+            ...item,
+            assignedTo: input.assignedTo,
+            updatedAt: nowIso,
+          }
+        : item,
+    ),
+  };
+
+  nextState = addAudit(nextState, {
+    organizationId: conversation.organizationId,
+    actorUserId: input.actorUserId,
+    action: "conversation.assigned",
+    entityType: "conversation",
+    entityId: conversation.id,
+    metadataJson: {
+      previousAssignee: lead.assignedTo ?? null,
+      assignedTo: input.assignedTo ?? null,
+    },
+  });
+
+  return nextState;
+}
+
+export function bulkApplyConversationAction(
+  state: AppState,
+  input: {
+    conversationIds: string[];
+    action: ConversationAction;
+    actorUserId?: string;
+    nowIso?: string;
+    reminderNote?: string;
+    remindAt?: string;
+  },
+): AppState {
+  const uniqueIds = [...new Set(input.conversationIds)].filter(Boolean);
+  let nextState = state;
+
+  for (const conversationId of uniqueIds) {
+    const conversation = nextState.conversations.find((item) => item.id === conversationId);
+    const lead = conversation
+      ? nextState.leads.find((item) => item.id === conversation.leadId)
+      : undefined;
+
+    if (!conversation || !lead) {
+      continue;
+    }
+
+    if (input.action === "mark_booked") {
+      nextState = updateLeadStatus(nextState, {
+        leadId: lead.id,
+        status: "booked",
+        reason: "Bulk action: marked booked",
+        actorUserId: input.actorUserId,
+        nowIso: input.nowIso,
+      });
+      continue;
+    }
+
+    if (input.action === "archive") {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      nextState = {
+        ...nextState,
+        conversations: nextState.conversations.map((item) =>
+          item.id === conversation.id
+            ? { ...item, status: "closed", lastMessageAt: nowIso }
+            : item,
+        ),
+      };
+      nextState = addAudit(nextState, {
+        organizationId: conversation.organizationId,
+        actorUserId: input.actorUserId,
+        action: "conversation.archived",
+        entityType: "conversation",
+        entityId: conversation.id,
+        metadataJson: { bulk: true },
+      });
+      continue;
+    }
+
+    nextState = snoozeConversation(nextState, {
+      conversationId,
+      note: input.reminderNote ?? "Follow up with patient",
+      remindAt: input.remindAt,
+      actorUserId: input.actorUserId,
+      nowIso: input.nowIso,
+    });
+  }
+
+  return nextState;
+}
+
+export function snoozeConversation(
+  state: AppState,
+  input: {
+    conversationId: string;
+    note: string;
+    remindAt?: string;
+    actorUserId?: string;
+    nowIso?: string;
+  },
+): AppState {
+  const conversation = state.conversations.find((item) => item.id === input.conversationId);
+  const lead = conversation
+    ? state.leads.find((item) => item.id === conversation.leadId)
+    : undefined;
+
+  if (!conversation || !lead) {
+    return state;
+  }
+
+  const nowIso = input.nowIso ?? new Date().toISOString();
+  const reminder = {
+    id: createRuntimeId("reminder"),
+    organizationId: conversation.organizationId,
+    conversationId: conversation.id,
+    leadId: lead.id,
+    assignedTo: lead.assignedTo,
+    note: input.note.trim() || "Follow up with patient",
+    remindAt: input.remindAt ?? addHoursIso(nowIso, 24),
+    status: "scheduled" as const,
+    createdBy: input.actorUserId ?? "system",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+  };
+
+  let nextState: AppState = {
+    ...state,
+    conversationReminders: [reminder, ...(state.conversationReminders ?? [])],
+    conversations: state.conversations.map((item) =>
+      item.id === conversation.id ? { ...item, status: "closed", lastMessageAt: nowIso } : item,
+    ),
+  };
+
+  nextState = addAudit(nextState, {
+    organizationId: conversation.organizationId,
+    actorUserId: input.actorUserId,
+    action: "conversation.snoozed",
+    entityType: "conversation",
+    entityId: conversation.id,
+    metadataJson: {
+      remindAt: reminder.remindAt,
+      note: reminder.note,
+    },
+  });
+
+  return nextState;
+}
+
+export function updateRecentOutboundMessage(
+  state: AppState,
+  input: {
+    conversationId: string;
+    messageId: string;
+    text?: string;
+    undo?: boolean;
+    actorUserId?: string;
+    nowIso?: string;
+  },
+): AppState {
+  const message = state.messages.find(
+    (item) =>
+      item.id === input.messageId &&
+      item.conversationId === input.conversationId &&
+      item.direction === "outbound",
+  );
+  const conversation = state.conversations.find((item) => item.id === input.conversationId);
+
+  if (!message || !conversation) {
+    return state;
+  }
+
+  const nowIso = input.nowIso ?? new Date().toISOString();
+  const ageMs = Date.parse(nowIso) - Date.parse(message.sentAt);
+  if (ageMs > 5 * 60_000) {
+    return state;
+  }
+
+  const nextMessages = input.undo
+    ? state.messages.filter((item) => item.id !== message.id)
+    : state.messages.map((item) =>
+        item.id === message.id
+          ? {
+              ...item,
+              text: input.text?.trim() || item.text,
+              payloadJson: {
+                ...(item.payloadJson ?? {}),
+                editedAt: nowIso,
+                originalText: item.payloadJson?.originalText ?? item.text,
+              },
+            }
+          : item,
+      );
+
+  let nextState: AppState = {
+    ...state,
+    messages: nextMessages,
+  };
+
+  nextState = addAudit(nextState, {
+    organizationId: conversation.organizationId,
+    actorUserId: input.actorUserId,
+    action: input.undo ? "message.undo_send" : "message.edited",
+    entityType: "message",
+    entityId: message.id,
+    metadataJson: {
+      conversationId: conversation.id,
+      withinUndoWindow: true,
+    },
+  });
+
+  return nextState;
+}
+
+export function upsertReplyTemplate(
+  state: AppState,
+  input: {
+    organizationId: string;
+    title: string;
+    body: string;
+    category?: "booking" | "pricing" | "callback" | "aftercare" | "custom";
+    actorUserId?: string;
+    nowIso?: string;
+  },
+): AppState {
+  const nowIso = input.nowIso ?? new Date().toISOString();
+  const template = {
+    id: createRuntimeId("template"),
+    organizationId: input.organizationId,
+    title: input.title.trim(),
+    body: input.body.trim(),
+    category: input.category ?? "custom",
+    createdBy: input.actorUserId ?? "system",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+  };
+
+  if (!template.title || !template.body) {
+    return state;
+  }
+
+  return {
+    ...state,
+    replyTemplates: [template, ...(state.replyTemplates ?? [])],
+  };
 }
 
 export function toggleAutomationRule(
