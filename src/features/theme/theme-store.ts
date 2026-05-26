@@ -5,8 +5,11 @@ import { useSyncExternalStore } from "react";
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedThemeMode = "light" | "dark";
 
-const STORAGE_KEY = "dental-recovery:theme:v3";
-const LEGACY_STORAGE_KEY = "dental-recovery:theme:v2";
+const STORAGE_KEY = "dd-theme";
+const LEGACY_STORAGE_KEYS = [
+  "dental-recovery:theme:v3",
+  "dental-recovery:theme:v2",
+] as const;
 const CHANGE_EVENT = "dental-recovery:theme-change";
 const DEFAULT_THEME: ThemeMode = "dark";
 
@@ -34,9 +37,13 @@ function readStoredTheme(): ThemeMode | null {
   try {
     const stored =
       window.localStorage.getItem(STORAGE_KEY) ??
-      window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      LEGACY_STORAGE_KEYS.map((key) => window.localStorage.getItem(key)).find(Boolean);
     if (!stored) {
       return null;
+    }
+
+    if (isThemeMode(stored)) {
+      return stored;
     }
 
     const parsed = JSON.parse(stored) as { mode?: unknown };
@@ -69,14 +76,10 @@ export function setPreferredThemeMode(mode: ThemeMode) {
     return;
   }
 
-  window.localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      mode,
-      version: 2,
-    }),
-  );
-  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+  window.localStorage.setItem(STORAGE_KEY, mode);
+  for (const key of LEGACY_STORAGE_KEYS) {
+    window.localStorage.removeItem(key);
+  }
   applyThemeMode(mode);
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: mode }));
 }
@@ -87,7 +90,7 @@ function subscribe(callback: () => void) {
   }
 
   function handleStorage(event: StorageEvent) {
-    if (event.key === STORAGE_KEY) {
+    if (event.key === STORAGE_KEY || LEGACY_STORAGE_KEYS.includes(event.key as never)) {
       callback();
     }
   }

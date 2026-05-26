@@ -5,7 +5,9 @@ import type {
   AutomationRule,
   BillingEvent,
   Conversation,
+  ConversationReminder,
   DataAccessContract,
+  FeatureFlag,
   Integration,
   IntegrationEvent,
   Lead,
@@ -13,17 +15,16 @@ import type {
   Membership,
   Message,
   Organization,
-  ConversationReminder,
-  FeatureFlag,
   OutgoingWebhookEndpoint,
   PartnerApiKey,
   ReplyTemplate,
   Subscription,
-  WeeklyDigest,
   UsageEvent,
   UsageLimits,
   User,
   TeamNote,
+  TeamInviteToken,
+  WeeklyDigest,
 } from "./types";
 
 export const demoNow = "2026-04-22T09:30:00.000Z";
@@ -415,131 +416,6 @@ export const messages: Message[] = [
   },
 ];
 
-export const replyTemplates: ReplyTemplate[] = [
-  {
-    id: "template-booking-001",
-    organizationId: defaultOrganizationId,
-    title: "Offer two appointment times",
-    body: "Hi {patientName}, we can help. Would {slotA} or {slotB} work for you?",
-    category: "booking",
-    createdBy: "user-admin",
-    createdAt: "2026-04-22T08:40:00.000Z",
-    updatedAt: "2026-04-22T08:40:00.000Z",
-  },
-  {
-    id: "template-callback-001",
-    organizationId: defaultOrganizationId,
-    title: "Ask for callback number",
-    body: "Thanks for reaching out. What is the best phone number for our coordinator to call today?",
-    category: "callback",
-    createdBy: "user-manager",
-    createdAt: "2026-04-22T08:42:00.000Z",
-    updatedAt: "2026-04-22T08:42:00.000Z",
-  },
-  {
-    id: "template-pricing-001",
-    organizationId: defaultOrganizationId,
-    title: "Price range with consult CTA",
-    body: "Pricing depends on the exam, but we can give you a clear range during a short consult. Would you like an appointment this week?",
-    category: "pricing",
-    createdBy: "user-manager",
-    createdAt: "2026-04-22T08:44:00.000Z",
-    updatedAt: "2026-04-22T08:44:00.000Z",
-  },
-];
-
-export const conversationReminders: ConversationReminder[] = [
-  {
-    id: "reminder-001",
-    organizationId: defaultOrganizationId,
-    conversationId: "conv-002",
-    leadId: "lead-002",
-    assignedTo: "user-manager",
-    note: "Call tomorrow if implant consult has not replied.",
-    remindAt: "2026-04-23T09:30:00.000Z",
-    status: "scheduled",
-    createdBy: "user-manager",
-    createdAt: "2026-04-22T09:33:00.000Z",
-    updatedAt: "2026-04-22T09:33:00.000Z",
-  },
-];
-
-export const featureFlags: FeatureFlag[] = [
-  {
-    id: "flag-sla-push",
-    organizationId: defaultOrganizationId,
-    key: "sla_push_alerts",
-    enabled: true,
-    updatedBy: "user-owner",
-    updatedAt: "2026-04-22T08:35:00.000Z",
-  },
-  {
-    id: "flag-sound-alerts",
-    organizationId: defaultOrganizationId,
-    key: "sound_alerts",
-    enabled: true,
-    updatedBy: "user-owner",
-    updatedAt: "2026-04-22T08:35:00.000Z",
-  },
-  {
-    id: "flag-webhooks",
-    organizationId: defaultOrganizationId,
-    key: "webhooks",
-    enabled: true,
-    updatedBy: "user-owner",
-    updatedAt: "2026-04-22T08:35:00.000Z",
-  },
-];
-
-export const outgoingWebhookEndpoints: OutgoingWebhookEndpoint[] = [
-  {
-    id: "webhook-zapier-001",
-    organizationId: defaultOrganizationId,
-    name: "Zapier booked-lead sync",
-    url: "https://hooks.zapier.com/hooks/catch/demo/dash-dental",
-    events: ["lead.booked", "conversation.sla_breached"],
-    status: "active",
-    lastAttemptAt: "2026-04-22T09:18:00.000Z",
-    lastSuccessAt: "2026-04-22T09:18:01.000Z",
-    secretPreview: "whsec_...a91",
-    createdBy: "user-owner",
-    createdAt: "2026-04-21T12:00:00.000Z",
-    updatedAt: "2026-04-22T09:18:01.000Z",
-  },
-];
-
-export const partnerApiKeys: PartnerApiKey[] = [
-  {
-    id: "api-key-001",
-    organizationId: defaultOrganizationId,
-    name: "Clinic BI export",
-    keyPrefix: "dd_live_8f4a",
-    scopes: ["conversations:read", "leads:read"],
-    status: "active",
-    createdBy: "user-owner",
-    createdAt: "2026-04-21T12:05:00.000Z",
-  },
-];
-
-export const weeklyDigests: WeeklyDigest[] = [
-  {
-    id: "digest-001",
-    organizationId: defaultOrganizationId,
-    periodStart: "2026-04-15T00:00:00.000Z",
-    periodEnd: "2026-04-22T00:00:00.000Z",
-    recipientEmail: "maya@smilestudio.example",
-    subject: "Dash Dental weekly recovery digest",
-    status: "draft",
-    metricsJson: {
-      unanswered: 2,
-      booked: 2,
-      revenueAtRisk: 1240,
-      averageResponseMinutes: 18,
-    },
-    createdAt: "2026-04-22T08:00:00.000Z",
-  },
-];
-
 export const integrations: Integration[] = [
   {
     id: "int-telegram",
@@ -644,23 +520,6 @@ export const subscriptions: Subscription[] = [
     externalSubscriptionId: "sub_demo_001",
   },
 ];
-
-function getLaunchReadySubscriptions(now = new Date()): Subscription[] {
-  const start = new Date(now);
-  start.setUTCDate(start.getUTCDate() - 1);
-  const end = new Date(now);
-  end.setUTCDate(end.getUTCDate() + 14);
-
-  return subscriptions.map((subscription) =>
-    subscription.organizationId === defaultOrganizationId
-      ? {
-          ...subscription,
-          currentPeriodStart: start.toISOString(),
-          currentPeriodEnd: end.toISOString(),
-        }
-      : subscription,
-  );
-}
 
 export const automationRules: AutomationRule[] = [
   {
@@ -864,12 +723,147 @@ export const teamNotes: TeamNote[] = [
   },
 ];
 
+export const inviteTokens: TeamInviteToken[] = [];
+
+export const replyTemplates: ReplyTemplate[] = [
+  {
+    id: "tpl-booking-001",
+    organizationId: defaultOrganizationId,
+    title: "Offer two appointment windows",
+    body: "Hi {patientName}, we can help. Would today at 16:30 or tomorrow at 10:00 work for a quick visit?",
+    category: "booking",
+    createdBy: "user-manager",
+    createdAt: "2026-04-22T08:00:00.000Z",
+    updatedAt: "2026-04-22T08:00:00.000Z",
+  },
+  {
+    id: "tpl-pricing-001",
+    organizationId: defaultOrganizationId,
+    title: "Price question",
+    body: "Hi {patientName}, pricing depends on the case. We can book a short consult and confirm options before treatment.",
+    category: "pricing",
+    createdBy: "user-admin",
+    createdAt: "2026-04-22T08:05:00.000Z",
+    updatedAt: "2026-04-22T08:05:00.000Z",
+  },
+  {
+    id: "tpl-callback-001",
+    organizationId: defaultOrganizationId,
+    title: "Callback tomorrow",
+    body: "Hi {patientName}, we can call you tomorrow morning. What phone number is best?",
+    category: "callback",
+    createdBy: "user-manager",
+    createdAt: "2026-04-22T08:10:00.000Z",
+    updatedAt: "2026-04-22T08:10:00.000Z",
+  },
+];
+
+export const conversationReminders: ConversationReminder[] = [
+  {
+    id: "reminder-001",
+    organizationId: defaultOrganizationId,
+    conversationId: "conv-002",
+    leadId: "lead-002",
+    assignedTo: "user-manager",
+    note: "Call back tomorrow if no reply.",
+    remindAt: "2026-04-23T10:00:00.000Z",
+    status: "scheduled",
+    createdBy: "user-manager",
+    createdAt: "2026-04-22T09:18:00.000Z",
+    updatedAt: "2026-04-22T09:18:00.000Z",
+  },
+];
+
+export const featureFlags: FeatureFlag[] = [
+  {
+    id: "flag-sla-push",
+    organizationId: defaultOrganizationId,
+    key: "sla_push_alerts",
+    enabled: true,
+    updatedBy: "user-admin",
+    updatedAt: "2026-04-22T08:20:00.000Z",
+  },
+  {
+    id: "flag-sound-alerts",
+    organizationId: defaultOrganizationId,
+    key: "sound_alerts",
+    enabled: true,
+    updatedBy: "user-admin",
+    updatedAt: "2026-04-22T08:21:00.000Z",
+  },
+  {
+    id: "flag-templates",
+    organizationId: defaultOrganizationId,
+    key: "reply_templates",
+    enabled: true,
+    updatedBy: "user-admin",
+    updatedAt: "2026-04-22T08:22:00.000Z",
+  },
+  {
+    id: "flag-webhooks",
+    organizationId: defaultOrganizationId,
+    key: "webhooks",
+    enabled: true,
+    updatedBy: "user-owner",
+    updatedAt: "2026-04-22T08:23:00.000Z",
+  },
+];
+
+export const outgoingWebhookEndpoints: OutgoingWebhookEndpoint[] = [
+  {
+    id: "webhook-zapier-001",
+    organizationId: defaultOrganizationId,
+    name: "Zapier booked appointment sync",
+    url: "https://hooks.zapier.com/hooks/catch/demo/dash-dental",
+    events: ["conversation.booked", "sla.breached"],
+    status: "active",
+    lastAttemptAt: "2026-04-22T09:20:00.000Z",
+    lastSuccessAt: "2026-04-22T09:20:00.000Z",
+    secretPreview: "whsec_...demo",
+    createdBy: "user-owner",
+    createdAt: "2026-04-22T08:30:00.000Z",
+    updatedAt: "2026-04-22T09:20:00.000Z",
+  },
+];
+
+export const partnerApiKeys: PartnerApiKey[] = [
+  {
+    id: "api-key-001",
+    organizationId: defaultOrganizationId,
+    name: "Clinic partner dashboard",
+    keyPrefix: "dd_live_demo",
+    scopes: ["conversations:read", "analytics:read"],
+    status: "active",
+    lastUsedAt: "2026-04-22T09:10:00.000Z",
+    createdBy: "user-owner",
+    createdAt: "2026-04-22T08:35:00.000Z",
+  },
+];
+
+export const weeklyDigests: WeeklyDigest[] = [
+  {
+    id: "digest-001",
+    organizationId: defaultOrganizationId,
+    periodStart: "2026-04-15T00:00:00.000Z",
+    periodEnd: "2026-04-22T00:00:00.000Z",
+    recipientEmail: "maya@smilestudio.example",
+    subject: "Dash Dental weekly owner digest",
+    status: "queued",
+    metricsJson: {
+      booked: 2,
+      responseRate: 50,
+      revenueAtRisk: 1860,
+    },
+    createdAt: "2026-04-22T08:40:00.000Z",
+  },
+];
+
 export function getInitialAppState(): AppState {
   return {
     users,
     organizations,
     memberships,
-    inviteTokens: [],
+    inviteTokens,
     leads,
     leadStatusHistory,
     conversations,
@@ -883,7 +877,7 @@ export function getInitialAppState(): AppState {
     teamNotes,
     integrations,
     dataAccessContracts,
-    subscriptions: getLaunchReadySubscriptions(),
+    subscriptions,
     automationRules,
     aiInsights,
     usageLimits,

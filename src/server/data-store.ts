@@ -178,7 +178,7 @@ async function readAppStateFromFile(): Promise<AppState> {
   await ensureStateFile();
   const stateFilePath = getStateFilePath();
   const file = await fs.readFile(stateFilePath, "utf8");
-  const parsed = JSON.parse(file) as Partial<AppState>;
+  const parsed = JSON.parse(file.replace(/^\uFEFF/, "")) as Partial<AppState>;
   const fallback = getRuntimeSeedState();
   return applyOAuthBootstrapUsers(
       sanitizeRuntimeState({

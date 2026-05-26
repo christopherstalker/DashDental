@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { SiteShell } from "@/features/design-system/components/site-shell";
-import { DashDentalHomepage } from "@/features/marketing/components/dash-dental-homepage";
+import { DashDentalRedesignLanding } from "@/components/landing/dash-dental-redesign";
 
 export const metadata: Metadata = {
   title: "Dash Dental - AI revenue recovery for dental clinics",
@@ -33,9 +32,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return (
-    <SiteShell>
-      <DashDentalHomepage />
-    </SiteShell>
-  );
+  return <DashDentalRedesignLanding />;
 }

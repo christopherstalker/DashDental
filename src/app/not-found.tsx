@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
-import { SiteShell } from "@/features/design-system/components/site-shell";
-import { MarketingFooter } from "@/features/marketing/components/marketing-footer";
-import { MarketingNav } from "@/features/marketing/components/marketing-nav";
 
 export default function NotFound() {
   return (
-    <SiteShell>
-      <main className="recovery-landing dash-marketing safe-fallback-page">
-      <MarketingNav launchPage="/404" />
-      <section className="safe-fallback-card safe-fallback-card-marketing">
+    <main className="safe-fallback-page">
+      <section className="safe-fallback-card">
         <div className="safe-fallback-mark">
           <ShieldCheck size={22} />
         </div>
@@ -29,8 +24,6 @@ export default function NotFound() {
           </Link>
         </div>
       </section>
-      <MarketingFooter />
     </main>
-    </SiteShell>
   );
 }
