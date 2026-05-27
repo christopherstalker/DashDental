@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageRuntime } from "@/features/i18n/components/language-runtime";
 import { LaunchEventTracker } from "@/features/launch-analytics/components/launch-event-tracker";
+import { PwaRuntime } from "@/features/pwa/components/pwa-runtime";
 import { ThemeRuntime } from "@/features/theme/components/theme-runtime";
 import "./globals.css";
 import "@/styles/tokens.css";
@@ -73,6 +74,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeRuntime />
+        <PwaRuntime />
         <LanguageRuntime />
         <LaunchEventTracker />
         {children}

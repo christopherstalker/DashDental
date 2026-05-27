@@ -1,12 +1,16 @@
 import { ApiError } from "./api-error";
 
-type PublicAuthAction = "login" | "register";
+type PublicAuthAction = "login" | "password_reset" | "register";
 
 const windowMs = 60_000;
 const limits: Record<PublicAuthAction, { limit: number; message: string }> = {
   login: {
     limit: 60,
     message: "Too many login attempts. Wait a minute and try again.",
+  },
+  password_reset: {
+    limit: 10,
+    message: "Too many password reset requests. Wait a minute and try again.",
   },
   register: {
     limit: 8,

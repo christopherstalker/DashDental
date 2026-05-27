@@ -69,10 +69,12 @@ export interface BusinessHours {
 export interface User {
   id: string;
   email: string;
+  emailVerifiedAt?: string;
   name: string;
   avatar: string;
   status: "active" | "invited" | "disabled";
   lastLoginAt: string;
+  sessionVersion?: number;
 }
 
 export interface Organization {

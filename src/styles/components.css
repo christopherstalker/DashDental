@@ -2907,12 +2907,44 @@ html[data-theme] ::-webkit-scrollbar-thumb {
 
 .account-workspace-header p,
 .account-workspace-card p,
-.account-no-workspace p {
+.account-no-workspace p,
+.account-security-panel p {
   max-width: 680px;
   margin: var(--space-2) 0 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
   line-height: var(--line-sm);
+}
+
+.account-security-panel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: var(--radius-lg);
+  background: var(--accent-glow);
+  padding: var(--space-4);
+}
+
+.account-security-panel h2 {
+  margin: var(--space-1) 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--line-lg);
+}
+
+.account-security-panel strong,
+.account-security-panel a {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .account-workspace-grid {
@@ -3747,6 +3779,145 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   color: var(--status-warm);
 }
 
+.ddr-channel-card-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ddr-channel-card-actions .ddr-button {
+  width: fit-content;
+  height: 32px;
+  padding-inline: var(--space-3);
+}
+
+.ddr-dashboard-shell .integration-connect-stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ddr-dashboard-shell .integration-connect-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: var(--space-4);
+}
+
+.ddr-dashboard-shell .integration-config-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  scroll-margin-top: 80px;
+}
+
+html[data-theme="dark"] .ddr-dashboard-shell .integration-config-card {
+  backdrop-filter: blur(12px);
+}
+
+.ddr-dashboard-shell .integration-config-card:hover {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: var(--bg-card-hover);
+}
+
+.ddr-dashboard-shell .integration-config-card .primary-button,
+.ddr-dashboard-shell .integration-config-card .secondary-button {
+  width: fit-content;
+}
+
+.ddr-dashboard-shell .integration-config-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.ddr-dashboard-shell .provider-icon-badge {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: var(--radius-md);
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.ddr-dashboard-shell .integration-config-head h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.ddr-dashboard-shell .integration-config-head p,
+.ddr-dashboard-shell .integration-feedback,
+.ddr-dashboard-shell .integration-checkbox,
+.ddr-dashboard-shell .integration-field span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--line-xs);
+}
+
+.ddr-dashboard-shell .integration-config-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ddr-dashboard-shell .integration-field input {
+  min-height: 38px;
+  padding: 0 var(--space-3);
+}
+
+.ddr-dashboard-shell .integration-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ddr-dashboard-shell .integration-feedback {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  padding: var(--space-3) var(--space-4);
+}
+
+.ddr-dashboard-shell .integration-feedback.success {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: var(--status-ok-bg);
+  color: var(--status-ok);
+}
+
+.ddr-dashboard-shell .integration-feedback.error {
+  border-color: rgba(239, 68, 68, 0.28);
+  background: var(--status-alert-bg);
+  color: var(--status-alert);
+}
+
+.ddr-dashboard-shell .integration-copyable {
+  background: var(--bg-input);
+}
+
+.ddr-dashboard-shell .integration-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ddr-dashboard-shell .integration-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
 .ddr-switch {
   position: relative;
   width: 42px;
@@ -4563,6 +4734,10 @@ html[data-theme] ::-webkit-scrollbar-thumb {
     flex-direction: column;
   }
 
+  .account-security-panel {
+    flex-direction: column;
+  }
+
   .account-workspace-grid {
     grid-template-columns: 1fr;
   }
@@ -4902,6 +5077,65 @@ html[data-theme] .login-shell[class] .premium-auth-form-column :is(.eyebrow, .lo
 
 html[data-theme] .login-shell[class] .premium-auth-form-column :is(.auth-card-heading p:not(.eyebrow), .registration-proof-list span, .auth-alt-action, .login-divider) {
   color: var(--text-muted) !important;
+}
+
+html[data-theme] .login-shell[class] .auth-inline-link {
+  width: fit-content;
+  color: var(--text-secondary) !important;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+html[data-theme] .login-shell[class] .auth-inline-link:hover {
+  color: var(--accent) !important;
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: var(--radius-lg);
+  background: var(--status-ok-bg);
+  padding: var(--space-4);
+  color: var(--text-secondary);
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel.error {
+  border-color: rgba(239, 68, 68, 0.28);
+  background: var(--status-alert-bg);
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel.error svg {
+  color: var(--status-alert);
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+html[data-theme] .login-shell[class] .auth-success-panel a {
+  display: inline-block;
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 html[data-theme] .login-shell[class] .premium-auth-form-column :is(.login-field input, .login-field select) {

@@ -301,6 +301,7 @@ export function IntegrationConnectionPanel({
 
       <div className="integration-connect-grid">
         <MessagingCard
+          anchorId="telegram"
           guide={guides.get("telegram")}
           icon={<Send size={18} />}
           integration={integrationFor("telegram")}
@@ -331,6 +332,7 @@ export function IntegrationConnectionPanel({
         </MessagingCard>
 
         <MessagingCard
+          anchorId="whatsapp"
           guide={guides.get("whatsapp")}
           icon={<MessageCircle size={18} />}
           integration={integrationFor("whatsapp")}
@@ -373,6 +375,7 @@ export function IntegrationConnectionPanel({
         </MessagingCard>
 
         <MessagingCard
+          anchorId="instagram"
           guide={guides.get("instagram")}
           icon={<Camera size={18} />}
           integration={integrationFor("instagram")}
@@ -416,7 +419,7 @@ export function IntegrationConnectionPanel({
           />
         </MessagingCard>
 
-        <section className="integration-config-card">
+        <section className="integration-config-card" id="web_form">
           <ConnectionCardHeader
             icon={<Globe2 size={18} />}
             integration={integrationFor("web_form")}
@@ -452,7 +455,7 @@ export function IntegrationConnectionPanel({
           </form>
         </section>
 
-        <section className="integration-config-card">
+        <section className="integration-config-card" id="clinic_database">
           <ConnectionCardHeader
             icon={<Database size={18} />}
             integration={integrationFor("clinic_database")}
@@ -511,6 +514,7 @@ export function IntegrationConnectionPanel({
 }
 
 function MessagingCard({
+  anchorId,
   children,
   guide,
   icon,
@@ -519,6 +523,7 @@ function MessagingCard({
   onSubmit,
   title,
 }: {
+  anchorId: MessagingProvider;
   children: ReactNode;
   guide?: MessagingSetupGuide;
   icon: ReactNode;
@@ -530,7 +535,7 @@ function MessagingCard({
   const languageCode = useCurrentLanguageCode();
 
   return (
-    <section className="integration-config-card">
+    <section className="integration-config-card" id={anchorId}>
       <ConnectionCardHeader icon={icon} integration={integration} title={title} />
       {guide ? (
         <>

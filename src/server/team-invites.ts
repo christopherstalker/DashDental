@@ -280,8 +280,10 @@ export function acceptTeamInviteInState(
         ? {
             ...item,
             avatar: sanitizeAvatar(name),
+            emailVerifiedAt: item.emailVerifiedAt ?? nowIso,
             lastLoginAt: nowIso,
             name,
+            sessionVersion: item.sessionVersion ?? 0,
             status: "active",
           }
         : item,

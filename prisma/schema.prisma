@@ -130,10 +130,12 @@ enum DataLifecycleRunStatus {
 model User {
   id           String       @id @default(cuid())
   email        String       @unique
+  emailVerifiedAt DateTime?
   name         String
   avatar       String?
   status       String       @default("active")
   lastLoginAt  DateTime?
+  sessionVersion Int        @default(0)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   memberships  Membership[]
@@ -143,10 +145,19 @@ model User {
 }
 
 model UserCredential {
-  userId       String   @id
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  userId                           String    @id
+  passwordHash                     String    @default("")
+  emailVerificationTokenHash       String?   @unique
+  emailVerificationExpiresAt       DateTime?
+  emailVerificationSentAt          DateTime?
+  passwordResetTokenHash           String?   @unique
+  passwordResetExpiresAt           DateTime?
+  passwordResetRequestedAt         DateTime?
+  createdAt                        DateTime  @default(now())
+  updatedAt                        DateTime  @updatedAt
+
+  @@index([emailVerificationExpiresAt])
+  @@index([passwordResetExpiresAt])
 }
 
 model Organization {

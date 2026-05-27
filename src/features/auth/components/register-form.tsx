@@ -80,8 +80,11 @@ export function RegisterForm({ turnstileSiteKey }: { turnstileSiteKey?: string }
         target: "/workspaces",
       });
 
-      // Give the browser a moment to commit the Set-Cookie header before navigation.
+      // Give the browser a moment to commit the Set-Cookie header before requesting verification.
       await new Promise((resolve) => window.setTimeout(resolve, 50));
+      await fetch("/api/v1/auth/email-verification/request", {
+        method: "POST",
+      }).catch(() => undefined);
       window.location.assign("/workspaces");
     } catch {
       setError("Signup request did not reach Dash Dental. Check the connection and try again.");

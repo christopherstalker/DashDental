@@ -134,10 +134,12 @@ function serializeUser(user: User) {
   return {
     id: user.id,
     email: user.email,
+    emailVerifiedAt: toDate(user.emailVerifiedAt) ?? null,
     name: user.name,
     avatar: user.avatar || null,
     status: user.status,
     lastLoginAt: toDate(user.lastLoginAt) ?? null,
+    sessionVersion: user.sessionVersion ?? 0,
   };
 }
 
@@ -686,10 +688,12 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
       (user): User => ({
         id: user.id,
         email: user.email,
+        emailVerifiedAt: toIso(user.emailVerifiedAt),
         name: user.name,
         avatar: user.avatar ?? "",
         status: user.status as User["status"],
         lastLoginAt: toIso(user.lastLoginAt) ?? "",
+        sessionVersion: user.sessionVersion,
       }),
     ),
     organizations: organizations.map(

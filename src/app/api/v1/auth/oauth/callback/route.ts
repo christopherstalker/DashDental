@@ -67,6 +67,7 @@ export async function GET(request: Request) {
       value: encodeSession(
         createSessionPayload({
           userId: user.id,
+          sessionVersion: user.sessionVersion ?? 0,
         }),
       ),
     });

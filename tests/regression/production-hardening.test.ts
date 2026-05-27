@@ -186,6 +186,90 @@ test("managed messaging connector activates and delivers without provider creden
   assert.equal(result.payloadJson.live, false);
 });
 
+test("managed connectors are disabled by default in production runtime", async () => {
+  const { areManagedConnectorsEnabled } = await import("../../src/server/feature-flags");
+
+  withEnv(
+    {
+      ENABLE_MANAGED_CONNECTORS: undefined,
+      NEXT_PHASE: undefined,
+      NODE_ENV: "production",
+    },
+    () => {
+      assert.equal(areManagedConnectorsEnabled(), false);
+    },
+  );
+
+  withEnv(
+    {
+      ENABLE_MANAGED_CONNECTORS: "true",
+      NEXT_PHASE: undefined,
+      NODE_ENV: "production",
+    },
+    () => {
+      assert.equal(areManagedConnectorsEnabled(), true);
+    },
+  );
+});
+
+test("direct plan changes are blocked on deployed production but allowed for local production QA", async () => {
+  const { canUseDirectBillingPlanChange } = await import("../../src/server/feature-flags");
+
+  assert.equal(
+    canUseDirectBillingPlanChange({
+      env: {
+        ENABLE_DEV_BILLING: "false",
+        NODE_ENV: "production",
+        VERCEL: "1",
+      } as NodeJS.ProcessEnv,
+      requestUrl: "https://dashdental.space/api/v1/billing/subscription/plan",
+    }),
+    false,
+  );
+  assert.equal(
+    canUseDirectBillingPlanChange({
+      env: {
+        ENABLE_DEV_BILLING: "false",
+        NODE_ENV: "production",
+      } as NodeJS.ProcessEnv,
+      requestUrl: "http://localhost:3000/api/v1/billing/subscription/plan",
+    }),
+    true,
+  );
+  assert.equal(
+    canUseDirectBillingPlanChange({
+      env: {
+        ENABLE_DEV_BILLING: "false",
+        NODE_ENV: "development",
+      } as NodeJS.ProcessEnv,
+      requestUrl: "https://preview.example/api/v1/billing/subscription/plan",
+    }),
+    true,
+  );
+});
+
+test("saved live credentials stay degraded until provider verification succeeds", async () => {
+  const { configureMessagingIntegration } = await import("../../src/server/channel-integrations");
+  const state = await configureMessagingIntegration(getRuntimeSeedState(), {
+    actorUserId: "user-owner",
+    organizationId: defaultOrganizationId,
+    provider: "telegram",
+    requestUrl: "http://localhost:3000/api/v1/integrations/messaging/config",
+    credentials: {
+      botToken: "123456:local-test-token",
+      botUsername: "local_test_bot",
+      webhookSecret: "local_secret",
+    },
+  });
+  const integration = state.integrations.find(
+    (item) => item.organizationId === defaultOrganizationId && item.provider === "telegram",
+  );
+
+  assert.equal(integration?.status, "degraded");
+  assert.equal(integration?.healthScore, 72);
+  assert.match(integration?.errorState ?? "", /provider verification is pending/i);
+});
+
 test("Prisma delta writes do not issue full-table deletes or delete unrelated tenant data", async () => {
   const previous = appendUnrelatedTenant(getRuntimeSeedState());
   const next = createLeadFromInbound(previous, {

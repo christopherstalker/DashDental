@@ -379,6 +379,7 @@ export function resolveOAuthSessionContext(input: {
     createSessionPayload({
       userId: user.id,
       organizationId: membership.organizationId,
+      sessionVersion: user.sessionVersion ?? 0,
     }),
     "manager",
   );

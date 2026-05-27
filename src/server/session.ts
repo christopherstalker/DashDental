@@ -15,6 +15,7 @@ export interface SessionPayload {
   issuedAt: number;
   expiresAt: number;
   nonce: string;
+  sessionVersion: number;
 }
 
 export interface ClientSession {
@@ -31,7 +32,7 @@ export interface AccountWorkspace {
 
 export interface AccountSession {
   selectedOrganizationId?: string;
-  user: Pick<User, "id" | "email" | "name" | "avatar" | "status">;
+  user: Pick<User, "id" | "email" | "emailVerifiedAt" | "name" | "avatar" | "status">;
   workspaces: Array<{
     organizationId: string;
     organizationName: string;
@@ -129,6 +130,7 @@ export function createSessionPayload(input: {
   userId: string;
   organizationId?: string;
   now?: number;
+  sessionVersion?: number;
 }): SessionPayload {
   const issuedAt = input.now ?? Date.now();
 
@@ -138,6 +140,7 @@ export function createSessionPayload(input: {
     issuedAt,
     expiresAt: issuedAt + SESSION_MAX_AGE_SECONDS * 1000,
     nonce: crypto.randomBytes(12).toString("hex"),
+    sessionVersion: input.sessionVersion ?? 0,
   };
 }
 
@@ -241,6 +244,10 @@ export function resolveAuthenticatedUser(
   if (!user) {
     throw new ApiError(401, "Active user was not found", "unauthenticated");
   }
+  const currentSessionVersion = user.sessionVersion ?? 0;
+  if ((payload.sessionVersion ?? 0) !== currentSessionVersion) {
+    throw new ApiError(401, "Authentication session has expired", "session_revoked");
+  }
 
   return user;
 }
@@ -287,6 +294,7 @@ export function toAccountSession(
     user: {
       id: user.id,
       email: user.email,
+      emailVerifiedAt: user.emailVerifiedAt,
       name: user.name,
       avatar: user.avatar,
       status: user.status,
@@ -373,5 +381,7 @@ export function createDefaultSessionPayload(state: AppState): SessionPayload {
   return createSessionPayload({
     userId: owner?.userId ?? "user-owner",
     organizationId: owner?.organizationId ?? defaultOrganizationId,
+    sessionVersion:
+      state.users.find((user) => user.id === owner?.userId)?.sessionVersion ?? 0,
   });
 }

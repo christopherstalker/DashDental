@@ -106,3 +106,41 @@ test("selected clinic without membership is forbidden", async () => {
     /does not belong/i,
   );
 });
+
+test("session version mismatch revokes old cookies after password reset", async () => {
+  const { createSessionPayload, resolveAuthenticatedUser } = await import(
+    "../../src/server/session"
+  );
+  const state: AppState = {
+    ...stateWithStandaloneUser(),
+    users: [
+      {
+        ...stateWithStandaloneUser().users[0],
+        sessionVersion: 2,
+      },
+    ],
+  };
+
+  assert.throws(
+    () =>
+      resolveAuthenticatedUser(
+        state,
+        createSessionPayload({
+          userId: "user-standalone",
+          sessionVersion: 1,
+        }),
+      ),
+    /expired/i,
+  );
+
+  assert.equal(
+    resolveAuthenticatedUser(
+      state,
+      createSessionPayload({
+        userId: "user-standalone",
+        sessionVersion: 2,
+      }),
+    ).id,
+    "user-standalone",
+  );
+});

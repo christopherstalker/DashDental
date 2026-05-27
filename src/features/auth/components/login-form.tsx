@@ -52,6 +52,9 @@ export function LoginForm({
     if (code === "bot_protection_not_configured") {
       return "Login is temporarily unavailable while bot protection is being configured.";
     }
+    if (code === "email_unverified") {
+      return "Verify your work email before signing in, or open the verification link from your account email.";
+    }
 
     return fallback;
   }
@@ -155,6 +158,9 @@ export function LoginForm({
             value={password}
           />
         </label>
+        <a className="auth-inline-link" href="/forgot-password">
+          Forgot password?
+        </a>
         <TurnstileChallenge
           action="login"
           resetKey={turnstileResetKey}

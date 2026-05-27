@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { getPlanCatalog } from "@/domain/business-rules";
@@ -76,6 +77,29 @@ const providerLabels: Record<Provider, string> = {
   telegram: "Telegram",
   web_form: "Website form",
   whatsapp: "WhatsApp",
+};
+
+const providerCredentialLinks: Record<Provider, { href: string; label: string }> = {
+  clinic_database: {
+    href: "/integrations#clinic_database",
+    label: "Configure DB access",
+  },
+  instagram: {
+    href: "/integrations#instagram",
+    label: "Configure API tokens",
+  },
+  telegram: {
+    href: "/integrations#telegram",
+    label: "Configure bot token",
+  },
+  web_form: {
+    href: "/integrations#web_form",
+    label: "Configure endpoint",
+  },
+  whatsapp: {
+    href: "/integrations#whatsapp",
+    label: "Configure API tokens",
+  },
 };
 
 const defaultThresholds: Record<Provider, number> = {
@@ -404,6 +428,11 @@ export function SettingsScreen({
                         <span />
                       </button>
                       {integration?.errorState ? <p>{integration.errorState}</p> : null}
+                      <div className="ddr-channel-card-actions">
+                        <Link className="ddr-button ddr-button-ghost" href={providerCredentialLinks[provider].href}>
+                          {providerCredentialLinks[provider].label}
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}

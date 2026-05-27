@@ -116,10 +116,12 @@ function createBootstrapUser(email: string): User {
   return {
     id: deterministicId("user-oauth", email),
     email,
+    emailVerifiedAt: new Date(0).toISOString(),
     name,
     avatar: avatarFromName(name),
     status: "active",
     lastLoginAt: new Date(0).toISOString(),
+    sessionVersion: 0,
   };
 }
 

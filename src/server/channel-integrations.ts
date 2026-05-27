@@ -560,11 +560,14 @@ export async function configureMessagingIntegration(
 
   if (input.provider === "telegram") {
     const credentials = ensureTelegramCredentials(input.credentials as TelegramCredentials);
-    const verification = await verifyTelegramConfig(input.requestUrl, credentials).catch((error) => ({
-      botUsername: credentials.botUsername,
-      healthScore: 72,
-      statusMessage: `Credentials saved. Telegram provider verification is pending: ${providerErrorMessage(error)}`,
-    }));
+    const verification = await verifyTelegramConfig(input.requestUrl, credentials)
+      .then((result) => ({ ...result, status: "active" as const }))
+      .catch((error) => ({
+        botUsername: credentials.botUsername,
+        healthScore: 72,
+        status: "degraded" as const,
+        statusMessage: `Credentials saved. Telegram provider verification is pending: ${providerErrorMessage(error)}`,
+      }));
     const encryptedCredentials = encryptIntegrationSecret({
       ...credentials,
       connectorMode: "live",
@@ -580,7 +583,7 @@ export async function configureMessagingIntegration(
           externalAccountId: verification.botUsername ?? credentials.botUsername ?? "",
           encryptedCredentials,
           webhookSecret: credentials.webhookSecret,
-          status: "active",
+          status: verification.status,
           errorState: verification.statusMessage,
           healthScore: verification.healthScore,
           lastSyncAt: nowIso,
@@ -607,10 +610,13 @@ export async function configureMessagingIntegration(
 
   if (input.provider === "whatsapp") {
     const credentials = ensureWhatsAppCredentials(input.credentials as WhatsAppCredentials);
-    const verification = await verifyWhatsAppConfig(credentials).catch((error) => ({
-      healthScore: 72,
-      statusMessage: `Credentials saved. WhatsApp provider verification is pending: ${providerErrorMessage(error)}`,
-    }));
+    const verification = await verifyWhatsAppConfig(credentials)
+      .then((result) => ({ ...result, status: "active" as const }))
+      .catch((error) => ({
+        healthScore: 72,
+        status: "degraded" as const,
+        statusMessage: `Credentials saved. WhatsApp provider verification is pending: ${providerErrorMessage(error)}`,
+      }));
     const encryptedCredentials = encryptIntegrationSecret({
       ...credentials,
       connectorMode: "live",
@@ -625,7 +631,7 @@ export async function configureMessagingIntegration(
           externalAccountId: credentials.phoneNumberId,
           encryptedCredentials,
           webhookSecret: credentials.webhookVerifyToken,
-          status: "active",
+          status: verification.status,
           errorState: verification.statusMessage,
           healthScore: verification.healthScore,
           lastSyncAt: nowIso,
@@ -651,10 +657,13 @@ export async function configureMessagingIntegration(
   }
 
   const credentials = ensureInstagramCredentials(input.credentials as InstagramCredentials);
-  const verification = await verifyInstagramConfig(credentials).catch((error) => ({
-    healthScore: 72,
-    statusMessage: `Credentials saved. Instagram provider verification is pending: ${providerErrorMessage(error)}`,
-  }));
+  const verification = await verifyInstagramConfig(credentials)
+    .then((result) => ({ ...result, status: "active" as const }))
+    .catch((error) => ({
+      healthScore: 72,
+      status: "degraded" as const,
+      statusMessage: `Credentials saved. Instagram provider verification is pending: ${providerErrorMessage(error)}`,
+    }));
   const encryptedCredentials = encryptIntegrationSecret({
     ...credentials,
     connectorMode: "live",
@@ -669,7 +678,7 @@ export async function configureMessagingIntegration(
         externalAccountId: credentials.pageId,
         encryptedCredentials,
         webhookSecret: credentials.webhookVerifyToken,
-        status: "active",
+        status: verification.status,
         errorState: verification.statusMessage,
         healthScore: verification.healthScore,
         lastSyncAt: nowIso,

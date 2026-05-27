@@ -18,7 +18,11 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
   const [isPending, startTransition] = useTransition();
   const [pendingWorkspace, setPendingWorkspace] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const emailVerified = Boolean(account.user.emailVerifiedAt);
 
   async function signOut() {
     setError(null);
@@ -59,6 +63,43 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
         setPendingWorkspace(null);
       }
     });
+  }
+
+  async function sendVerificationEmail() {
+    setError(null);
+    setVerificationMessage(null);
+    setVerificationUrl(null);
+    setIsSendingVerification(true);
+
+    try {
+      const response = await fetch("/api/v1/auth/email-verification/request", {
+        method: "POST",
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        alreadyVerified?: boolean;
+        devUrl?: string;
+        error?: string;
+        status?: string;
+      };
+
+      if (!response.ok) {
+        setError(payload.error ?? "Could not send verification email.");
+        return;
+      }
+
+      setVerificationUrl(payload.devUrl ?? null);
+      setVerificationMessage(
+        payload.alreadyVerified
+          ? "This work email is already verified."
+          : payload.status === "skipped"
+            ? "Email provider is not configured locally. Use the local verification link below."
+            : "Verification email sent.",
+      );
+    } catch {
+      setError("Could not request email verification. Try again.");
+    } finally {
+      setIsSendingVerification(false);
+    }
   }
 
   return (
@@ -107,6 +148,30 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
             Public site
           </Link>
         </header>
+
+        {!emailVerified ? (
+          <section className="account-security-panel">
+            <div>
+              <p className="eyebrow">Security action</p>
+              <h2>Verify your work email</h2>
+              <p>
+                Release accounts keep dashboard access tied to a verified clinic
+                mailbox. Send a secure verification link before go-live.
+              </p>
+              {verificationMessage ? <strong>{verificationMessage}</strong> : null}
+              {verificationUrl ? <Link href={verificationUrl}>Open local verification link</Link> : null}
+            </div>
+            <button
+              className="secondary-button"
+              disabled={isSendingVerification}
+              onClick={sendVerificationEmail}
+              type="button"
+            >
+              <ShieldCheck size={15} />
+              {isSendingVerification ? "Sending..." : "Send verification email"}
+            </button>
+          </section>
+        ) : null}
 
         {account.workspaces.length > 0 ? (
           <div className="account-workspace-grid">

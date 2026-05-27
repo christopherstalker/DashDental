@@ -15,15 +15,34 @@ import {
   mutateAppState,
   readAppState,
 } from "./data-store";
-import { isProductionRuntime } from "./feature-flags";
+import { isEmailVerificationRequired, isProductionRuntime } from "./feature-flags";
 import { getBillingProvider } from "./manual-billing";
 
 const scryptAsync = promisify(crypto.scrypt);
 
 interface CredentialRecord {
+  emailVerificationExpiresAt?: string;
+  emailVerificationSentAt?: string;
+  emailVerificationTokenHash?: string;
+  passwordHash?: string;
+  passwordResetExpiresAt?: string;
+  passwordResetRequestedAt?: string;
+  passwordResetTokenHash?: string;
   userId: string;
-  passwordHash: string;
 }
+
+type CredentialRecordPatch = {
+  emailVerificationExpiresAt?: string | null;
+  emailVerificationSentAt?: string | null;
+  emailVerificationTokenHash?: string | null;
+  passwordHash?: string;
+  passwordResetExpiresAt?: string | null;
+  passwordResetRequestedAt?: string | null;
+  passwordResetTokenHash?: string | null;
+};
+
+export type UserCredentialRecord = CredentialRecord;
+export type UserCredentialRecordPatch = CredentialRecordPatch;
 
 type DefaultIntegrationProvider = "telegram" | "web_form" | "instagram" | "whatsapp" | "clinic_database";
 
@@ -89,8 +108,7 @@ async function readCredentialRecordsFromFile(): Promise<CredentialRecord[]> {
             Boolean(
               item &&
                 typeof item === "object" &&
-                typeof (item as CredentialRecord).userId === "string" &&
-                typeof (item as CredentialRecord).passwordHash === "string",
+                typeof (item as CredentialRecord).userId === "string",
             ),
         )
       : [];
@@ -128,13 +146,94 @@ async function getPasswordHash(userId: string): Promise<string | undefined> {
   return records.find((record) => record.userId === userId)?.passwordHash;
 }
 
-export async function setPasswordHash(userId: string, passwordHash: string): Promise<void> {
+async function getCredentialRecord(userId: string): Promise<CredentialRecord | undefined> {
+  if (isPrismaStorageEnabled()) {
+    try {
+      const record = await prisma.userCredential.findUnique({
+        where: { userId },
+      });
+
+      return record
+        ? {
+            userId,
+            passwordHash: record.passwordHash,
+            emailVerificationTokenHash: record.emailVerificationTokenHash ?? undefined,
+            emailVerificationExpiresAt:
+              record.emailVerificationExpiresAt?.toISOString(),
+            emailVerificationSentAt: record.emailVerificationSentAt?.toISOString(),
+            passwordResetTokenHash: record.passwordResetTokenHash ?? undefined,
+            passwordResetExpiresAt: record.passwordResetExpiresAt?.toISOString(),
+            passwordResetRequestedAt: record.passwordResetRequestedAt?.toISOString(),
+          }
+        : undefined;
+    } catch (error) {
+      if (!isRecoverablePrismaConnectionError(error) || isProductionRuntime()) {
+        throw error;
+      }
+    }
+  }
+
+  const records = await readCredentialRecordsFromFile();
+  return records.find((record) => record.userId === userId);
+}
+
+export async function readUserCredentialRecord(
+  userId: string,
+): Promise<UserCredentialRecord | undefined> {
+  return getCredentialRecord(userId);
+}
+
+async function setCredentialRecord(
+  userId: string,
+  patch: CredentialRecordPatch,
+): Promise<void> {
   if (isPrismaStorageEnabled()) {
     try {
       await prisma.userCredential.upsert({
         where: { userId },
-        update: { passwordHash },
-        create: { userId, passwordHash },
+        update: {
+          passwordHash: patch.passwordHash,
+          emailVerificationTokenHash: patch.emailVerificationTokenHash,
+          emailVerificationExpiresAt: patch.emailVerificationExpiresAt
+            ? new Date(patch.emailVerificationExpiresAt)
+            : patch.emailVerificationExpiresAt === null
+              ? null
+              : undefined,
+          emailVerificationSentAt: patch.emailVerificationSentAt
+            ? new Date(patch.emailVerificationSentAt)
+            : patch.emailVerificationSentAt === null
+              ? null
+              : undefined,
+          passwordResetTokenHash: patch.passwordResetTokenHash,
+          passwordResetExpiresAt: patch.passwordResetExpiresAt
+            ? new Date(patch.passwordResetExpiresAt)
+            : patch.passwordResetExpiresAt === null
+              ? null
+              : undefined,
+          passwordResetRequestedAt: patch.passwordResetRequestedAt
+            ? new Date(patch.passwordResetRequestedAt)
+            : patch.passwordResetRequestedAt === null
+              ? null
+              : undefined,
+        },
+        create: {
+          userId,
+          passwordHash: patch.passwordHash ?? "",
+          emailVerificationTokenHash: patch.emailVerificationTokenHash,
+          emailVerificationExpiresAt: patch.emailVerificationExpiresAt
+            ? new Date(patch.emailVerificationExpiresAt)
+            : undefined,
+          emailVerificationSentAt: patch.emailVerificationSentAt
+            ? new Date(patch.emailVerificationSentAt)
+            : undefined,
+          passwordResetTokenHash: patch.passwordResetTokenHash,
+          passwordResetExpiresAt: patch.passwordResetExpiresAt
+            ? new Date(patch.passwordResetExpiresAt)
+            : undefined,
+          passwordResetRequestedAt: patch.passwordResetRequestedAt
+            ? new Date(patch.passwordResetRequestedAt)
+            : undefined,
+        },
       });
       return;
     } catch (error) {
@@ -146,13 +245,35 @@ export async function setPasswordHash(userId: string, passwordHash: string): Pro
 
   const records = await readCredentialRecordsFromFile();
   const index = records.findIndex((record) => record.userId === userId);
+  const currentRecord = index >= 0 ? records[index] : { userId };
+  const nextRecord: CredentialRecord = { ...currentRecord };
+  for (const [key, value] of Object.entries(patch)) {
+    const recordKey = key as keyof CredentialRecordPatch;
+    if (value === null) {
+      delete nextRecord[recordKey as keyof CredentialRecord];
+    } else if (value !== undefined) {
+      nextRecord[recordKey as keyof CredentialRecord] = value;
+    }
+  }
+
   if (index >= 0) {
-    records[index] = { userId, passwordHash };
+    records[index] = nextRecord;
   } else {
-    records.push({ userId, passwordHash });
+    records.push(nextRecord);
   }
 
   await writeCredentialRecordsToFile(records);
+}
+
+export async function writeUserCredentialRecord(
+  userId: string,
+  patch: UserCredentialRecordPatch,
+): Promise<void> {
+  await setCredentialRecord(userId, patch);
+}
+
+export async function setPasswordHash(userId: string, passwordHash: string): Promise<void> {
+  await setCredentialRecord(userId, { passwordHash });
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -204,6 +325,10 @@ export async function resolvePasswordLogin(input: {
   const isValidPassword = await verifyPassword(input.password, passwordHash);
   if (!isValidPassword) {
     throw new ApiError(401, "Invalid email or password", "invalid_credentials");
+  }
+
+  if (isEmailVerificationRequired() && !user.emailVerifiedAt) {
+    throw new ApiError(403, "Verify your work email before signing in", "email_unverified");
   }
 
   const memberships = input.state.memberships
@@ -453,6 +578,7 @@ export async function registerClinicWorkspace(input: {
           avatar: sanitizeAvatar(ownerName),
           status: "active",
           lastLoginAt: nowIso,
+          sessionVersion: 0,
         },
       ],
       memberships: [

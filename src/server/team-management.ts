@@ -156,6 +156,7 @@ export async function createClinicTeamMember(input: {
           avatar: sanitizeAvatar(name),
           status: "invited",
           lastLoginAt: "",
+          sessionVersion: 0,
         };
     const membershipStatus: Membership["status"] = isRegisteredUser ? "active" : "invited";
     const nextMembership: Membership = existingMembership

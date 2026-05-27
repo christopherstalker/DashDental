@@ -6,6 +6,7 @@ import {
   provisionManagedMessagingIntegration,
   resolveMessagingCredentials,
 } from "@/server/channel-integrations";
+import { areManagedConnectorsEnabled } from "@/server/feature-flags";
 import {
   ApiError,
   errorResponse,
@@ -55,6 +56,17 @@ export async function POST(
           currentIntegration.provider,
         )
       ) {
+        if (!areManagedConnectorsEnabled()) {
+          throw new ApiError(
+            409,
+            "Add live API credentials before activating this channel",
+            "integration_credentials_required",
+            {
+              provider: currentIntegration.provider,
+            },
+          );
+        }
+
         return provisionManagedMessagingIntegration(current, {
           organizationId: currentIntegration.organizationId,
           provider: currentIntegration.provider,

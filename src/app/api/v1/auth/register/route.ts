@@ -34,7 +34,12 @@ export async function POST(request: Request) {
       timezone: optionalString(payload, "timezone") ?? "UTC",
       currency: currencyValue === "EUR" || currencyValue === "UAH" ? currencyValue : "USD",
     });
-    const sessionPayload = createSessionPayload({ userId, organizationId });
+    const userForSession = state.users.find((user) => user.id === userId);
+    const sessionPayload = createSessionPayload({
+      userId,
+      organizationId,
+      sessionVersion: userForSession?.sessionVersion ?? 0,
+    });
     const context = resolveSessionContext(state, sessionPayload, "manager");
     const cookieStore = await cookies();
 

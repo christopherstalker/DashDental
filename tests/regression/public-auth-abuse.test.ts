@@ -56,6 +56,38 @@ test("public auth rate limit blocks repeated login or registration abuse", () =>
   );
 });
 
+test("password reset requests have a separate public auth limit", () => {
+  resetPublicAuthRateLimitsForTests();
+
+  const request = new Request("https://dashdental.space/api/v1/auth/password-reset/request", {
+    headers: {
+      "x-forwarded-for": "198.51.100.18",
+    },
+  });
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    assert.doesNotThrow(() =>
+      assertPublicAuthRateLimit(request, {
+        action: "password_reset",
+        nowMs: 2_000,
+      }),
+    );
+  }
+
+  assert.throws(
+    () =>
+      assertPublicAuthRateLimit(request, {
+        action: "password_reset",
+        nowMs: 2_000,
+      }),
+    (error) =>
+      error instanceof ApiError &&
+      error.status === 429 &&
+      error.code === "rate_limited" &&
+      /password reset/i.test(error.message),
+  );
+});
+
 test("public route fallback rate limits cover health and launch analytics", () => {
   resetPublicRouteRateLimitsForTests();
 

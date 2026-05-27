@@ -44,6 +44,7 @@ export const users: User[] = [
   {
     id: "system",
     email: "system@dentalrecovery.local",
+    emailVerifiedAt: demoNow,
     name: "System",
     avatar: "SY",
     status: "disabled",
@@ -52,6 +53,7 @@ export const users: User[] = [
   {
     id: "user-owner",
     email: "maya@smilestudio.example",
+    emailVerifiedAt: demoNow,
     name: "Maya Chen",
     avatar: "MC",
     status: "active",
@@ -60,6 +62,7 @@ export const users: User[] = [
   {
     id: "user-admin",
     email: "ops@smilestudio.example",
+    emailVerifiedAt: demoNow,
     name: "Elena Ortiz",
     avatar: "EO",
     status: "active",
@@ -68,6 +71,7 @@ export const users: User[] = [
   {
     id: "user-manager",
     email: "frontdesk@smilestudio.example",
+    emailVerifiedAt: demoNow,
     name: "Noah Reed",
     avatar: "NR",
     status: "active",
@@ -76,6 +80,7 @@ export const users: User[] = [
   {
     id: "user-super",
     email: "support@dentalrecovery.example",
+    emailVerifiedAt: demoNow,
     name: "Platform Admin",
     avatar: "PA",
     status: "active",

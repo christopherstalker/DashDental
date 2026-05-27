@@ -17,7 +17,11 @@ export async function POST(request: Request) {
       password: requiredString(payload, "password"),
       token: requiredString(payload, "token"),
     });
-    const sessionPayload = createSessionPayload({ userId: result.userId });
+    const userForSession = result.state.users.find((user) => user.id === result.userId);
+    const sessionPayload = createSessionPayload({
+      userId: result.userId,
+      sessionVersion: userForSession?.sessionVersion ?? 0,
+    });
     const cookieStore = await cookies();
 
     cookieStore.set({

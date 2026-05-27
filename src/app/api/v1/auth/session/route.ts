@@ -111,7 +111,12 @@ export async function POST(request: Request) {
 
     await activateInvitedUserOnLogin(userId);
     const state = await touchUserLastLogin(userId);
-    const sessionPayload = createSessionPayload({ userId, organizationId });
+    const userForSession = state.users.find((item) => item.id === userId);
+    const sessionPayload = createSessionPayload({
+      userId,
+      organizationId,
+      sessionVersion: userForSession?.sessionVersion ?? 0,
+    });
     const cookieStore = await cookies();
 
     cookieStore.set({
