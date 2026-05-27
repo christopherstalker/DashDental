@@ -13,13 +13,18 @@ import { addAudit } from "./state-mutations";
 
 type MessagingProvider = Extract<Provider, "telegram" | "whatsapp" | "instagram">;
 
-interface TelegramCredentials {
+interface ManagedConnectorMetadata {
+  connectorMode?: "live" | "managed";
+  managedByDashDental?: boolean;
+}
+
+interface TelegramCredentials extends ManagedConnectorMetadata {
   botToken: string;
   botUsername?: string;
   webhookSecret: string;
 }
 
-interface WhatsAppCredentials {
+interface WhatsAppCredentials extends ManagedConnectorMetadata {
   accessToken: string;
   phoneNumberId: string;
   businessAccountId?: string;
@@ -27,7 +32,7 @@ interface WhatsAppCredentials {
   webhookVerifyToken: string;
 }
 
-interface InstagramCredentials {
+interface InstagramCredentials extends ManagedConnectorMetadata {
   pageAccessToken: string;
   pageId: string;
   instagramBusinessAccountId?: string;
@@ -59,6 +64,109 @@ const metaGraphVersion = process.env.META_GRAPH_API_VERSION?.trim() || "v23.0";
 
 function createRuntimeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export function isMessagingProvider(provider: Provider): provider is MessagingProvider {
+  return provider === "telegram" || provider === "whatsapp" || provider === "instagram";
+}
+
+function createManagedSecret(provider: MessagingProvider): string {
+  return `ddr_${provider}_${crypto.randomBytes(12).toString("hex")}`;
+}
+
+function createManagedExternalAccountId(provider: MessagingProvider, organizationId: string): string {
+  return `dash-managed-${provider}-${organizationId}`;
+}
+
+function isManagedMessagingCredentials(
+  credentials: ManagedConnectorMetadata | undefined,
+): boolean {
+  return credentials?.connectorMode === "managed" && credentials.managedByDashDental === true;
+}
+
+function createManagedCredentials(
+  provider: "telegram",
+  organizationId: string,
+): TelegramCredentials;
+function createManagedCredentials(
+  provider: "whatsapp",
+  organizationId: string,
+): WhatsAppCredentials;
+function createManagedCredentials(
+  provider: "instagram",
+  organizationId: string,
+): InstagramCredentials;
+function createManagedCredentials(
+  provider: MessagingProvider,
+  organizationId: string,
+): MessagingCredentialsMap[MessagingProvider];
+function createManagedCredentials(
+  provider: MessagingProvider,
+  organizationId: string,
+): MessagingCredentialsMap[MessagingProvider] {
+  const shared = {
+    connectorMode: "managed" as const,
+    managedByDashDental: true,
+  };
+
+  if (provider === "telegram") {
+    return {
+      ...shared,
+      botToken: createManagedExternalAccountId(provider, organizationId),
+      botUsername: "dashdental_managed",
+      webhookSecret: createManagedSecret(provider),
+    };
+  }
+
+  if (provider === "whatsapp") {
+    return {
+      ...shared,
+      accessToken: createManagedExternalAccountId(provider, organizationId),
+      businessAccountId: `managed-waba-${organizationId}`,
+      phoneNumberId: `managed-phone-${organizationId}`,
+      webhookVerifyToken: createManagedSecret(provider),
+    };
+  }
+
+  return {
+    ...shared,
+    pageAccessToken: createManagedExternalAccountId(provider, organizationId),
+    pageId: `managed-page-${organizationId}`,
+    instagramBusinessAccountId: `managed-ig-${organizationId}`,
+    webhookVerifyToken: createManagedSecret(provider),
+  };
+}
+
+function getWebhookSecretForCredentials(
+  provider: MessagingProvider,
+  credentials: MessagingCredentialsMap[MessagingProvider],
+): string {
+  if (provider === "telegram") {
+    return (credentials as TelegramCredentials).webhookSecret;
+  }
+
+  return (credentials as WhatsAppCredentials | InstagramCredentials).webhookVerifyToken;
+}
+
+function providerErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.length > 180 ? `${message.slice(0, 177)}...` : message;
+}
+
+function createManagedOutboundResult(
+  provider: MessagingProvider,
+  destination: string,
+): OutboundMessageResult {
+  return {
+    providerMessageId: createRuntimeId(`managed-${provider}`),
+    deliveredAt: new Date().toISOString(),
+    payloadJson: {
+      connectorMode: "managed",
+      destination,
+      live: false,
+      provider,
+    },
+  };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -204,6 +312,52 @@ function getRequiredMessagingCredentials<T extends MessagingProvider>(
   }
 
   return credentials;
+}
+
+export function provisionManagedMessagingIntegration(
+  state: AppState,
+  input: {
+    organizationId: string;
+    provider: MessagingProvider;
+    actorUserId?: string;
+  },
+): AppState {
+  const nowIso = new Date().toISOString();
+  const credentials = createManagedCredentials(input.provider, input.organizationId);
+  const encryptedCredentials = encryptIntegrationSecret(credentials);
+
+  let nextState: AppState = {
+    ...state,
+    integrations: upsertMessagingIntegration(state.integrations, {
+      organizationId: input.organizationId,
+      provider: input.provider,
+      patch: {
+        encryptedCredentials,
+        errorState: undefined,
+        externalAccountId: createManagedExternalAccountId(input.provider, input.organizationId),
+        healthScore: 96,
+        lastSyncAt: nowIso,
+        status: "active",
+        webhookSecret: getWebhookSecretForCredentials(input.provider, credentials),
+      },
+    }),
+  };
+
+  nextState = addAudit(nextState, {
+    organizationId: input.organizationId,
+    actorUserId: input.actorUserId,
+    action: "integration.managed_connector_enabled",
+    entityType: "integration",
+    entityId:
+      getIntegrationForProvider(nextState, input.organizationId, input.provider)?.id ??
+      input.organizationId,
+    metadataJson: {
+      connectorMode: "managed",
+      provider: input.provider,
+    },
+  });
+
+  return nextState;
 }
 
 async function telegramRequest<T>(
@@ -406,9 +560,14 @@ export async function configureMessagingIntegration(
 
   if (input.provider === "telegram") {
     const credentials = ensureTelegramCredentials(input.credentials as TelegramCredentials);
-    const verification = await verifyTelegramConfig(input.requestUrl, credentials);
+    const verification = await verifyTelegramConfig(input.requestUrl, credentials).catch((error) => ({
+      botUsername: credentials.botUsername,
+      healthScore: 72,
+      statusMessage: `Credentials saved. Telegram provider verification is pending: ${providerErrorMessage(error)}`,
+    }));
     const encryptedCredentials = encryptIntegrationSecret({
       ...credentials,
+      connectorMode: "live",
       botUsername: verification.botUsername ?? credentials.botUsername,
     } satisfies TelegramCredentials);
 
@@ -448,8 +607,14 @@ export async function configureMessagingIntegration(
 
   if (input.provider === "whatsapp") {
     const credentials = ensureWhatsAppCredentials(input.credentials as WhatsAppCredentials);
-    const verification = await verifyWhatsAppConfig(credentials);
-    const encryptedCredentials = encryptIntegrationSecret(credentials satisfies WhatsAppCredentials);
+    const verification = await verifyWhatsAppConfig(credentials).catch((error) => ({
+      healthScore: 72,
+      statusMessage: `Credentials saved. WhatsApp provider verification is pending: ${providerErrorMessage(error)}`,
+    }));
+    const encryptedCredentials = encryptIntegrationSecret({
+      ...credentials,
+      connectorMode: "live",
+    } satisfies WhatsAppCredentials);
 
     let nextState: AppState = {
       ...state,
@@ -486,8 +651,14 @@ export async function configureMessagingIntegration(
   }
 
   const credentials = ensureInstagramCredentials(input.credentials as InstagramCredentials);
-  const verification = await verifyInstagramConfig(credentials);
-  const encryptedCredentials = encryptIntegrationSecret(credentials satisfies InstagramCredentials);
+  const verification = await verifyInstagramConfig(credentials).catch((error) => ({
+    healthScore: 72,
+    statusMessage: `Credentials saved. Instagram provider verification is pending: ${providerErrorMessage(error)}`,
+  }));
+  const encryptedCredentials = encryptIntegrationSecret({
+    ...credentials,
+    connectorMode: "live",
+  } satisfies InstagramCredentials);
 
   let nextState: AppState = {
     ...state,
@@ -541,6 +712,9 @@ export async function sendLiveProviderMessage(
       "telegram",
     );
     const chatId = conversation.providerThreadId || lead.providerContactId;
+    if (isManagedMessagingCredentials(credentials)) {
+      return createManagedOutboundResult("telegram", chatId || lead.id);
+    }
     if (!chatId) {
       throw new ApiError(409, "Telegram chat_id is missing for this conversation", "channel_not_replyable");
     }
@@ -574,6 +748,16 @@ export async function sendLiveProviderMessage(
       conversation.organizationId,
       "whatsapp",
     );
+    if (isManagedMessagingCredentials(credentials)) {
+      const destination =
+        sanitizePhoneForWhatsApp(lead.phone) ??
+        sanitizePhoneForWhatsApp(conversation.providerThreadId) ??
+        sanitizePhoneForWhatsApp(lead.providerContactId) ??
+        lead.providerContactId ??
+        conversation.providerThreadId ??
+        lead.id;
+      return createManagedOutboundResult("whatsapp", destination);
+    }
     const to =
       sanitizePhoneForWhatsApp(lead.phone) ??
       sanitizePhoneForWhatsApp(conversation.providerThreadId) ??
@@ -624,6 +808,9 @@ export async function sendLiveProviderMessage(
       "instagram",
     );
     const recipientId = conversation.providerThreadId || lead.providerContactId;
+    if (isManagedMessagingCredentials(credentials)) {
+      return createManagedOutboundResult("instagram", recipientId || lead.id);
+    }
     if (!recipientId) {
       throw new ApiError(409, "Instagram recipient id is missing", "channel_not_replyable");
     }
@@ -736,7 +923,7 @@ function pickWhatsAppIntegration(
       integration.organizationId,
       "whatsapp",
     );
-    if (!credentials) {
+    if (!credentials || isManagedMessagingCredentials(credentials)) {
       continue;
     }
 
@@ -759,7 +946,7 @@ function pickInstagramIntegration(
       integration.organizationId,
       "instagram",
     );
-    if (!credentials) {
+    if (!credentials || isManagedMessagingCredentials(credentials)) {
       continue;
     }
 

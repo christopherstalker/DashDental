@@ -12,8 +12,10 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { FeatureFlagKey, IntegrationStatus, Provider } from "@/domain/types";
+import { getPlanCatalog } from "@/domain/business-rules";
+import type { FeatureFlagKey, IntegrationStatus, Provider, Subscription } from "@/domain/types";
 
 export interface SettingsIntegration {
   errorState?: string;
@@ -43,6 +45,7 @@ export interface SettingsDigest {
 
 export interface SettingsBilling {
   daysRemaining: number;
+  plan: Subscription["plan"];
   planLabel: string;
   status: string;
 }
@@ -65,6 +68,7 @@ const tabs: Array<{ id: SettingsTab; label: string; icon: typeof Settings }> = [
 ];
 
 const channels: Provider[] = ["whatsapp", "instagram", "telegram", "web_form", "clinic_database"];
+const upgradeOrder: Subscription["plan"][] = ["starter", "growth", "scale"];
 
 const providerLabels: Record<Provider, string> = {
   clinic_database: "Clinic DB",
@@ -92,11 +96,17 @@ function featureEnabled(flags: Array<{ enabled: boolean; key: FeatureFlagKey }>,
   return flags.some((flag) => flag.key === key && flag.enabled);
 }
 
+function nextPlanFor(plan: Subscription["plan"]): Subscription["plan"] {
+  const currentIndex = upgradeOrder.indexOf(plan);
+  return upgradeOrder[Math.min(currentIndex + 1, upgradeOrder.length - 1)] ?? "scale";
+}
+
 export function SettingsScreen({
   billing,
   digest,
   featureFlags,
   integrations,
+  organizationId,
   organizationName,
   team,
   templates,
@@ -106,14 +116,18 @@ export function SettingsScreen({
   digest: SettingsDigest;
   featureFlags: Array<{ enabled: boolean; key: FeatureFlagKey }>;
   integrations: SettingsIntegration[];
+  organizationId: string;
   organizationName: string;
   team: SettingsTeamMember[];
   templates: SettingsTemplate[];
   timezone: string;
 }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [billingState, setBillingState] = useState(billing);
   const [channelState, setChannelState] = useState(integrations);
   const [loadingChannelId, setLoadingChannelId] = useState<string | null>(null);
+  const [upgradingPlan, setUpgradingPlan] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [thresholds, setThresholds] = useState(defaultThresholds);
   const [weeklyDigest, setWeeklyDigest] = useState(digest);
@@ -145,7 +159,16 @@ export function SettingsScreen({
       }
 
       setChannelState((current) =>
-        current.map((item) => (item.id === integration.id ? { ...item, status: nextStatus } : item)),
+        current.map((item) =>
+          item.id === integration.id
+            ? {
+                ...item,
+                errorState: nextStatus === "active" ? undefined : item.errorState,
+                healthScore: nextStatus === "active" ? 96 : 0,
+                status: nextStatus,
+              }
+            : item,
+        ),
       );
       setStatusMessage({ kind: "success", text: `${providerLabels[integration.provider]} updated.` });
     } catch (error) {
@@ -164,7 +187,49 @@ export function SettingsScreen({
       return;
     }
 
-    setStatusMessage({ kind: "success", text: "Settings staged for the beta workspace." });
+    setStatusMessage({ kind: "success", text: "Settings saved for this clinic workspace." });
+  }
+
+  async function upgradePlan() {
+    const nextPlan = nextPlanFor(billingState.plan);
+
+    if (nextPlan === billingState.plan) {
+      setStatusMessage({ kind: "success", text: "You are already on the highest plan." });
+      return;
+    }
+
+    setUpgradingPlan(true);
+    setStatusMessage(null);
+
+    try {
+      const response = await fetch("/api/v1/billing/subscription/plan", {
+        body: JSON.stringify({ organizationId, plan: nextPlan }),
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Could not upgrade plan.");
+      }
+
+      const catalog = getPlanCatalog(nextPlan);
+      setBillingState((current) => ({
+        ...current,
+        plan: nextPlan,
+        planLabel: catalog.label,
+      }));
+      setStatusMessage({ kind: "success", text: `Plan upgraded to ${catalog.label}.` });
+      window.setTimeout(() => router.refresh(), 250);
+    } catch (error) {
+      setStatusMessage({
+        kind: "error",
+        text: error instanceof Error ? error.message : "Could not upgrade plan.",
+      });
+    } finally {
+      setUpgradingPlan(false);
+    }
   }
 
   return (
@@ -276,23 +341,32 @@ export function SettingsScreen({
             <article className="ddr-card ddr-settings-panel">
               <div className="ddr-card-heading">
                 <h2>Billing</h2>
-                <p>Beta pricing keeps the plan affordable while the product is being hardened.</p>
+                <p>Release pricing with clear limits, active billing state, and instant plan changes.</p>
               </div>
               <div className="ddr-billing-summary">
                 <div>
                   <span>Current plan</span>
-                  <strong>{billing.planLabel}</strong>
+                  <strong>{billingState.planLabel}</strong>
                 </div>
                 <div>
                   <span>Status</span>
-                  <strong>{billing.status}</strong>
+                  <strong>{billingState.status}</strong>
                 </div>
                 <div>
                   <span>Days remaining</span>
-                  <strong>{billing.daysRemaining}</strong>
+                  <strong>{billingState.daysRemaining}</strong>
                 </div>
-                <button className="ddr-button ddr-button-primary" type="button">
-                  Upgrade plan
+                <button
+                  className="ddr-button ddr-button-primary"
+                  disabled={upgradingPlan || billingState.plan === "scale"}
+                  onClick={() => void upgradePlan()}
+                  type="button"
+                >
+                  {upgradingPlan
+                    ? "Upgrading..."
+                    : billingState.plan === "scale"
+                      ? "Highest plan"
+                      : `Upgrade to ${getPlanCatalog(nextPlanFor(billingState.plan)).label}`}
                 </button>
               </div>
             </article>
@@ -426,7 +500,7 @@ export function SettingsScreen({
 
       <div className="ddr-settings-footnote">
         <ShieldCheck size={15} />
-        Beta workspace changes are scoped to this clinic tenant.
+        Workspace changes are scoped to this clinic tenant.
         <Mail size={15} />
         Owner digest can be connected to the weekly email job.
         <Check size={15} />

@@ -33,7 +33,7 @@ const roleRank: Record<Role, number> = {
 const planLimits = {
   starter: {
     maxUsers: 4,
-    maxIntegrations: 2,
+    maxIntegrations: 5,
     monthlyMessages: 2000,
     monthlyAiRuns: 120,
   },
@@ -59,7 +59,7 @@ const planCatalog = {
     summary: "Single-clinic launch with live inbox, one front-desk pod, and clear SLA discipline.",
     included: [
       "1 clinic workspace",
-      "Telegram + one additional live channel",
+      "All core intake channels",
       "Shared inbox and recovery dashboard",
       "Weekly owner summary and AI reply assist",
     ],

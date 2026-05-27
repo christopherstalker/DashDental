@@ -53,7 +53,7 @@ export default async function PlatformSubscriptionsPage() {
             Support console
           </Link>
         }
-        description="Give clinics paid access after manual invoice confirmation. This is the founder-friendly panel for beta and early paid customers."
+        description="Give clinics paid access after manual invoice confirmation. This is the founder-friendly panel for live paid customers."
         eyebrow="Platform billing"
         title="Subscriptions"
       />

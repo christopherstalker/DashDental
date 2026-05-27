@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Bell,
+  Building2,
   CreditCard,
   Inbox,
   LayoutDashboard,
@@ -130,6 +131,10 @@ export function DashboardShell({
               <input id="workspace-search" placeholder="Search patients, threads, templates" />
             </label>
             <span className="ddr-badge ddr-badge-info">{openConversations} open</span>
+            <Link className="ddr-button ddr-button-ghost ddr-topbar-account-link" href="/workspaces">
+              <Building2 size={15} />
+              <span>Account</span>
+            </Link>
             <ThemeToggle />
             <span className="ddr-user-avatar" title={userName}>
               {initials(userName) || "DD"}

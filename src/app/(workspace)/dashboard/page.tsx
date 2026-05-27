@@ -28,8 +28,8 @@ function WorkspaceAccessRequired({ requiredRole }: { requiredRole: string }) {
         Dash Dental keeps clinic dashboards tenant-scoped. Sign in with a workspace
         that has the right role before opening operational data.
       </p>
-      <Link className="ddr-button ddr-button-primary" href="/login">
-        Go to login
+      <Link className="ddr-button ddr-button-primary" href="/workspaces">
+        Go to account
       </Link>
     </section>
   );

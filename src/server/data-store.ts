@@ -140,8 +140,16 @@ function assertProductionStorageConfigured() {
   }
 }
 
-function isRecoverablePrismaConnectionError(error: unknown): boolean {
-  if (!error || typeof error !== "object") {
+export function isRecoverablePrismaConnectionError(error: unknown): boolean {
+  if (!error) {
+    return false;
+  }
+
+  if (error instanceof AggregateError) {
+    return error.errors.some(isRecoverablePrismaConnectionError);
+  }
+
+  if (typeof error !== "object") {
     return false;
   }
 
@@ -153,7 +161,8 @@ function isRecoverablePrismaConnectionError(error: unknown): boolean {
     code === "P1001" ||
     code === "ECONNREFUSED" ||
     message.includes("Can't reach database server") ||
-    message.includes("ECONNREFUSED")
+    message.includes("ECONNREFUSED") ||
+    message.includes("connect ECONNREFUSED")
   );
 }
 
@@ -246,7 +255,7 @@ export async function writeAppState(state: AppState): Promise<AppState> {
   assertProductionStorageConfigured();
   if (isPrismaStorageEnabled()) {
     try {
-      return writeAppStateToPrisma(state);
+      return await writeAppStateToPrisma(state);
     } catch (error) {
       if (!isRecoverablePrismaConnectionError(error)) {
         throw error;
@@ -280,7 +289,7 @@ export async function mutateAppState(
     assertProductionStorageConfigured();
     if (isPrismaStorageEnabled()) {
       try {
-        return writeAppStateDeltaToPrisma(state, nextState);
+        return await writeAppStateDeltaToPrisma(state, nextState);
       } catch (error) {
         if (!isRecoverablePrismaConnectionError(error)) {
           throw error;

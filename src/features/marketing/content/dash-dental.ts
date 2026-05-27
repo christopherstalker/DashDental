@@ -4,10 +4,10 @@ export const privacyEmail = "privacy@dashdental.space";
 
 export const primaryCta = "Book 15-min demo";
 export const secondaryCta = "View sample dashboard";
-export const pilotCta = "Start 14-day guided trial";
+export const pilotCta = "Create account";
 
 export const trustRow =
-  "Lead intake only | Human-reviewed AI drafts | No medical records required | Guided pilot available";
+  "Lead intake only | Human-reviewed AI drafts | No medical records required | Guided launch available";
 
 export const ownerDashboardMetrics = [
   {
@@ -173,9 +173,9 @@ export const pricingFaqs = [
       "No. Dash Dental is for lead intake and recovery workflows. Do not use it to store unnecessary clinical history.",
   },
   {
-    question: "What happens after the trial or pilot?",
+    question: "What happens after launch?",
     answer:
-      "You can continue on a paid plan, request help choosing the right plan, or disconnect channels.",
+      "You can continue on the current plan, request help choosing the right plan, or disconnect channels.",
   },
   {
     question: "Can we export or delete data?",
@@ -185,7 +185,7 @@ export const pricingFaqs = [
   {
     question: "How long does setup take?",
     answer:
-      "A pilot should start with one channel and a guided setup checklist. Exact timing depends on channel access, approvals, and clinic availability.",
+      "Launch should start with one channel and a guided setup checklist. Exact timing depends on channel access, approvals, and clinic availability.",
   },
 ] as const;
 

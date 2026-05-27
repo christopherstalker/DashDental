@@ -708,6 +708,38 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   padding: var(--space-3) var(--space-4);
 }
 
+.premium-account-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.premium-account-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 0 var(--space-3);
+  text-decoration: none;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.premium-account-tabs a:hover,
+.premium-account-tabs a.active,
+.premium-account-tabs a[aria-current="page"] {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
 .premium-auth-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 0.78fr);
@@ -2721,6 +2753,12 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   gap: var(--space-2);
 }
 
+.ddr-topbar-account-link {
+  gap: var(--space-2);
+  height: 32px;
+  padding: 0 var(--space-3);
+}
+
 .ddr-user-avatar,
 .ddr-mini-avatar {
   background: var(--accent-glow);
@@ -2742,6 +2780,221 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   min-height: calc(100svh - 52px);
   overflow: auto;
   padding: var(--space-5);
+}
+
+/* Account workspace hub */
+.account-workspace-shell {
+  min-height: 100svh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  padding: clamp(14px, 3vw, 30px);
+}
+
+.account-workspace-topbar,
+.account-workspace-panel {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.account-workspace-topbar {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto minmax(160px, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 58px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3) var(--space-4);
+}
+
+.account-workspace-brand,
+.account-workspace-nav,
+.account-workspace-nav a,
+.account-signout-button {
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-workspace-brand {
+  gap: var(--space-3);
+  color: var(--text-primary);
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.account-workspace-brand span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: var(--radius-md);
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.account-workspace-nav {
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.account-workspace-nav a {
+  gap: var(--space-2);
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 0 var(--space-3);
+  text-decoration: none;
+}
+
+.account-workspace-nav a:hover,
+.account-workspace-nav a.active,
+.account-workspace-nav a[aria-current="page"] {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.account-signout-button {
+  justify-self: end;
+  gap: var(--space-2);
+  min-height: 36px;
+}
+
+.account-workspace-panel {
+  margin-top: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+  padding: clamp(18px, 4vw, 34px);
+}
+
+:root[data-theme="dark"] .account-workspace-panel,
+:root[data-theme="dark"] .account-workspace-topbar {
+  backdrop-filter: var(--surface-blur);
+}
+
+.account-workspace-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.account-workspace-header h1,
+.account-no-workspace h1,
+.account-no-workspace h2,
+.account-workspace-card h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: var(--tracking-heading);
+}
+
+.account-workspace-header h1 {
+  margin-top: var(--space-2);
+  font-size: var(--text-xl);
+  line-height: var(--line-xl);
+}
+
+.account-workspace-header p,
+.account-workspace-card p,
+.account-no-workspace p {
+  max-width: 680px;
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--line-sm);
+}
+
+.account-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.account-workspace-card,
+.account-no-workspace {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.account-workspace-card {
+  display: grid;
+  gap: var(--space-4);
+  min-height: 270px;
+  padding: var(--space-4);
+}
+
+.account-workspace-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+  background: var(--bg-card-hover);
+}
+
+.account-workspace-card-head,
+.account-workspace-proof,
+.account-workspace-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.account-workspace-card-head {
+  justify-content: space-between;
+}
+
+.account-workspace-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: var(--radius-md);
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.account-workspace-card h2 {
+  font-size: var(--text-lg);
+  line-height: var(--line-lg);
+}
+
+.account-workspace-proof {
+  flex-wrap: wrap;
+}
+
+.account-workspace-proof span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 3px var(--space-2);
+}
+
+.account-no-workspace {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.account-workspace-actions {
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
 }
 
 /* Inbox */
@@ -3958,6 +4211,7 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   .ddr-stat-grid,
   .ddr-public-grid,
   .ddr-public-pricing-grid,
+  .account-workspace-grid,
   .ddr-public-footer,
   .ddr-feature-grid,
   .ddr-pricing-grid,
@@ -4146,6 +4400,10 @@ html[data-theme] ::-webkit-scrollbar-thumb {
     padding: 0 var(--space-3);
   }
 
+  .ddr-topbar-account-link span {
+    display: none;
+  }
+
   .ddr-page-scroll {
     padding: var(--space-3);
   }
@@ -4216,6 +4474,27 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   .ddr-marketing-footer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .premium-auth-nav,
+  .account-workspace-topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-auth-nav {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .premium-account-tabs,
+  .account-workspace-nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 1px;
+  }
+
+  .account-signout-button {
+    justify-self: start;
+  }
 }
 
 @media (max-width: 720px) {
@@ -4278,6 +4557,14 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   .ddr-dashboard-shell .dashboard-command {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .account-workspace-header {
+    flex-direction: column;
+  }
+
+  .account-workspace-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -4536,6 +4823,39 @@ html[data-theme] .ddr-dashboard-shell[class] :is(.topbar, .dashboard-command, .m
 
 html[data-theme] .ddr-dashboard-shell[class] :is(.blueprint-copy, .section-heading p, .thread-header p, .empty-state p, .info-line, .usage-line, .table-row, .event-row, small) {
   color: var(--text-secondary) !important;
+}
+
+html[data-theme] .ddr-dashboard-shell[class] .live-notes-launcher {
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)) !important;
+  background:
+    radial-gradient(circle at 28% 0%, var(--accent-glow), transparent 9rem),
+    color-mix(in srgb, var(--bg-surface) 92%, transparent) !important;
+  color: var(--text-primary) !important;
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+html[data-theme] .ddr-dashboard-shell[class] .live-notes-launcher:hover {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--border)) !important;
+  background: color-mix(in srgb, var(--bg-card-hover) 80%, var(--accent-glow)) !important;
+}
+
+html[data-theme] .ddr-dashboard-shell[class] .live-notes-launcher > span {
+  background: var(--accent-glow) !important;
+  color: var(--accent) !important;
+}
+
+html[data-theme] .ddr-dashboard-shell[class] .live-notes-launcher b {
+  border-color: var(--bg-surface) !important;
+  background: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme] .ddr-dashboard-shell[class] .live-notes-drawer {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-xl) !important;
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent) !important;
 }
 
 @media (max-width: 720px) {

@@ -44,6 +44,7 @@ import {
   SupportRequestForm,
   type InitialSupportRequest,
 } from "@/features/support/components/support-request-form";
+import { PublicAccountCta } from "./public-account-cta";
 
 type RouteTone = "demo" | "docs" | "pricing" | "security" | "support" | "trust";
 
@@ -114,10 +115,10 @@ const footerGroups = [
   {
     title: "Account",
     links: [
+      { href: "/register", label: "Create account" },
       { href: "/login", label: "Sign in" },
-      { href: "/register", label: "Create workspace" },
-      { href: "/trial", label: "Start trial" },
-      { href: "/workspaces", label: "Workspaces" },
+      { href: "/workspaces", label: "Account hub" },
+      { href: "/trial", label: "Launch details" },
     ],
   },
 ] as const;
@@ -172,12 +173,7 @@ export function MarketingRedesignShell({
 
         <div className="ddr-public-actions">
           <ThemeToggle />
-          <Link className="ddr-button ddr-button-ghost" href="/login">
-            Sign in
-          </Link>
-          <Link className="ddr-button ddr-button-primary" href="/trial">
-            Start free trial
-          </Link>
+          <PublicAccountCta className="ddr-button ddr-button-primary" />
         </div>
       </header>
 
@@ -400,8 +396,8 @@ function PublicTable({
 export function PricingRedesignPage() {
   const plans: Subscription["plan"][] = ["starter", "growth", "scale"];
   const rows = [
-    ["Best for", "Single clinic pilot", "Busy clinic", "Clinic group"],
-    ["Connected channels", "2", "5", "12"],
+    ["Best for", "Single clinic launch", "Busy clinic", "Clinic group"],
+    ["Connected channels", "5", "5", "12"],
     ["Team seats", "4", "10", "30"],
     ["Monthly messages", "2,000", "10,000", "40,000"],
     ["AI-assisted drafts", "120/mo", "600/mo", "2,500/mo"],
@@ -419,8 +415,8 @@ export function PricingRedesignPage() {
             and owner reporting as clinic volume grows.
           </p>
           <div className="ddr-public-hero-actions">
-            <Link className="ddr-button ddr-button-primary" href="/trial">
-              Start free trial
+            <Link className="ddr-button ddr-button-primary" href="/register">
+              Create account
               <ArrowRight size={15} />
             </Link>
             <Link className="ddr-button ddr-button-ghost" href="/demo">
@@ -434,7 +430,7 @@ export function PricingRedesignPage() {
       <section className="ddr-public-section">
         <div className="ddr-public-section-head">
           <span>Plans</span>
-          <h2>Beta pricing: clear, low-friction, and easy to explain.</h2>
+          <h2>Release pricing: clear, low-friction, and easy to explain.</h2>
           <p>Annual billing includes a 17% discount. Guided onboarding can be added for $200-500.</p>
         </div>
         <div className="ddr-public-pricing-grid">
@@ -464,8 +460,8 @@ export function PricingRedesignPage() {
                     {limits.maxUsers} seats, {limits.maxIntegrations} integrations
                   </li>
                 </ul>
-                <Link className="ddr-button ddr-button-primary" href="/trial">
-                  Start free trial
+                <Link className="ddr-button ddr-button-primary" href="/register">
+                  Create account
                 </Link>
               </article>
             );
@@ -631,7 +627,7 @@ export function SupportRedesignPage({
       title: "Workspace access",
     },
     {
-      body: "Plan status, invoices, trial access, and upgrade questions.",
+      body: "Plan status, invoices, account access, and upgrade questions.",
       icon: CreditCard,
       title: "Billing",
     },
@@ -848,24 +844,24 @@ export const staticPageContent = {
   },
   trial: {
     body:
-      "Start a guided beta trial with one channel, a real reception workflow, and owner visibility from the beginning.",
+      "Start a guided launch with one channel, a real reception workflow, and owner visibility from the beginning.",
     current: "pricing" as RouteTone,
-    eyebrow: "Trial",
+    eyebrow: "Launch",
     primary: { href: "/register", label: "Create workspace" },
     secondary: { href: "/demo", label: "View sample dashboard" },
     sections: [
       {
-        body: "A good trial proves whether the team can respond faster without replacing existing clinic systems.",
+        body: "A good launch proves whether the team can respond faster without replacing existing clinic systems.",
         items: [
           { body: "Connect one channel and verify test submissions.", icon: PlugZap, title: "Day 1" },
           { body: "Run assignment, templates, notes, and snooze with reception.", icon: Workflow, title: "Days 2-3" },
           { body: "Review response time, money at risk, and booked outcomes.", icon: TrendingUp, title: "Week 1" },
-          { body: "Paid workflow screens may lock if billing is not activated; owners keep read, setup, and export paths.", icon: LockKeyhole, title: "After trial" },
-          { body: "Trial records remain available for reasonable billing, support, and export workflows.", icon: Database, title: "Data retention" },
+          { body: "Plan-gated screens stay clear if billing is not activated; owners keep read, setup, and export paths.", icon: LockKeyhole, title: "Plan access" },
+          { body: "Launch records remain available for reasonable billing, support, and export workflows.", icon: Database, title: "Data retention" },
         ],
-        title: "Try Dash Dental for 14 days without guessing what happens next.",
+        title: "Launch Dash Dental without guessing what happens next.",
       },
     ],
-    title: "Try Dash Dental for 14 days without guessing what happens next.",
+    title: "Launch Dash Dental without guessing what happens next.",
   },
 } satisfies Record<string, Omit<RedesignContentPageProps, "primary" | "secondary"> & Partial<Pick<RedesignContentPageProps, "primary" | "secondary">>>;

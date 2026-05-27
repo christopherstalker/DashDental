@@ -66,6 +66,7 @@ export default async function DashboardSettingsPage() {
   };
   const billing: SettingsBilling = {
     daysRemaining: bootstrap.billing.daysRemaining,
+    plan: bootstrap.subscription?.plan ?? "starter",
     planLabel: bootstrap.billing.planLabel,
     status: bootstrap.billing.status,
   };
@@ -76,6 +77,7 @@ export default async function DashboardSettingsPage() {
       digest={digest}
       featureFlags={bootstrap.state.featureFlags.filter((flag) => flag.organizationId === organizationId)}
       integrations={integrations}
+      organizationId={organizationId}
       organizationName={bootstrap.organization.name}
       team={team}
       templates={templates}

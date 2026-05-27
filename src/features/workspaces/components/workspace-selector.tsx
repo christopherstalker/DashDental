@@ -7,6 +7,9 @@ import {
   Building2,
   CheckCircle2,
   Clock3,
+  LayoutDashboard,
+  LogOut,
+  MessageCircle,
   ShieldCheck,
 } from "lucide-react";
 import type { AccountSession } from "@/server/session";
@@ -14,7 +17,21 @@ import type { AccountSession } from "@/server/session";
 export function WorkspaceSelector({ account }: { account: AccountSession }) {
   const [isPending, startTransition] = useTransition();
   const [pendingWorkspace, setPendingWorkspace] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function signOut() {
+    setError(null);
+    setIsSigningOut(true);
+
+    try {
+      await fetch("/api/v1/auth/session", { method: "DELETE" });
+      window.location.assign("/login");
+    } catch {
+      setError("Could not sign out. Try again.");
+      setIsSigningOut(false);
+    }
+  }
 
   function openWorkspace(organizationId: string) {
     setError(null);
@@ -46,15 +63,44 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
 
   return (
     <main className="account-workspace-shell">
+      <header className="account-workspace-topbar">
+        <Link className="account-workspace-brand" href="/">
+          <span>
+            <MessageCircle size={17} />
+          </span>
+          <strong>Dash Dental</strong>
+        </Link>
+        <nav className="account-workspace-nav" aria-label="Account navigation">
+          <Link aria-current="page" className="active" href="/workspaces">
+            <Building2 size={15} />
+            Workspaces
+          </Link>
+          {account.selectedOrganizationId ? (
+            <Link href="/dashboard">
+              <LayoutDashboard size={15} />
+              Dashboard
+            </Link>
+          ) : null}
+        </nav>
+        <button
+          className="secondary-button account-signout-button"
+          disabled={isSigningOut}
+          onClick={signOut}
+          type="button"
+        >
+          <LogOut size={15} />
+          {isSigningOut ? "Signing out..." : "Sign out"}
+        </button>
+      </header>
+
       <section className="account-workspace-panel">
         <header className="account-workspace-header">
           <div>
-            <p className="eyebrow">Workspace access</p>
+            <p className="eyebrow">Account hub</p>
             <h1>Choose a clinic workspace</h1>
             <p>
-              You are signed in as {account.user.email}. Dash Dental only opens
-              clinic dashboards where your email has been added by an owner or
-              admin.
+              Signed in as {account.user.email}. Open dashboard access from a
+              verified workspace instead of the public marketing header.
             </p>
           </div>
           <Link className="secondary-button" href="/">
@@ -106,7 +152,9 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
                       ? "Opening..."
                       : isInvited
                         ? "Invite pending"
-                        : "Open dashboard"}
+                        : isCurrent
+                          ? "Open dashboard"
+                          : "Select and open dashboard"}
                     <ArrowRight size={16} />
                   </button>
                 </article>

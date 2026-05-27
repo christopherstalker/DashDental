@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { PublicAccountCta } from "@/components/marketing/public-account-cta";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -40,19 +41,20 @@ export function MarketingNav({
 
       <div className="recovery-nav-actions">
         <ThemeToggle />
-        <Link className="ddr-button ddr-button-ghost" href="/login">
+        <Link
+          className="ddr-button ddr-button-ghost"
+          href="/login"
+        >
           Sign in
         </Link>
-        <Link
+        <PublicAccountCta
           className="recovery-white-button ddr-button ddr-button-primary"
-          data-launch-event="public.home.demo_clicked"
+          data-launch-event="public.home.account_clicked"
           data-launch-page={launchPage}
           data-launch-section="nav"
-          data-launch-target="/trial"
-          href="/trial"
-        >
-          <LocalizedText fallback="Start free trial" k="common.nav.startTrial" />
-        </Link>
+          data-launch-target="/register"
+          guestLabel="Create account"
+        />
       </div>
     </nav>
   );

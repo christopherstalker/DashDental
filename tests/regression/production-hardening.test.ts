@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { defaultOrganizationId } from "../../src/domain/seed-data";
-import type { AppState } from "../../src/domain/types";
+import type { AppState, Conversation, Lead } from "../../src/domain/types";
 import { getRuntimeSeedState } from "../../src/server/runtime-state";
 import { createLeadFromInbound } from "../../src/server/state-mutations";
 import { encryptIntegrationSecret } from "../../src/server/integration-secrets";
@@ -136,6 +136,54 @@ test("Meta webhook signature verification fails closed when no app secret exists
   };
 
   assert.equal(verifyMetaWebhookSignature(state, "{\"entry\":[]}", null), false);
+});
+
+test("managed messaging connector activates and delivers without provider credentials", async () => {
+  const {
+    provisionManagedMessagingIntegration,
+    resolveMessagingCredentials,
+    sendLiveProviderMessage,
+  } = await import("../../src/server/channel-integrations");
+  const organizationId = defaultOrganizationId;
+  const lead: Lead = {
+    id: "lead-managed-whatsapp",
+    organizationId,
+    name: "Managed Patient",
+    phone: "+15551234567",
+    source: "whatsapp",
+    status: "new",
+    providerContactId: "15551234567",
+    firstMessageAt: "2026-05-01T09:00:00.000Z",
+    estimatedValue: 500,
+    createdAt: "2026-05-01T09:00:00.000Z",
+    updatedAt: "2026-05-01T09:00:00.000Z",
+  };
+  const conversation: Conversation = {
+    id: "conv-managed-whatsapp",
+    organizationId,
+    leadId: lead.id,
+    provider: "whatsapp",
+    providerThreadId: "15551234567",
+    status: "open",
+    lastMessageAt: "2026-05-01T09:00:00.000Z",
+  };
+  const state = provisionManagedMessagingIntegration(getRuntimeSeedState(), {
+    actorUserId: "user-owner",
+    organizationId,
+    provider: "whatsapp",
+  });
+  const integration = state.integrations.find(
+    (item) => item.organizationId === organizationId && item.provider === "whatsapp",
+  );
+  const credentials = resolveMessagingCredentials(state, organizationId, "whatsapp");
+  const result = await sendLiveProviderMessage(state, conversation, lead, "Can we book tomorrow?");
+
+  assert.equal(integration?.status, "active");
+  assert.equal(integration?.healthScore, 96);
+  assert.equal(credentials?.connectorMode, "managed");
+  assert.equal(credentials?.managedByDashDental, true);
+  assert.equal(result.payloadJson.connectorMode, "managed");
+  assert.equal(result.payloadJson.live, false);
 });
 
 test("Prisma delta writes do not issue full-table deletes or delete unrelated tenant data", async () => {

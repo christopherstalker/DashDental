@@ -14,6 +14,7 @@ import {
   UserCheck,
   Zap,
 } from "lucide-react";
+import { AuthAccountNav } from "../components/auth-account-nav";
 
 const authPreviewThreads = [
   {
@@ -129,23 +130,17 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
             </span>
             <strong>Dash Dental</strong>
           </Link>
-          <div className="premium-auth-actions">
-            <Link href="/pricing">Pricing</Link>
-            <Link className="premium-auth-login" href="/login">
-              Sign in
-            </Link>
-          </div>
+          <AuthAccountNav />
         </header>
 
         <div className="premium-auth-grid">
           <div className="login-copy premium-auth-copy">
-            <p className="premium-auth-kicker">Dash Dental missed-message recovery</p>
-            <h1>Start a clinic recovery workspace without replacing your CRM.</h1>
+            <p className="premium-auth-kicker">Dash Dental account setup</p>
+            <h1>Create an account first. Open the dashboard from your workspace hub.</h1>
             <p className="login-subcopy">
-              Create a protected workspace for unanswered patient messages, response-time
-              risk, safe AI-assisted reply drafts (human-reviewed before sending), and
-              owner visibility. No CRM migration required - start with one channel and a
-              work email.
+              The public site stays focused on the product. Your account holds clinic
+              workspaces, role access, setup progress, and the path into the operational
+              dashboard after authentication.
             </p>
             <div className="premium-auth-proof">
               <span>
@@ -154,7 +149,7 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
               </span>
               <span>
                 <CreditCard size={15} />
-                14-day guided trial
+                Active release plan
               </span>
               <span>
                 <Zap size={15} />

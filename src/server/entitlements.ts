@@ -175,7 +175,7 @@ export function canConnectChannel(
     state.integrations.filter(
       (integration) =>
         integration.organizationId === organizationId &&
-        integration.status !== "disconnected",
+        (integration.status === "active" || integration.status === "degraded"),
     ).length,
   );
 

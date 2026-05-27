@@ -21,6 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PublicAccountCta } from "@/components/marketing/public-account-cta";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   integrationRows,
@@ -78,8 +79,8 @@ const plans = [
   {
     name: "Starter",
     monthly: 30,
-    description: "For one front desk team validating the unified inbox.",
-    features: ["2 channels", "3 seats", "Saved replies", "Weekly owner digest"],
+    description: "For one front desk team running the unified inbox.",
+    features: ["All core channels", "4 seats", "Saved replies", "Weekly owner digest"],
   },
   {
     name: "Pro",
@@ -100,7 +101,7 @@ const legacyTrustItems = [
   "Lead intake only",
   "Human-reviewed AI drafts",
   "No medical records required",
-  "Guided pilot available",
+  "Guided launch available",
 ] as const;
 
 const frontDeskRows = [
@@ -157,18 +158,13 @@ export function DashDentalRedesignLanding() {
         </div>
         <div className="ddr-landing-actions">
           <ThemeToggle />
-          <Link className="ddr-button ddr-button-ghost" href="/login">
-            Sign in
-          </Link>
-          <Link className="ddr-button ddr-button-primary" href="/trial">
-            Start free trial
-          </Link>
+          <PublicAccountCta className="ddr-button ddr-button-primary" />
         </div>
       </nav>
 
       <section className="ddr-section ddr-hero">
         <div>
-          <span className="ddr-tag">Now in beta - 12 clinics onboard</span>
+          <span className="ddr-tag">Live release - 12 clinics onboard</span>
           <h1>
             Never miss another
             <br />
@@ -179,10 +175,11 @@ export function DashDentalRedesignLanding() {
             Dash Dental brings WhatsApp, Instagram DMs, and clinic messages into one fast workspace for reception teams.
           </p>
           <div className="ddr-hero-actions">
-            <Link className="ddr-button ddr-button-primary" href="/trial">
-              Get early access
-              <ArrowRight size={15} />
-            </Link>
+            <PublicAccountCta
+              className="ddr-button ddr-button-primary"
+              signedInLabel="Open account"
+              showArrow
+            />
             <Link className="ddr-button ddr-button-ghost" href="/demo">
               See demo
               <Play size={15} />
@@ -391,7 +388,7 @@ export function DashDentalRedesignLanding() {
               </span>
               <h3>60-second Loom walkthrough</h3>
               <p>
-                A lightweight beta screencast shows the receptionist flow from missed DM to booked appointment.
+                A lightweight walkthrough shows the receptionist flow from missed DM to booked appointment.
               </p>
               <div className="ddr-hero-actions">
                 <button className="ddr-button ddr-button-ghost" type="button">
@@ -465,7 +462,7 @@ export function DashDentalRedesignLanding() {
 
       <section className="ddr-section ddr-before-after">
         <div className="ddr-section-heading">
-          <h2>Before and after the beta rollout</h2>
+          <h2>Before and after the rollout</h2>
           <p>One clinic moved from scattered phones to a shared queue with owner visibility in week one.</p>
         </div>
         <div className="ddr-toggle" role="group" aria-label="Before and after selector">
@@ -614,7 +611,7 @@ export function DashDentalRedesignLanding() {
       <section className="ddr-section" id="pricing">
         <div className="ddr-pricing-header">
           <div className="ddr-section-heading">
-            <h2>Pricing that matches beta speed</h2>
+            <h2>Release pricing for growing clinics</h2>
             <p>Annual billing includes a 17% discount. Guided onboarding is available for $200-500.</p>
           </div>
           <div className="ddr-toggle" role="group" aria-label="Billing cadence">
@@ -650,8 +647,8 @@ export function DashDentalRedesignLanding() {
                     </li>
                   ))}
                 </ul>
-                <Link className="ddr-button ddr-button-primary" href="/trial">
-                  Start free trial
+                <Link className="ddr-button ddr-button-primary" href="/register">
+                  Create account
                 </Link>
               </article>
             );
@@ -662,7 +659,7 @@ export function DashDentalRedesignLanding() {
       <section className="ddr-section ddr-cta ddr-card" id="trial">
         <TrendingUp size={24} />
         <h2>Turn missed DMs into booked treatment.</h2>
-        <p>Join the beta and get the receptionist workflow live before your next busy week.</p>
+        <p>Create a workspace and get the receptionist workflow live before your next busy week.</p>
         <div className="ddr-final-cta-actions">
           <Link className="ddr-button ddr-button-primary" href="/support#request">
             {primaryCta}

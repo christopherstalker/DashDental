@@ -114,8 +114,8 @@ export function LoginForm({
         <p className="eyebrow">Secure sign in</p>
         <h2>Sign in to your Dash Dental account</h2>
         <p>
-          After sign-in, choose a clinic workspace where your email has been
-          added by an owner or admin.
+          After sign-in, Dash Dental opens your account hub first. From there,
+          choose a clinic workspace and enter the dashboard with the right role.
         </p>
       </div>
 
@@ -163,7 +163,7 @@ export function LoginForm({
           onTokenChange={setTurnstileToken}
         />
         <button className="primary-button" disabled={isBusy} type="submit">
-          {isBusy ? "Checking access..." : "Continue to workspaces"}
+          {isBusy ? "Checking access..." : "Continue to account"}
           {isBusy ? <Loader2 className="login-spin" size={16} /> : <ArrowRight size={16} />}
         </button>
       </form>
@@ -172,7 +172,7 @@ export function LoginForm({
 
       {allowDevLogin && loginProfiles.length > 0 ? (
         <>
-          <div className="login-divider">Local beta profiles</div>
+          <div className="login-divider">Local clinic profiles</div>
           <div className="login-profile-grid">
             {loginProfiles.slice(0, 4).map((profile) => (
               <button
@@ -202,9 +202,7 @@ export function LoginForm({
       <div className="auth-alt-action">
         <Building2 size={16} />
         <span>New clinic?</span>
-        <a href="/support?category=Demo%20or%20onboarding%20call&message=Please%20book%20a%20Dash%20Dental%20demo%20for%20my%20clinic.#request">
-          Book a demo
-        </a>
+        <a href="/register">Create account</a>
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 import { readAppState, mutateAppState } from "@/server/data-store";
 import { changeSubscriptionPlan } from "@/server/state-mutations";
 import { ApiError } from "@/server/api-error";
-import { isDevBillingEnabled } from "@/server/feature-flags";
+import { isDevBillingEnabled, isProductionRuntime } from "@/server/feature-flags";
 import {
   assertSameOrganization,
   errorResponse,
@@ -13,7 +13,7 @@ import { optionalString, requiredSubscriptionPlan } from "@/server/validation";
 
 export async function POST(request: Request) {
   try {
-    if (!isDevBillingEnabled()) {
+    if (!isDevBillingEnabled() && isProductionRuntime()) {
       throw new ApiError(
         403,
         "Direct plan changes are disabled. Use Checkout, Customer Portal, or operator-confirmed manual billing.",

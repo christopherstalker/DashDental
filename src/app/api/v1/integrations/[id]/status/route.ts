@@ -2,6 +2,11 @@ import { readAppState, mutateAppState } from "@/server/data-store";
 import { assertEntitlement, canConnectChannel } from "@/server/entitlements";
 import { updateIntegrationStatus } from "@/server/state-mutations";
 import {
+  isMessagingProvider,
+  provisionManagedMessagingIntegration,
+  resolveMessagingCredentials,
+} from "@/server/channel-integrations";
+import {
   ApiError,
   errorResponse,
   getRequestContext,
@@ -38,27 +43,31 @@ export async function POST(
         canConnectChannel(currentState, integration.organizationId),
       );
     }
-    if (
-      status === "active" &&
-      (integration.provider === "telegram" ||
-        integration.provider === "whatsapp" ||
-        integration.provider === "instagram") &&
-      !integration.encryptedCredentials.trim()
-    ) {
-      throw new ApiError(
-        409,
-        "Save live API credentials before activating this channel",
-        "integration_not_configured",
-      );
-    }
+    const state = await mutateAppState((current) => {
+      const currentIntegration = current.integrations.find((item) => item.id === id);
+      if (
+        status === "active" &&
+        currentIntegration &&
+        isMessagingProvider(currentIntegration.provider) &&
+        !resolveMessagingCredentials(
+          current,
+          currentIntegration.organizationId,
+          currentIntegration.provider,
+        )
+      ) {
+        return provisionManagedMessagingIntegration(current, {
+          organizationId: currentIntegration.organizationId,
+          provider: currentIntegration.provider,
+          actorUserId: requestContext.userId,
+        });
+      }
 
-    const state = await mutateAppState((current) =>
-      updateIntegrationStatus(current, {
+      return updateIntegrationStatus(current, {
         integrationId: id,
         status,
         actorUserId: requestContext.userId,
-      }),
-    );
+      });
+    });
 
     return Response.json(stateForContext(state, requestContext));
   } catch (error) {

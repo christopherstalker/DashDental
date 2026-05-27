@@ -3,13 +3,19 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { FREE_TRIAL_DAYS, getFreeTrialPeriod, getPlanLimits } from "@/domain/business-rules";
+import { getCurrentCalendarMonthPeriod, getPlanLimits } from "@/domain/business-rules";
 import type { AppState, Organization, Subscription, UsageLimits } from "@/domain/types";
 import { prisma } from "./prisma";
 import { addAudit } from "./state-mutations";
 import { createDefaultClinicDbContract } from "./data-access-contracts";
 import { ApiError } from "./api-error";
-import { isPrismaStorageEnabled, mutateAppState, readAppState } from "./data-store";
+import {
+  isPrismaStorageEnabled,
+  isRecoverablePrismaConnectionError,
+  mutateAppState,
+  readAppState,
+} from "./data-store";
+import { isProductionRuntime } from "./feature-flags";
 import { getBillingProvider } from "./manual-billing";
 
 const scryptAsync = promisify(crypto.scrypt);
@@ -105,11 +111,17 @@ async function writeCredentialRecordsToFile(records: CredentialRecord[]): Promis
 
 async function getPasswordHash(userId: string): Promise<string | undefined> {
   if (isPrismaStorageEnabled()) {
-    const record = await prisma.userCredential.findUnique({
-      where: { userId },
-      select: { passwordHash: true },
-    });
-    return record?.passwordHash;
+    try {
+      const record = await prisma.userCredential.findUnique({
+        where: { userId },
+        select: { passwordHash: true },
+      });
+      return record?.passwordHash;
+    } catch (error) {
+      if (!isRecoverablePrismaConnectionError(error) || isProductionRuntime()) {
+        throw error;
+      }
+    }
   }
 
   const records = await readCredentialRecordsFromFile();
@@ -118,12 +130,18 @@ async function getPasswordHash(userId: string): Promise<string | undefined> {
 
 export async function setPasswordHash(userId: string, passwordHash: string): Promise<void> {
   if (isPrismaStorageEnabled()) {
-    await prisma.userCredential.upsert({
-      where: { userId },
-      update: { passwordHash },
-      create: { userId, passwordHash },
-    });
-    return;
+    try {
+      await prisma.userCredential.upsert({
+        where: { userId },
+        update: { passwordHash },
+        create: { userId, passwordHash },
+      });
+      return;
+    } catch (error) {
+      if (!isRecoverablePrismaConnectionError(error) || isProductionRuntime()) {
+        throw error;
+      }
+    }
   }
 
   const records = await readCredentialRecordsFromFile();
@@ -276,18 +294,18 @@ function createStarterSubscription(
   organizationId: string,
   nowIso: string,
 ): Subscription {
-  const trialPeriod = getFreeTrialPeriod(nowIso);
+  const billingPeriod = getCurrentCalendarMonthPeriod(nowIso);
 
   return {
     id: createRuntimeId("sub"),
     organizationId,
     provider: getBillingProvider() === "stripe" ? "stripe" : "manual",
     plan: "starter",
-    status: "trialing",
-    currentPeriodStart: trialPeriod.startIso,
-    currentPeriodEnd: trialPeriod.endIso,
+    status: "active",
+    currentPeriodStart: billingPeriod.startIso,
+    currentPeriodEnd: billingPeriod.endIso,
     externalCustomerId: "",
-    externalSubscriptionId: "free-trial",
+    externalSubscriptionId: "self-serve-active",
   };
 }
 
@@ -365,7 +383,7 @@ function createClinicOrganization(
       end: "18:00",
       weekdays: [1, 2, 3, 4, 5],
     },
-    status: "trial",
+    status: "active",
   };
 }
 
@@ -469,8 +487,8 @@ export async function registerClinicWorkspace(input: {
       metadataJson: {
         email,
         timezone,
-        trialDays: FREE_TRIAL_DAYS,
-        trialEndsAt: subscription.currentPeriodEnd,
+        launchMode: "self_serve_release",
+        currentPeriodEnd: subscription.currentPeriodEnd,
       },
     });
 
