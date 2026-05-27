@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { MarketingShell } from "@/features/marketing/components/landing-system";
-import { SupportHubContent } from "@/features/marketing/components/trust-support-pages";
+import { SupportRedesignPage } from "@/components/marketing/marketing-redesign";
 
 export const metadata: Metadata = {
   title: "Support Center - Dash Dental",
@@ -41,9 +40,5 @@ export default async function SupportPage({
     urgency: readQueryValue(query, "urgency"),
   };
 
-  return (
-    <MarketingShell launchPage="/support">
-      <SupportHubContent initialRequest={initialRequest} />
-    </MarketingShell>
-  );
+  return <SupportRedesignPage initialRequest={initialRequest} />;
 }

@@ -56,7 +56,7 @@ export function SectionBlueprintPage({
   const hasAccess = session ? canAccess(requiredRole, session.role) : false;
 
   return (
-    <section className="view-grid">
+    <section className="view-grid ddr-workspace-page">
       <PageHeader
         actions={
           <div className="notice">

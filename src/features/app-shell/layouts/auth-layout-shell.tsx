@@ -2,15 +2,120 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
+  BellRing,
   CheckCircle2,
+  Clock3,
   CreditCard,
+  Inbox,
   MessageCircle,
   ShieldCheck,
   Sparkles,
-  TimerReset,
+  type LucideIcon,
+  UserCheck,
   Zap,
 } from "lucide-react";
+
+const authPreviewThreads = [
+  {
+    accent: "alert",
+    initials: "MK",
+    message: "Veneers pricing",
+    name: "Mila K.",
+    time: "12m",
+  },
+  {
+    accent: "warm",
+    initials: "ON",
+    message: "Implant consult",
+    name: "Oleh N.",
+    time: "31m",
+  },
+  {
+    accent: "ok",
+    initials: "EP",
+    message: "Emergency tooth pain",
+    name: "Eva P.",
+    time: "4m",
+  },
+] as const;
+
+const authPreviewNavItems: Array<{ icon: LucideIcon; label: string }> = [
+  { icon: Inbox, label: "Inbox" },
+  { icon: Clock3, label: "SLA" },
+  { icon: BellRing, label: "Alerts" },
+];
+
+function AuthDashboardPreview() {
+  return (
+    <div className="premium-auth-dashboard-preview" aria-label="Dash Dental dark dashboard preview">
+      <aside className="premium-auth-dashboard-sidebar">
+        <div className="premium-auth-dashboard-logo">
+          <Zap size={13} />
+          <span>Dash Dental</span>
+        </div>
+        {authPreviewNavItems.map(({ icon: Icon, label }) => (
+          <span className={label === "Inbox" ? "active" : ""} key={label}>
+            <Icon size={13} />
+            {label}
+          </span>
+        ))}
+      </aside>
+
+      <section className="premium-auth-dashboard-main">
+        <div className="premium-auth-dashboard-topbar">
+          <span>Workspace / Inbox</span>
+          <b>3 open</b>
+        </div>
+
+        <div className="premium-auth-dashboard-metrics">
+          <article>
+            <small>Response rate</small>
+            <strong>94%</strong>
+          </article>
+          <article>
+            <small>Avg response</small>
+            <strong>8m</strong>
+          </article>
+          <article>
+            <small>Booked today</small>
+            <strong>7</strong>
+          </article>
+        </div>
+
+        <div className="premium-auth-dashboard-workspace">
+          <div className="premium-auth-thread-list">
+            {authPreviewThreads.map((thread) => (
+              <article className={thread.accent} key={thread.name}>
+                <span>{thread.initials}</span>
+                <div>
+                  <strong>{thread.name}</strong>
+                  <small>{thread.message}</small>
+                </div>
+                <b>{thread.time}</b>
+              </article>
+            ))}
+          </div>
+
+          <div className="premium-auth-thread-panel">
+            <div className="premium-auth-thread-header">
+              <span>
+                <MessageCircle size={13} />
+                Mila K.
+              </span>
+              <b>SLA 3 min</b>
+            </div>
+            <p className="incoming">Hi, do you have veneer consult slots this week?</p>
+            <p className="outgoing">Yes, we can offer today at 16:30 or tomorrow morning.</p>
+            <div className="team-note">
+              <UserCheck size={13} />
+              Team note: mention financing options.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 export function AuthLayoutShell({ children }: { children: ReactNode }) {
   return (
@@ -23,7 +128,6 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
               <ShieldCheck size={17} />
             </span>
             <strong>Dash Dental</strong>
-            <em className="dd-beta-badge">Beta</em>
           </Link>
           <div className="premium-auth-actions">
             <Link href="/pricing">Pricing</Link>
@@ -35,12 +139,13 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
 
         <div className="premium-auth-grid">
           <div className="login-copy premium-auth-copy">
-            <p className="premium-auth-kicker">Secure beta access</p>
-            <h1>Open the recovery cockpit your clinic assigned to you.</h1>
+            <p className="premium-auth-kicker">Dash Dental missed-message recovery</p>
+            <h1>Start a clinic recovery workspace without replacing your CRM.</h1>
             <p className="login-subcopy">
-              Dash Dental separates your personal account from clinic data. Sign in,
-              choose an assigned workspace, and recover missed inquiries without mixing
-              patient intake with clinical records.
+              Create a protected workspace for unanswered patient messages, response-time
+              risk, safe AI-assisted reply drafts (human-reviewed before sending), and
+              owner visibility. No CRM migration required - start with one channel and a
+              work email.
             </p>
             <div className="premium-auth-proof">
               <span>
@@ -49,62 +154,26 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
               </span>
               <span>
                 <CreditCard size={15} />
-                Beta workspace
+                14-day guided trial
               </span>
               <span>
                 <Zap size={15} />
-                Human-reviewed AI drafts
+                Setup checklist included
               </span>
             </div>
-
-            <div className="premium-auth-console" aria-label="Dash Dental access preview">
+            <div className="premium-auth-preview">
               <div className="premium-auth-preview-header">
-                <span>Access preview</span>
-                <strong>Revenue recovery cockpit</strong>
+                <span>Current dashboard preview</span>
+                <strong>Live recovery cockpit</strong>
               </div>
-              <div className="premium-auth-console-grid">
-                <div className="premium-auth-console-card accent">
-                  <span>
-                    <BarChart3 size={15} />
-                    Revenue at risk
-                  </span>
-                  <strong>$7.8k</strong>
-                  <em>4 patients need action</em>
-                </div>
-                <div className="premium-auth-console-card">
-                  <span>
-                    <TimerReset size={15} />
-                    Avg first response
-                  </span>
-                  <strong>11m</strong>
-                  <em>inside target</em>
-                </div>
+              <AuthDashboardPreview />
+              <div className="premium-auth-float one">
+                <Sparkles size={16} />
+                <span>AI brief ready</span>
               </div>
-              <div className="premium-auth-queue">
-                {[
-                  ["WhatsApp", "Implant consult waiting", "High SLA risk"],
-                  ["Instagram", "Whitening quote request", "AI draft ready"],
-                  ["Web form", "Emergency appointment", "Owner visible"],
-                ].map(([channel, intent, status]) => (
-                  <div className="premium-auth-queue-row" key={intent}>
-                    <span>
-                      <MessageCircle size={14} />
-                      {channel}
-                    </span>
-                    <strong>{intent}</strong>
-                    <em>{status}</em>
-                  </div>
-                ))}
-              </div>
-              <div className="premium-auth-console-footer">
-                <span>
-                  <Sparkles size={15} />
-                  Human approval required
-                </span>
-                <strong>
-                  Open priority queue
-                  <ArrowRight size={14} />
-                </strong>
+              <div className="premium-auth-float two">
+                <ArrowRight size={16} />
+                <span>$1.8k recoverable</span>
               </div>
             </div>
           </div>

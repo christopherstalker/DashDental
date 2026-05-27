@@ -39,7 +39,7 @@ export function TrustPageShell({
 }) {
   return (
     <SiteShell>
-      <main className="recovery-landing trust-page">
+      <main className="recovery-landing trust-page ddr-marketing-page ddr-reset">
         <section className="recovery-hero trust-page-hero">
           <MarketingNav launchPage={launchPage} />
 

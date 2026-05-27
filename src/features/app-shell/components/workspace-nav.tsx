@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
@@ -94,7 +95,7 @@ export function WorkspaceNav({
                 const Icon = routeIcons[route.id] ?? Gauge;
 
                 return (
-                  <a
+                  <Link
                     className={`nav-item ${isActive ? "active" : ""}`}
                     href={route.href}
                     key={route.id}
@@ -105,7 +106,7 @@ export function WorkspaceNav({
                       fallback={route.label}
                       k={routeLabelKeys[route.id] ?? "workspace.nav.dashboard"}
                     />
-                  </a>
+                  </Link>
                 );
               })}
           </nav>

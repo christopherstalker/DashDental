@@ -1,20 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LanguageSwitcher } from "@/features/i18n/components/language-switcher";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
-import { demoRequestHref } from "@/features/marketing/components/landing-system";
-import { MarketingLocalizedText } from "@/features/marketing/components/marketing-localized-text";
-import { ThemeToggle } from "@/features/theme/components/theme-toggle";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function MarketingNav({
   launchPage,
-  showLanguageSwitcher = false,
 }: {
   launchPage?: string;
-  showLanguageSwitcher?: boolean;
 }) {
   return (
-    <nav className="recovery-nav marketing-nav" aria-label="Primary navigation">
+    <nav className="recovery-nav marketing-nav ddr-marketing-nav" aria-label="Primary navigation">
       <Link className="recovery-brand" href="/" aria-label="Dash Dental home">
         <span className="recovery-brand-icon" aria-hidden="true">
           <Image
@@ -28,42 +23,35 @@ export function MarketingNav({
           />
         </span>
         <span className="recovery-brand-wordmark">Dash Dental</span>
-        <span className="dd-beta-badge">Beta</span>
       </Link>
 
       <div className="recovery-nav-links">
-        <Link href="/#product">
-          <LocalizedText fallback="Product" k="common.nav.platform" />
-        </Link>
-        <Link href="/demo">
-          <LocalizedText fallback="Demo" k="common.nav.demo" />
-        </Link>
+        <Link href="/#product">Product</Link>
+        <Link href="/demo">Demo</Link>
         <Link href="/pricing">
           <LocalizedText fallback="Pricing" k="common.nav.pricing" />
         </Link>
+        <Link href="/integrations-guide">Integrations</Link>
         <Link href="/security">
           <LocalizedText fallback="Security" k="common.nav.security" />
         </Link>
-        <Link href="/support">
-          <MarketingLocalizedText fallback="Support" k="support" />
-        </Link>
+        <Link href="/support">Support</Link>
       </div>
 
       <div className="recovery-nav-actions">
-        {showLanguageSwitcher ? <LanguageSwitcher compact tone="dark" /> : null}
-        <ThemeToggle compact />
-        <Link className="recovery-ghost-button" href="/login">
-          <LocalizedText fallback="Sign in" k="common.nav.login" />
+        <ThemeToggle />
+        <Link className="ddr-button ddr-button-ghost" href="/login">
+          Sign in
         </Link>
         <Link
-          className="recovery-white-button"
+          className="recovery-white-button ddr-button ddr-button-primary"
           data-launch-event="public.home.demo_clicked"
           data-launch-page={launchPage}
           data-launch-section="nav"
-          data-launch-target={demoRequestHref}
-          href={demoRequestHref}
+          data-launch-target="/trial"
+          href="/trial"
         >
-          <MarketingLocalizedText fallback="Book demo" k="bookDemo" />
+          <LocalizedText fallback="Start free trial" k="common.nav.startTrial" />
         </Link>
       </div>
     </nav>

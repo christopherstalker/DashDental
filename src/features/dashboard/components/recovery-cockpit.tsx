@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import {
   BarChart3,
   Bot,
-  CalendarClock,
   CheckCircle2,
   Clock3,
   FileText,
@@ -19,9 +18,6 @@ import {
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import type { TranslationKey } from "@/features/i18n/translations";
 import { RecoveryCockpitSidebar } from "@/features/dashboard/components/recovery-cockpit-sidebar";
-
-const demoRequestHref =
-  "/support?category=Demo%20or%20onboarding%20call&urgency=Normal&channel=Not%20channel-specific&message=Please%20book%20or%20reschedule%20a%20Dash%20Dental%20demo.%20I%20want%20to%20review%20the%20dashboard%20workflow.#request";
 
 export type CockpitQueueRow = {
   action: string;
@@ -240,12 +236,9 @@ export function RecoveryCockpit({
                   <LocalizedText k="dashboard.cockpit.embeddedKicker" />
                 </span>
                 <p className="dd-cockpit-clinic-line">{embeddedContext.clinicName}</p>
-                <div className="dd-cockpit-title-row">
-                  <h1>
-                    <LocalizedText k="workspace.nav.dashboard" />
-                  </h1>
-                  <span className="dd-beta-badge">Beta</span>
-                </div>
+                <h1>
+                  <LocalizedText k="workspace.nav.dashboard" />
+                </h1>
                 <p className="clinic-console-summary dd-cockpit-summary-compact">
                   <span className="dd-cockpit-greet-line">
                     <LocalizedText k="dashboard.hero.greeting" /> {embeddedContext.firstName}
@@ -253,7 +246,7 @@ export function RecoveryCockpit({
                   <span className="dd-cockpit-meta-line">
                     {embeddedContext.unanswered}{" "}
                     <LocalizedText k="dashboard.cockpit.unansweredPatients" />
-                    {" / "}
+                    {" · "}
                     {embeddedContext.atRisk}{" "}
                     <LocalizedText k="dashboard.cockpit.atRiskItems" />
                   </span>
@@ -264,12 +257,9 @@ export function RecoveryCockpit({
                 <span className="dd-cockpit-kicker dd-cockpit-kicker-demo">
                   <LocalizedText k="dashboard.cockpit.demoKicker" />
                 </span>
-                <div className="dd-cockpit-title-row">
-                  <h1>
-                    <LocalizedText k="workspace.nav.dashboard" />
-                  </h1>
-                  <span className="dd-beta-badge">Beta</span>
-                </div>
+                <h1>
+                  <LocalizedText k="workspace.nav.dashboard" />
+                </h1>
                 <p className="clinic-console-summary">
                   <LocalizedText k="dashboard.cockpit.heroSummary" />
                 </p>
@@ -325,7 +315,6 @@ export function RecoveryCockpit({
     </section>
   );
 }
-
 function MetricCard({ metric }: { metric: CockpitMetric }) {
   const label =
     metric.labelKey !== undefined ? <LocalizedText k={metric.labelKey} /> : metric.label;
@@ -452,21 +441,6 @@ function InsightPanel({ sampleMode }: { sampleMode: boolean }) {
           <LocalizedText k="dashboard.cockpit.recoverySettings" />
         </strong>
       </div>
-
-      <section className="dd-cockpit-demo-card">
-        <span>
-          <CalendarClock size={16} aria-hidden />
-          Demo support
-        </span>
-        <strong>Book or reschedule a dashboard demo</strong>
-        <p>
-          Open a pre-filled support request so the team can respond with the next
-          available demo slot.
-        </p>
-        <Link className="dd-cockpit-button primary" href={demoRequestHref}>
-          Book demo
-        </Link>
-      </section>
 
       <InsightSection title={<LocalizedText k="dashboard.cockpit.sectionChannels" />}>
         {channelHealth.map(([label, value]) => (

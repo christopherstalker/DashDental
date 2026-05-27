@@ -4,20 +4,33 @@ import Link from "next/link";
 import {
   ArrowRight,
   BellRing,
+  Bot,
   Check,
+  CheckCircle2,
   FileText,
   History,
+  Inbox,
   Lock,
   MessageCircle,
   MousePointer2,
   Play,
   Send,
+  ShieldCheck,
   TrendingUp,
   UserCheck,
   Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  integrationRows,
+  ownerDashboardMetrics,
+  pilotCta,
+  primaryCta,
+  sampleConversations,
+  secondaryCta,
+  workflowSteps,
+} from "@/features/marketing/content/dash-dental";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
@@ -83,6 +96,38 @@ const plans = [
   },
 ];
 
+const legacyTrustItems = [
+  "Lead intake only",
+  "Human-reviewed AI drafts",
+  "No medical records required",
+  "Guided pilot available",
+] as const;
+
+const frontDeskRows = [
+  ["Who to reply to first", "Sorted by urgency, waiting time, and estimated patient value"],
+  ["What to say", "Safe AI draft with staff review required before sending"],
+  ["Why it matters", "Shows treatment opportunity, response risk, and ownership"],
+  ["What failed", "Delivery and channel status stay visible for follow-up"],
+] as const;
+
+const trustBoundaryCards = [
+  {
+    icon: Inbox,
+    title: "Lead intake only",
+    text: "Dash Dental is for inbound inquiries, callbacks, and recovery work. It is not a full EHR.",
+  },
+  {
+    icon: Bot,
+    title: "Human-reviewed AI",
+    text: "AI can summarize and draft replies. Staff review is required before sending patient communications.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "No fake compliance badges",
+    text: "Security controls are described honestly. No SOC 2, HIPAA, or ISO certification is claimed unless completed.",
+  },
+] as const;
+
 export function DashDentalRedesignLanding() {
   const [mode, setMode] = useState<"before" | "after">("after");
   const [dmCount, setDmCount] = useState(180);
@@ -103,21 +148,27 @@ export function DashDentalRedesignLanding() {
           <span>Dash Dental</span>
         </Link>
         <div className="ddr-landing-links">
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#blog">Blog</a>
+          <a href="#product">Product</a>
+          <a href="#how-it-works">How it works</a>
+          <Link href="/demo">Demo</Link>
+          <Link href="/pricing">Pricing</Link>
+          <Link href="/security">Security</Link>
+          <Link href="/support">Support</Link>
         </div>
         <div className="ddr-landing-actions">
           <ThemeToggle />
-          <a className="ddr-button ddr-button-primary" href="#trial">
+          <Link className="ddr-button ddr-button-ghost" href="/login">
+            Sign in
+          </Link>
+          <Link className="ddr-button ddr-button-primary" href="/trial">
             Start free trial
-          </a>
+          </Link>
         </div>
       </nav>
 
       <section className="ddr-section ddr-hero">
         <div>
-          <span className="ddr-tag">Now in beta · 12 clinics onboard</span>
+          <span className="ddr-tag">Now in beta - 12 clinics onboard</span>
           <h1>
             Never miss another
             <br />
@@ -128,14 +179,25 @@ export function DashDentalRedesignLanding() {
             Dash Dental brings WhatsApp, Instagram DMs, and clinic messages into one fast workspace for reception teams.
           </p>
           <div className="ddr-hero-actions">
-            <a className="ddr-button ddr-button-primary" href="#trial">
+            <Link className="ddr-button ddr-button-primary" href="/trial">
               Get early access
               <ArrowRight size={15} />
-            </a>
-            <a className="ddr-button ddr-button-ghost" href="#demo">
+            </Link>
+            <Link className="ddr-button ddr-button-ghost" href="/demo">
               See demo
               <Play size={15} />
-            </a>
+            </Link>
+          </div>
+          <p className="ddr-legacy-hero-note">
+            Stop losing implant, veneer, emergency, whitening, and pricing leads in scattered DMs. No CRM migration required.
+          </p>
+          <div className="ddr-trust-row" aria-label="Product boundaries">
+            {legacyTrustItems.map((item) => (
+              <span key={item}>
+                <CheckCircle2 size={14} />
+                {item}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -223,6 +285,99 @@ export function DashDentalRedesignLanding() {
         </div>
       </section>
 
+      <section className="ddr-section ddr-problem-grid" id="product">
+        <div className="ddr-section-heading">
+          <h2>Your next high-value patient may already be waiting in your inbox.</h2>
+          <p>
+            Patients ask about implants, veneers, emergencies, whitening, and pricing across channels.
+            The front desk is busy. Owners only see the loss after the patient disappears.
+          </p>
+        </div>
+        <div className="ddr-message-stack">
+          {sampleConversations.map((conversation) => (
+            <article className="ddr-card ddr-message-card" key={conversation.intent}>
+              <span className="ddr-channel-dot whatsapp">{conversation.initials}</span>
+              <div>
+                <strong>{conversation.intent}</strong>
+                <p>
+                  {conversation.channel} - {conversation.waiting}
+                </p>
+              </div>
+              <b>{conversation.value}</b>
+            </article>
+          ))}
+        </div>
+        <article className="ddr-card ddr-transform-card">
+          <span className="ddr-feature-icon">
+            <ArrowRight size={18} />
+          </span>
+          <h3>One recovery queue</h3>
+          <p>Urgency, waiting time, estimated value, assigned owner, and next action in one row.</p>
+        </article>
+      </section>
+
+      <section className="ddr-section" id="how-it-works">
+        <div className="ddr-section-heading">
+          <h2>From missed message to recovered consult in three steps.</h2>
+          <p>Simple enough for reception. Useful enough for owners.</p>
+        </div>
+        <div className="ddr-workflow-grid">
+          {workflowSteps.map((step, index) => (
+            <article className="ddr-card ddr-workflow-card" key={step.title}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{step.title}</strong>
+              <p>{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="ddr-section ddr-owner-grid">
+        <div className="ddr-section-heading">
+          <h2>See the revenue risk before it becomes invisible.</h2>
+          <p>
+            Owners do not need to inspect every inbox. Dash Dental shows where response time,
+            channel leakage, and unresolved patient interest are creating risk.
+          </p>
+        </div>
+        <div className="ddr-owner-metrics">
+          {ownerDashboardMetrics.map((metric) => (
+            <article className="ddr-card ddr-owner-metric" key={metric.label}>
+              <span>{metric.label}</span>
+              <strong>{metric.value}</strong>
+              <p>{metric.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="ddr-section ddr-frontdesk-grid">
+        <div className="ddr-card ddr-frontdesk-list">
+          {frontDeskRows.map(([title, text]) => (
+            <article key={title}>
+              <CheckCircle2 size={17} />
+              <div>
+                <strong>{title}</strong>
+                <p>{text}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="ddr-section-heading">
+          <h2>A front-desk workflow that does not feel like another CRM.</h2>
+          <p>
+            Staff see who needs attention, why it matters, what to write, and which messages failed.
+            Owners see the operating pattern without turning reception into a financial dashboard.
+          </p>
+          <div className="ddr-hero-actions">
+            <Link className="ddr-button ddr-button-primary" href="/demo">
+              {secondaryCta}
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="ddr-section" id="features">
         <div className="ddr-section-heading">
           <h2>Built for reception teams who move fast</h2>
@@ -278,6 +433,36 @@ export function DashDentalRedesignLanding() {
         </div>
       </section>
 
+      <section className="ddr-section">
+        <div className="ddr-section-heading">
+          <h2>Start with one channel, then add the next.</h2>
+          <p>
+            Most clinics should prove the recovery workflow on one patient channel before expanding setup.
+          </p>
+        </div>
+        <div className="ddr-integration-grid">
+          {integrationRows.map((integration) => (
+            <article className="ddr-card ddr-integration-card" key={integration.channel}>
+              <span className="ddr-feature-icon">
+                <MessageCircle size={18} />
+              </span>
+              <div>
+                <strong>{integration.channel}</strong>
+                <span className="ddr-badge ddr-badge-info">{integration.status}</span>
+              </div>
+              <p>{integration.captures}</p>
+              <small>{integration.setup}</small>
+            </article>
+          ))}
+        </div>
+        <div className="ddr-section-actions">
+          <Link className="ddr-button ddr-button-ghost" href="/integrations-guide">
+            View integration guide
+            <ArrowRight size={15} />
+          </Link>
+        </div>
+      </section>
+
       <section className="ddr-section ddr-before-after">
         <div className="ddr-section-heading">
           <h2>Before and after the beta rollout</h2>
@@ -318,6 +503,37 @@ export function DashDentalRedesignLanding() {
             ))}
           </div>
         </article>
+      </section>
+
+      <section className="ddr-section">
+        <div className="ddr-section-heading">
+          <h2>Security and AI boundaries are part of the product.</h2>
+          <p>
+            Dash Dental is designed around patient lead intake and front-desk recovery,
+            not autonomous clinical decisions or unnecessary medical history storage.
+          </p>
+        </div>
+        <div className="ddr-trust-card-grid">
+          {trustBoundaryCards.map((card) => {
+            const Icon = card.icon;
+
+            return (
+              <article className="ddr-card ddr-trust-card" key={card.title}>
+                <span className="ddr-feature-icon">
+                  <Icon size={18} />
+                </span>
+                <strong>{card.title}</strong>
+                <p>{card.text}</p>
+              </article>
+            );
+          })}
+        </div>
+        <div className="ddr-section-actions">
+          <Link className="ddr-button ddr-button-ghost" href="/security">
+            Read security and trust
+            <ArrowRight size={15} />
+          </Link>
+        </div>
       </section>
 
       <section className="ddr-section">
@@ -434,9 +650,9 @@ export function DashDentalRedesignLanding() {
                     </li>
                   ))}
                 </ul>
-                <a className="ddr-button ddr-button-primary" href="#trial">
+                <Link className="ddr-button ddr-button-primary" href="/trial">
                   Start free trial
-                </a>
+                </Link>
               </article>
             );
           })}
@@ -447,17 +663,27 @@ export function DashDentalRedesignLanding() {
         <TrendingUp size={24} />
         <h2>Turn missed DMs into booked treatment.</h2>
         <p>Join the beta and get the receptionist workflow live before your next busy week.</p>
-        <a className="ddr-button ddr-button-primary" href="mailto:founder@dashdental.space">
-          Get early access
-        </a>
+        <div className="ddr-final-cta-actions">
+          <Link className="ddr-button ddr-button-primary" href="/support#request">
+            {primaryCta}
+            <ArrowRight size={15} />
+          </Link>
+          <Link className="ddr-button ddr-button-ghost" href="/register">
+            {pilotCta}
+          </Link>
+        </div>
       </section>
 
       <footer className="ddr-footer">
-        <span>Dash Dental © 2025</span>
+        <span>Dash Dental (c) 2025</span>
         <nav aria-label="Footer links">
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="mailto:founder@dashdental.space">Contact</a>
+          <a href="#product">Product</a>
+          <a href="#how-it-works">How it works</a>
+          <Link href="/demo">Demo</Link>
+          <Link href="/integrations-guide">Integrations</Link>
+          <Link href="/pricing">Pricing</Link>
+          <Link href="/security">Security</Link>
+          <Link href="/support">Support</Link>
         </nav>
       </footer>
     </main>

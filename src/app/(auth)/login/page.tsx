@@ -7,7 +7,7 @@ import { LoginForm } from "@/features/auth/components/login-form";
 import { getPublicAuthTurnstileSiteKey } from "@/server/public-auth-bot-protection";
 
 export const metadata: Metadata = {
-  title: "Login — Dash Dental",
+  title: "Login - Dash Dental",
   description: "Sign in to your Dash Dental clinic workspace.",
 };
 

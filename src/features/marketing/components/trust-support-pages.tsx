@@ -514,7 +514,7 @@ export function SupportHubContent({
         </div>
       </section>
 
-      <section className={styles.section}>
+      <section className={styles.section} id="request">
         <div className={styles.supportWorkGrid}>
           <article className={styles.checklistPanel}>
             <span className={styles.eyebrow}>{content.checklist.eyebrow}</span>

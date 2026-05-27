@@ -67,7 +67,7 @@ const planCatalog = {
   growth: {
     monthlyPrice: 100,
     onboardingFee: 0,
-    label: "Growth",
+    label: "Pro",
     summary: "Best fit for busy clinics that want WhatsApp, Instagram, and full recovery operations.",
     included: [
       "Multi-channel inbox for front desk and treatment coordinators",
@@ -79,7 +79,7 @@ const planCatalog = {
   scale: {
     monthlyPrice: 250,
     onboardingFee: 0,
-    label: "Scale",
+    label: "Enterprise",
     summary: "Multi-location revenue recovery with higher throughput, more seats, and operational oversight.",
     included: [
       "Multi-location rollout and deeper usage capacity",

@@ -1,17 +1,21 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
   ArrowRight,
   Bot,
-  CalendarClock,
   CheckCircle2,
   Clock3,
   DollarSign,
   Inbox,
   RadioTower,
+  Search,
+  ShieldCheck,
   Sparkles,
+  Zap,
 } from "lucide-react";
+import styles from "./dashboard-screen.module.css";
 
 export interface DashboardMetric {
   detail: string;
@@ -52,9 +56,6 @@ const metricIcons = {
   warning: AlertTriangle,
 } as const;
 
-const demoRequestHref =
-  "/support?category=Demo%20or%20onboarding%20call&urgency=Normal&channel=Not%20channel-specific&message=Please%20book%20or%20reschedule%20a%20Dash%20Dental%20demo.%20I%20want%20to%20review%20the%20dashboard%20workflow.#request";
-
 const channelStatusLabel: Record<DashboardChannelRow["state"], string> = {
   configured: "Configured",
   degraded: "Degraded",
@@ -62,6 +63,73 @@ const channelStatusLabel: Record<DashboardChannelRow["state"], string> = {
   receiving: "Receiving",
   setup: "Setup",
 };
+
+const statusStrength: Record<DashboardChannelRow["state"], number> = {
+  configured: 62,
+  degraded: 38,
+  disconnected: 12,
+  receiving: 92,
+  setup: 24,
+};
+
+const statusTone: Record<DashboardChannelRow["state"], string> = {
+  configured: styles.statusActive,
+  degraded: styles.statusWarning,
+  disconnected: styles.statusRisk,
+  receiving: styles.statusSuccess,
+  setup: styles.statusMuted,
+};
+
+const mapNodes = [
+  {
+    className: styles.nodeSourceA,
+    id: "sources",
+    label: "Patient channels",
+    metric: "4 sources",
+    subLabel: "WhatsApp / IG / web / Telegram",
+    tone: styles.nodeBlue,
+  },
+  {
+    className: styles.nodeScanner,
+    id: "scanner",
+    label: "SLA scanner",
+    metric: "live",
+    subLabel: "reply pressure + value",
+    tone: styles.nodeGreen,
+  },
+  {
+    className: styles.nodeTriage,
+    id: "triage",
+    label: "AI triage",
+    metric: "ranked",
+    subLabel: "intent + risk",
+    tone: styles.nodeAccent,
+  },
+  {
+    className: styles.nodeDraft,
+    id: "draft",
+    label: "Draft engine",
+    metric: "review",
+    subLabel: "safe replies only",
+    tone: styles.nodePurple,
+  },
+  {
+    className: styles.nodeStaff,
+    id: "staff",
+    label: "Staff approval",
+    metric: "human",
+    subLabel: "send / call / book",
+    tone: styles.nodeAmber,
+  },
+  {
+    className: styles.nodeOutcome,
+    id: "outcome",
+    label: "Recovered revenue",
+    metric: "reported",
+    subLabel: "owner-visible",
+    tone: styles.nodeGreen,
+  },
+] as const;
 
 export function DashboardScreen({
   activities,
@@ -92,38 +160,42 @@ export function DashboardScreen({
   userName: string;
 }) {
   const firstName = userName.split(" ")[0] || "team";
+  const topQueue = queue[0];
 
   return (
-    <section className="operator-dashboard">
-      <header className="operator-hero">
-        <div>
-          <p className="eyebrow">Recovery command center</p>
+    <section className={`${styles.dashboard} dashboard-ops-shell`}>
+      <header className={styles.header}>
+        <div className={styles.headerCopy}>
+          <span className={styles.kicker}>
+            <Zap size={14} />
+            Live recovery cockpit
+          </span>
           <h1>Dashboard</h1>
-          <p className="operator-clinic-name">{clinicName}</p>
-          <p className="clinic-console-summary">
-            Good morning, {firstName}. {summary.waiting} patients waiting -{" "}
-            {summary.atRisk} at risk - {summary.revenueAtRisk} revenue at risk.
+          <p className={styles.clinicName}>{clinicName}</p>
+          <p className={styles.summaryText}>
+            Good morning, {firstName}. {summary.waiting} patients waiting,{" "}
+            {summary.atRisk} at risk, {summary.revenueAtRisk} visible revenue at risk.
           </p>
         </div>
-        <div className="operator-hero-actions">
-          <span className="operator-user-pill">
-            {userName} - {role.replaceAll("_", " ")}
+        <div className={styles.headerActions}>
+          <span className={styles.userPill}>
+            {userName} / {role.replaceAll("_", " ")}
           </span>
-          <Link className="primary-button" href="/inbox">
+          <Link className={styles.primaryAction} href="/inbox">
             Open priority queue
-            <ArrowRight size={16} />
+            <ArrowRight size={15} />
           </Link>
         </div>
       </header>
 
-      <div className="operator-metric-grid">
+      <section className={styles.metricStrip} aria-label="Dashboard metrics">
         {metrics.map((metric) => {
           const Icon = metricIcons[metric.tone];
 
           return (
-            <article className={`operator-metric ${metric.tone}`} key={metric.label}>
+            <article className={`${styles.metricCard} ${styles[metric.tone]}`} key={metric.label}>
               <span>
-                <Icon size={16} />
+                <Icon size={15} />
                 {metric.label}
               </span>
               <strong>{metric.value}</strong>
@@ -131,104 +203,98 @@ export function DashboardScreen({
             </article>
           );
         })}
-      </div>
+      </section>
 
-      <div className="operator-main-grid">
-        <section className="operator-panel operator-queue-panel clinic-main-column">
-          <div className="operator-panel-header">
+      <div className={styles.mainGrid}>
+        <section className={styles.signalMapPanel} aria-label="Recovery signal map">
+          <div className={styles.panelHeader}>
             <div>
-              <p className="eyebrow">Priority queue</p>
-              <h2>Patients that need staff action now</h2>
+              <span className={styles.kicker}>Signal map</span>
+              <h2>Every patient signal flows to one recovery action.</h2>
             </div>
-            <Link className="secondary-button compact-button" href="/inbox">
-              View inbox
-            </Link>
+            <div className={styles.toolbar} aria-label="Map filters">
+              <span>Interval: last 5 min</span>
+              <span>Risk: live</span>
+              <span>
+                <Search size={13} />
+                Quick search
+              </span>
+            </div>
           </div>
-          <div className="operator-queue">
-            {queue.length > 0 ? (
-              queue.map((row) => (
-                <article className="operator-queue-row" key={`${row.patient}-${row.intent}`}>
-                  <div>
-                    <strong>{row.patient}</strong>
-                    <span>
-                      {row.channel} - {row.intent}
-                    </span>
-                  </div>
-                  <span className="operator-status warning">{row.waiting}</span>
-                  <span className="operator-status risk">{row.risk}</span>
-                  <b>{row.value}</b>
-                  <p>{row.action}</p>
-                </article>
-              ))
-            ) : (
-              <section className="operator-empty">
-                <Inbox size={28} />
-                <h3>No urgent patient conversations.</h3>
-                <p>
-                  Connect a channel or send a website-form test lead to start
-                  measuring response time.
-                </p>
-              </section>
-            )}
+
+          <div className={styles.mapCanvas}>
+            <svg aria-hidden="true" className={styles.mapLines} viewBox="0 0 1000 460">
+              <path d="M118 228 C220 228 240 146 338 146" />
+              <path d="M118 228 C230 228 250 304 368 304" />
+              <path d="M420 146 C508 146 514 228 594 228" />
+              <path d="M442 304 C522 304 520 228 594 228" />
+              <path d="M670 228 C742 228 748 132 828 132" />
+              <path d="M670 228 C752 228 758 318 844 318" />
+              <path d="M888 132 C936 178 934 256 878 318" />
+            </svg>
+
+            <span className={`${styles.mapDot} ${styles.dotA}`} />
+            <span className={`${styles.mapDot} ${styles.dotB}`} />
+            <span className={`${styles.mapDot} ${styles.dotC}`} />
+            <span className={styles.mapLabelA}>SLA + value</span>
+            <span className={styles.mapLabelB}>{summary.revenueAtRisk}</span>
+            <span className={styles.mapLabelC}>human approval</span>
+
+            {mapNodes.map((node) => (
+              <article
+                className={`${styles.mapNode} ${node.className} ${node.tone}`}
+                key={node.id}
+              >
+                <span>{node.metric}</span>
+                <strong>{node.label}</strong>
+                <small>{node.subLabel}</small>
+              </article>
+            ))}
           </div>
         </section>
 
-        <aside className="operator-side-stack clinic-side-column">
-          <section className="operator-panel operator-ai-panel">
-            <div className="operator-panel-header">
-              <div>
-                <p className="eyebrow">AI recommendation</p>
-                <h2>{aiRecommendation.title}</h2>
-              </div>
-              <span className="operator-status active">
+        <aside className={styles.controlRail}>
+          <section className={`${styles.sidePanel} ${styles.aiPanel}`}>
+            <div className={styles.panelHeaderCompact}>
+              <span>
                 <Sparkles size={14} />
-                Human review
+                AI recommendation
               </span>
+              <b>Review</b>
             </div>
+            <h2>{aiRecommendation.title}</h2>
             <p>{aiRecommendation.body}</p>
-            <div className="operator-ai-boundary">
-              <Bot size={17} />
-              AI drafts and prioritizes. Clinic staff approves final messages.
-              No diagnosis, clinical decisioning, or billing truth.
+            <div className={styles.aiBoundary}>
+              <Bot size={16} />
+              Drafting and ranking only. Staff approves the final patient message.
             </div>
           </section>
 
-          <section className="operator-panel operator-demo-panel">
-            <div className="operator-panel-header">
-              <div>
-                <p className="eyebrow">Demo support</p>
-                <h2>Book or reschedule a dashboard demo</h2>
-              </div>
-              <CalendarClock size={18} />
+          <section className={styles.sidePanel}>
+            <div className={styles.panelHeaderCompact}>
+              <span>
+                <RadioTower size={14} />
+                Channel health
+              </span>
+              <b>{channels.length} sources</b>
             </div>
-            <p>
-              Opens a pre-filled support request so the team can respond with the
-              next available demo slot.
-            </p>
-            <Link className="primary-button compact-button" href={demoRequestHref}>
-              Book demo
-              <ArrowRight size={15} />
-            </Link>
-          </section>
-
-          <section className="operator-panel">
-            <div className="operator-panel-header">
-              <div>
-                <p className="eyebrow">Channel health</p>
-                <h2>Inbound signal quality</h2>
-              </div>
-            </div>
-            <div className="operator-channel-list">
+            <div className={styles.channelList}>
               {channels.map((channel) => (
-                <article className="operator-channel-row" key={channel.label}>
+                <article className={styles.channelRow} key={channel.label}>
                   <div>
                     <strong>{channel.label}</strong>
-                    <span>{channel.detail}</span>
+                    <span>{channel.volume}</span>
                   </div>
-                  <span className={`operator-status ${channel.state}`}>
+                  <em className={`${styles.status} ${statusTone[channel.state]}`}>
                     {channelStatusLabel[channel.state]}
+                  </em>
+                  <small>{channel.detail}</small>
+                  <span className={styles.progressTrack}>
+                    <span
+                      className={styles.progressFill}
+                      style={{ "--value": `${statusStrength[channel.state]}%` } as CSSProperties}
+                    />
                   </span>
-                  <small>{channel.volume}</small>
                   <small>{channel.lastEvent}</small>
                 </article>
               ))}
@@ -237,24 +303,82 @@ export function DashboardScreen({
         </aside>
       </div>
 
-      <section className="operator-panel operator-activity-panel">
-        <div className="operator-panel-header">
-          <div>
-            <p className="eyebrow">Recent activity</p>
-            <h2>Workspace signals</h2>
+      <div className={styles.lowerGrid}>
+        <section className={styles.queuePanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <span className={styles.kicker}>Priority queue</span>
+              <h2>Patients that need staff action now</h2>
+            </div>
+            <Link className={styles.secondaryAction} href="/inbox">
+              View inbox
+            </Link>
           </div>
-          <Activity size={18} />
-        </div>
-        <div className="operator-activity-grid">
-          {activities.map((activity) => (
-            <article className="operator-activity-row" key={`${activity.label}-${activity.meta}`}>
-              <span className={`operator-status ${activity.tone}`}>{activity.tone}</span>
-              <strong>{activity.label}</strong>
-              <small>{activity.meta}</small>
-            </article>
-          ))}
-        </div>
-      </section>
+
+          {queue.length > 0 ? (
+            <div className={styles.queueTable}>
+              {queue.map((row, index) => (
+                <article className={styles.queueRow} key={`${row.patient}-${row.intent}`}>
+                  <span className={styles.queueIndex}>{String(index + 1).padStart(2, "0")}</span>
+                  <div className={styles.queuePatient}>
+                    <strong>{row.patient}</strong>
+                    <small>
+                      {row.channel} / {row.intent}
+                    </small>
+                  </div>
+                  <span className={`${styles.status} ${styles.statusWarning}`}>{row.waiting}</span>
+                  <span className={`${styles.status} ${styles.statusRisk}`}>{row.risk}</span>
+                  <b>{row.value}</b>
+                  <p>{row.action}</p>
+                  <Link href="/inbox">Review</Link>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <section className={styles.emptyQueue}>
+              <Inbox size={28} />
+              <h3>No urgent patient conversations.</h3>
+              <p>Connect a channel or send a website-form test lead to start measuring response time.</p>
+            </section>
+          )}
+        </section>
+
+        <section className={styles.activityPanel}>
+          <div className={styles.panelHeaderCompact}>
+            <span>
+              <Activity size={14} />
+              Recent activity
+            </span>
+            <b>Workspace signals</b>
+          </div>
+
+          <div className={styles.activityList}>
+            {activities.map((activity) => (
+              <article className={styles.activityRow} key={`${activity.label}-${activity.meta}`}>
+                <span className={`${styles.status} ${styles[activity.tone]}`}>
+                  {activity.tone}
+                </span>
+                <strong>{activity.label}</strong>
+                <small>{activity.meta}</small>
+              </article>
+            ))}
+          </div>
+
+          <div className={styles.fastPath}>
+            <ShieldCheck size={16} />
+            <span>
+              Fast path: no dashboard client state, no chart library, server-rendered SVG map.
+            </span>
+          </div>
+        </section>
+      </div>
+
+      {topQueue ? (
+        <Link className={styles.floatingAction} href="/inbox">
+          Reply to {topQueue.patient}
+          <ArrowRight size={15} />
+        </Link>
+      ) : null}
     </section>
   );
 }

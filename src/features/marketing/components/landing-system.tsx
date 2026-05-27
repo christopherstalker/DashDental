@@ -18,13 +18,12 @@ import {
 } from "lucide-react";
 import { getPlanCatalog, getPlanLimits } from "@/domain/business-rules";
 import type { Subscription } from "@/domain/types";
-import { ThemeToggle } from "@/features/theme/components/theme-toggle";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   primaryCta,
   secondaryCta,
   supportEmail,
 } from "@/features/marketing/content/dash-dental";
-import { LanguageSwitcher } from "@/features/i18n/components/language-switcher";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import styles from "./landing-system.module.css";
 
@@ -39,7 +38,7 @@ export function MarketingShell({
   launchPage?: string;
 }) {
   return (
-    <main className={styles.page}>
+    <main className={`${styles.page} ddr-marketing-system ddr-reset`}>
       <AnimatedBackground />
       <LandingNav launchPage={launchPage} />
       {children}
@@ -61,7 +60,7 @@ export function AnimatedBackground() {
 
 export function LandingNav({ launchPage }: { launchPage?: string }) {
   return (
-    <nav aria-label="Primary navigation" className={styles.nav}>
+    <nav aria-label="Primary navigation" className={`${styles.nav} ddr-marketing-nav`}>
       <Link aria-label="Dash Dental home" className={styles.brand} href="/">
         <span aria-hidden="true" className={styles.brandMark}>
           <Image
@@ -77,45 +76,37 @@ export function LandingNav({ launchPage }: { launchPage?: string }) {
         <span className={styles.brandText}>
           <span className={styles.brandNameRow}>
             <strong className="recovery-brand-wordmark">Dash Dental</strong>
-            <span className={styles.betaBadge}>Beta</span>
           </span>
-          <span>Revenue recovery cockpit</span>
         </span>
       </Link>
 
       <div className={styles.navLinks}>
-        <Link href="/#product">
-          <LocalizedText fallback="Product" k="common.nav.platform" />
-        </Link>
-        <Link href="/demo">
-          <LocalizedText fallback="Demo" k="common.nav.demo" />
-        </Link>
+        <Link href="/#product">Product</Link>
+        <Link href="/demo">Demo</Link>
         <Link href="/pricing">
           <LocalizedText fallback="Pricing" k="common.nav.pricing" />
         </Link>
+        <Link href="/integrations-guide">Integrations</Link>
         <Link href="/security">
           <LocalizedText fallback="Security" k="common.nav.security" />
         </Link>
-        <Link href="/support">
-          <LocalizedText fallback="Support" k="common.nav.support" />
-        </Link>
+        <Link href="/support">Support</Link>
       </div>
 
       <div className={styles.navActions}>
-        <LanguageSwitcher compact tone="dark" />
-        <ThemeToggle className={styles.themeButton} compact />
+        <ThemeToggle className={styles.themeButton} />
         <Link className={styles.navSignIn} href="/login">
-          <LocalizedText fallback="Sign in" k="common.nav.login" />
+          Sign in
         </Link>
         <Link
           className={styles.navCta}
           data-launch-event="public.marketing.demo_clicked"
           data-launch-page={launchPage}
           data-launch-section="nav"
-          data-launch-target={demoRequestHref}
-          href={demoRequestHref}
+          data-launch-target="/trial"
+          href="/trial"
         >
-          <LocalizedText fallback="Book demo" k="common.cta.bookDemo" />
+          <LocalizedText fallback="Start free trial" k="common.nav.startTrial" />
         </Link>
       </div>
     </nav>
@@ -559,7 +550,7 @@ export const trustCards = [
 
 export function LandingFooter() {
   return (
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ddr-marketing-footer`}>
       <div className={styles.footerBrand}>
         <strong>Dash Dental</strong>
         <p>

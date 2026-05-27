@@ -4,85 +4,58 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   Activity,
   Bot,
+  CheckCircle2,
   Clock3,
+  FileText,
   Inbox,
   MessageCircle,
+  Play,
   RadioTower,
   ShieldCheck,
   Sparkles,
   Target,
-  TrendingUp,
+  Settings2,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import styles from "./landing-system.module.css";
 
-type ConsoleTabId = "queue" | "revenue" | "channels" | "ai";
+type StudioModeId = "triage" | "draft" | "summary";
 
-const consoleTabs: Array<{
-  bars: Array<{ label: string; value: number }>;
+const studioModes: Array<{
   color: string;
-  id: ConsoleTabId;
-  insight: string;
+  id: StudioModeId;
   label: string;
-  metric: string;
-  metricLabel: string;
+  output: string;
+  prompt: string;
   title: string;
 }> = [
   {
-    bars: [
-      { label: "Critical SLA pressure", value: 84 },
-      { label: "High-value consults", value: 66 },
-      { label: "Follow-up clarity", value: 52 },
-    ],
     color: "#4fe7d2",
-    id: "queue",
-    insight: "Emergency pain and implant consults are above the clinic SLA target.",
-    label: "Queue",
-    metric: "12",
-    metricLabel: "patients waiting",
-    title: "Priority recovery queue",
+    id: "triage",
+    label: "Triage",
+    output: "Move Eva to critical queue, assign reception, offer same-day callback windows.",
+    prompt:
+      "Find patient messages with urgent symptoms, high booking intent, or SLA risk. Return the next action only.",
+    title: "Detect missed patient demand",
   },
   {
-    bars: [
-      { label: "Implant opportunities", value: 78 },
-      { label: "Cosmetic demand", value: 62 },
-      { label: "Emergency bookings", value: 48 },
-    ],
-    color: "#79d99a",
-    id: "revenue",
-    insight: "Estimated opportunity is concentrated in cosmetic DMs and website forms.",
-    label: "Revenue",
-    metric: "$7.8k",
-    metricLabel: "estimated at risk",
-    title: "Money-at-risk scanner",
-  },
-  {
-    bars: [
-      { label: "WhatsApp urgency", value: 74 },
-      { label: "Instagram intent", value: 58 },
-      { label: "Website callback risk", value: 41 },
-    ],
     color: "#7db7ff",
-    id: "channels",
-    insight: "WhatsApp needs immediate attention. Instagram is driving cosmetic consults.",
-    label: "Channels",
-    metric: "4",
-    metricLabel: "sources monitored",
-    title: "Channel health radar",
+    id: "draft",
+    label: "Draft",
+    output: "Draft a receptionist-safe reply with two appointment windows and no clinical promises.",
+    prompt:
+      "Write a warm reply that asks for callback number, offers available appointment windows, and keeps treatment claims out.",
+    title: "Generate staff-reviewed replies",
   },
   {
-    bars: [
-      { label: "Intent summary", value: 88 },
-      { label: "Reply draft quality", value: 76 },
-      { label: "Clinical boundary check", value: 18 },
-    ],
     color: "#b39cff",
-    id: "ai",
-    insight: "AI suggests the reply, but staff review stays required before sending.",
-    label: "AI",
-    metric: "Draft",
-    metricLabel: "human approval",
-    title: "Human-reviewed AI assist",
+    id: "summary",
+    label: "Summary",
+    output: "Summarize channel, intent, wait time, estimated value, and owner-visible leakage.",
+    prompt:
+      "Create a short owner summary of unanswered demand by channel, revenue risk, and recovered outcomes.",
+    title: "Explain revenue leakage",
   },
 ];
 
@@ -114,14 +87,29 @@ const patientRows = [
 ] as const;
 
 const channelHealth = [
-  ["WhatsApp", "3 urgent threads", "Watch"],
-  ["Instagram", "5 cosmetic DMs", "Live"],
-  ["Website forms", "2 callbacks late", "Risk"],
-  ["Telegram", "4 follow-ups", "Live"],
+  ["WhatsApp", "3 urgent threads", "Watch", "86%"],
+  ["Instagram", "5 cosmetic DMs", "Live", "64%"],
+  ["Website forms", "2 callbacks late", "Risk", "71%"],
+  ["Telegram", "4 follow-ups", "Live", "39%"],
+] as const;
+
+const sideNav: Array<{ icon: LucideIcon; label: string; active?: boolean }> = [
+  { icon: Sparkles, label: "AI studio", active: true },
+  { icon: Inbox, label: "Inbox" },
+  { icon: Target, label: "Revenue" },
+  { icon: RadioTower, label: "Channels" },
+  { icon: ShieldCheck, label: "Safety" },
+];
+
+const runSettings = [
+  ["Model", "Gemini recovery"],
+  ["Temperature", "0.3"],
+  ["Clinical boundary", "Strict"],
+  ["Send mode", "Human approval"],
 ] as const;
 
 export function HeroConsole() {
-  const [activeTab, setActiveTab] = useState<ConsoleTabId>("queue");
+  const [activeMode, setActiveMode] = useState<StudioModeId>("triage");
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -130,185 +118,221 @@ export function HeroConsole() {
     }
 
     const interval = window.setInterval(() => {
-      setActiveTab((current) => {
-        const currentIndex = consoleTabs.findIndex((tab) => tab.id === current);
-        return consoleTabs[(currentIndex + 1) % consoleTabs.length].id;
+      setActiveMode((current) => {
+        const currentIndex = studioModes.findIndex((mode) => mode.id === current);
+        return studioModes[(currentIndex + 1) % studioModes.length].id;
       });
-    }, 4600);
+    }, 5200);
 
     return () => window.clearInterval(interval);
   }, []);
 
   const active = useMemo(
-    () => consoleTabs.find((tab) => tab.id === activeTab) ?? consoleTabs[0],
-    [activeTab],
+    () => studioModes.find((mode) => mode.id === activeMode) ?? studioModes[0],
+    [activeMode],
   );
 
   return (
     <aside
-      aria-label="Interactive Dash Dental product console"
-      className={styles.console}
+      aria-label="Dash Dental AI recovery studio preview"
+      className={styles.studioConsole}
       style={{ "--tab-color": active.color } as CSSProperties}
     >
-      <div className={styles.consoleTopbar}>
-        <div className={styles.consoleTitle}>
-          <span aria-hidden="true" className={styles.liveDot} />
-          <div>
-            <strong>Dash Dental live cockpit</strong>
-            <span>Owner view with front-desk actions</span>
-          </div>
-        </div>
-        <span className={styles.sampleTag}>Illustrative data</span>
-      </div>
-
-      <div aria-label="Console preview tabs" className={styles.tabList} role="tablist">
-        {consoleTabs.map((tab) => (
+      <nav aria-label="Studio sections" className={styles.studioRail}>
+        <span aria-hidden="true" className={styles.studioRailMark}>
+          DD
+        </span>
+        {sideNav.map(({ active: isActive, icon: Icon, label }) => (
           <button
-            aria-controls={`hero-console-${tab.id}`}
-            aria-selected={active.id === tab.id}
-            id={`hero-console-tab-${tab.id}`}
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            role="tab"
+            aria-label={label}
+            aria-pressed={isActive ? "true" : "false"}
+            className={isActive ? styles.studioRailButtonActive : styles.studioRailButton}
+            key={label}
             type="button"
           >
-            {tab.label}
+            <Icon size={18} />
           </button>
         ))}
-      </div>
+      </nav>
 
-      <section
-        aria-labelledby={`hero-console-tab-${active.id}`}
-        className={styles.activePanel}
-        id={`hero-console-${active.id}`}
-        role="tabpanel"
-      >
-        <div className={styles.metricHero}>
-          <span>{active.title}</span>
-          <strong>{active.metric}</strong>
-          <small>{active.metricLabel}</small>
-        </div>
-        <div className={styles.nextAction}>
-          <div className={styles.nextActionHeader}>
+      <section className={styles.studioWorkbench}>
+        <div className={styles.studioTopbar}>
+          <div className={styles.studioTitleBlock}>
             <span>
               <Sparkles size={15} />
-              AI next action
+              Recovery Studio
             </span>
-            <span className={styles.statusTag}>Review</span>
+            <strong>Missed-message AI workflow</strong>
           </div>
-          <h3>{active.insight}</h3>
-          <p>
-            Reply with specific appointment windows, ask for the best callback number,
-            and keep the thread owned by reception until booked or clearly closed.
-          </p>
-          <div className={styles.progressStack}>
-            {active.bars.map((bar) => (
-              <ConsoleProgress key={`${active.id}-${bar.label}`} label={bar.label} value={bar.value} />
-            ))}
+          <div className={styles.studioTopbarActions}>
+            <span className={styles.studioModelPill}>Gemini connected</span>
+            <button className={styles.studioIconButton} aria-label="Open run settings" type="button">
+              <Settings2 size={17} />
+            </button>
+            <button className={styles.studioRunButton} type="button">
+              <Play size={16} />
+              Run
+            </button>
           </div>
         </div>
+
+        <div className={styles.studioPromptTabs} role="tablist" aria-label="AI workflow modes">
+          {studioModes.map((mode) => (
+            <button
+              aria-controls={`studio-mode-${mode.id}`}
+              aria-selected={active.id === mode.id}
+              id={`studio-tab-${mode.id}`}
+              key={mode.id}
+              onClick={() => setActiveMode(mode.id)}
+              role="tab"
+              type="button"
+            >
+              {mode.label}
+            </button>
+          ))}
+        </div>
+
+        <section
+          aria-labelledby={`studio-tab-${active.id}`}
+          className={styles.studioPromptPanel}
+          id={`studio-mode-${active.id}`}
+          role="tabpanel"
+        >
+          <div className={styles.studioPromptHeader}>
+            <div>
+              <span>System instruction</span>
+              <h3>{active.title}</h3>
+            </div>
+            <span className={styles.studioStatusPill}>Draft only</span>
+          </div>
+
+          <div className={styles.studioPromptBox}>
+            <p>{active.prompt}</p>
+            <div className={styles.studioPromptChips}>
+              <span>WhatsApp</span>
+              <span>Instagram</span>
+              <span>Website forms</span>
+              <span>Clinic SLA</span>
+            </div>
+          </div>
+
+          <div className={styles.studioContextGrid}>
+            <article className={styles.studioPatientCard}>
+              <div className={styles.studioMiniHeader}>
+                <span>
+                  <MessageCircle size={14} />
+                  Incoming context
+                </span>
+                <em>22m late</em>
+              </div>
+              <p>
+                Patient says severe tooth pain, asks if the clinic can see them today,
+                and has not received a reply.
+              </p>
+            </article>
+            <article className={styles.studioPatientCard}>
+              <div className={styles.studioMiniHeader}>
+                <span>
+                  <FileText size={14} />
+                  Clinic data
+                </span>
+                <em>$420 risk</em>
+              </div>
+              <p>
+                Emergency slots: 14:30 and 16:00. Staff policy requires phone
+                confirmation before booking.
+              </p>
+            </article>
+          </div>
+
+          <article className={styles.studioOutputCard}>
+            <div className={styles.studioMiniHeader}>
+              <span>
+                <Bot size={14} />
+                Generated recovery plan
+              </span>
+              <em>Human review required</em>
+            </div>
+            <p>{active.output}</p>
+            <div className={styles.studioChecklist}>
+              {["No diagnosis", "No autonomous sending", "Owner-visible audit"].map((item) => (
+                <span key={item}>
+                  <CheckCircle2 size={14} />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </article>
+        </section>
       </section>
 
-      <div className={styles.consoleMetrics}>
-        <ConsoleMetric icon={Target} label="Revenue at risk" value="$7.8k" />
-        <ConsoleMetric icon={TrendingUp} label="Saved revenue" value="$12.4k" />
-        <ConsoleMetric icon={Inbox} label="Unanswered" value="12" />
-        <ConsoleMetric icon={Clock3} label="Avg response" value="38m" />
-      </div>
+      <aside className={styles.studioInspector} aria-label="Run settings and live signals">
+        <div className={styles.studioInspectorHeader}>
+          <span>
+            <Zap size={14} />
+            Run settings
+          </span>
+          <strong>Safe assist</strong>
+        </div>
+        <div className={styles.studioSettingsList}>
+          {runSettings.map(([label, value]) => (
+            <article key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </article>
+          ))}
+        </div>
 
-      <div className={styles.consoleGrid}>
-        <section aria-label="Sample patient recovery queue" className={styles.queuePanel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <strong>Patient queue</strong>
-              <span>Sorted by SLA, intent, and value</span>
-            </div>
-            <Activity size={17} />
+        <div className={styles.studioMetricStack}>
+          <ConsoleMetric icon={Target} label="Revenue at risk" value="$7.8k" />
+          <ConsoleMetric icon={Inbox} label="Unanswered" value="12" />
+          <ConsoleMetric icon={Clock3} label="Avg response" value="38m" />
+        </div>
+
+        <section aria-label="Sample patient queue" className={styles.studioQueuePanel}>
+          <div className={styles.studioInspectorHeader}>
+            <span>
+              <Activity size={14} />
+              Priority queue
+            </span>
+            <strong>Live</strong>
           </div>
           {patientRows.map((row) => (
-            <article className={styles.queueRow} key={row.intent}>
-              <span className={styles.avatar}>{row.initials}</span>
+            <article className={styles.studioQueueRow} key={row.intent}>
+              <span>{row.initials}</span>
               <div>
                 <strong>{row.intent}</strong>
                 <small>
-                  {row.channel} - {row.wait} waiting
+                  {row.channel} - {row.wait}
                 </small>
               </div>
-              <span className={styles.queueValue}>
-                {row.value}
-                <em>{row.status}</em>
-              </span>
+              <em>{row.value}</em>
             </article>
           ))}
         </section>
 
-        {active.id === "channels" ? (
-          <section className={styles.channelPanel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <strong>Channel health</strong>
-                <span>Where attention is needed</span>
-              </div>
-              <RadioTower size={17} />
-            </div>
-            <div className={styles.healthList}>
-              {channelHealth.map(([channel, detail, status]) => (
-                <article key={channel}>
-                  <div>
-                    <strong>{channel}</strong>
-                    <small>{detail}</small>
-                  </div>
-                  <span className={styles.healthStatus}>{status}</span>
-                </article>
-              ))}
-            </div>
-          </section>
-        ) : active.id === "ai" ? (
-          <section className={styles.aiPanel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <strong>AI guardrails</strong>
-                <span>Drafting support only</span>
-              </div>
-              <Bot size={17} />
-            </div>
-            <p>
-              AI summarizes intent and drafts a receptionist-safe reply. It does not
-              diagnose, promise treatment, or send without staff approval.
-            </p>
-            <div className={styles.aiChecklist}>
-              {["Summarize intent", "Suggest next action", "Human sends", "Audit context remains"].map(
-                (item) => (
-                  <span key={item}>
-                    <ShieldCheck size={14} />
-                    {item}
-                  </span>
-                ),
-              )}
-            </div>
-          </section>
-        ) : (
-          <section className={styles.scannerPanel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <strong>SLA scanner</strong>
-                <span>Response pressure by thread</span>
-              </div>
-              <MessageCircle size={17} />
-            </div>
-            <div className={styles.scannerBars}>
-              {[
-                ["Emergency", 88],
-                ["Implants", 72],
-                ["Cosmetic", 61],
-                ["Whitening", 34],
-              ].map(([label, value]) => (
-                <ConsoleProgress key={label} label={String(label)} value={Number(value)} />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
+        <section className={styles.studioChannelPanel} aria-label="Channel health">
+          <div className={styles.studioInspectorHeader}>
+            <span>
+              <RadioTower size={14} />
+              Channel health
+            </span>
+            <strong>4 sources</strong>
+          </div>
+          <div className={styles.studioChannelList}>
+            {channelHealth.map(([channel, detail, status, value]) => (
+              <article key={channel}>
+                <div>
+                  <strong>{channel}</strong>
+                  <small>{detail}</small>
+                </div>
+                <span>{status}</span>
+                <ConsoleProgress label={channel} value={Number(value.replace("%", ""))} />
+              </article>
+            ))}
+          </div>
+        </section>
+      </aside>
     </aside>
   );
 }
@@ -323,7 +347,7 @@ function ConsoleMetric({
   value: string;
 }) {
   return (
-    <article className={styles.metricPanel}>
+    <article className={styles.studioMetricPanel}>
       <span>
         <Icon size={14} />
         {label}
@@ -335,13 +359,10 @@ function ConsoleMetric({
 
 function ConsoleProgress({ label, value }: { label: string; value: number }) {
   return (
-    <div className={styles.progressRow}>
-      <div className={styles.progressLabel}>
-        <span>{label}</span>
-        <span>{value}%</span>
-      </div>
-      <span className={styles.progressTrack}>
-        <span className={styles.progressFill} style={{ "--value": `${value}%` } as CSSProperties} />
+    <div className={styles.studioProgressRow}>
+      <span className={styles.visuallyHidden}>{label}</span>
+      <span className={styles.studioProgressTrack}>
+        <span className={styles.studioProgressFill} style={{ "--value": `${value}%` } as CSSProperties} />
       </span>
     </div>
   );

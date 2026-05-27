@@ -28,7 +28,7 @@ const footerGroups = [
 
 export function MarketingFooter() {
   return (
-    <footer className="marketing-footer">
+    <footer className="marketing-footer ddr-marketing-footer">
       <div className="marketing-footer-brand">
         <strong>Dash Dental</strong>
         <p>

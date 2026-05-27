@@ -8,10 +8,8 @@ import {
 } from "../src/server/go-live-readiness";
 
 const { loadEnvConfig } = nextEnv;
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = "production";
-}
-loadEnvConfig(process.cwd(), process.env.NODE_ENV === "development");
+const nodeEnv = process.env.NODE_ENV ?? "production";
+loadEnvConfig(process.cwd(), nodeEnv === "development");
 
 const legalDocs = new Set<string>(
   requiredLegalDocs.filter((filePath) => existsSync(filePath)),

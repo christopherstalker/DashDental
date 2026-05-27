@@ -38,14 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    ".next",
-    ".next-broken",
-    ".next-verify",
-    ".next-codex-*",
     "backend",
-    "tests",
-    "scripts",
-    "prisma/*.ts",
     ".tmp",
     ".data",
     ".vercel",
@@ -53,9 +46,6 @@
     "playwright-report",
     "test-results",
     "src/generated",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "scripts/synthetic-monitor-guard.ts"
   ]
 }

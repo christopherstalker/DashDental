@@ -1,12 +1,8 @@
 import { generatedDictionaries } from "./generated-translations";
 
-export const english = {
+const english = {
   "common.language.label": "Language",
   "common.language.aria": "Choose interface language",
-  "common.theme.dark": "Dark",
-  "common.theme.light": "Light",
-  "common.theme.system": "System",
-  "common.theme.switch": "Switch theme. Current: {current}. Next: {next}.",
   "common.nav.platform": "Platform",
   "common.nav.pricing": "Pricing",
   "common.nav.faq": "Q&A",
@@ -17,22 +13,26 @@ export const english = {
   "common.nav.login": "Sign in",
   "common.nav.startTrial": "Start free trial",
   "common.cta.startTrial3": "Start 14-day guided trial",
-  "common.cta.bookDemo": "Book demo",
   "common.cta.viewPricing": "View pricing",
   "common.cta.viewDashboard": "View dashboard",
   "common.cta.productTour": "Product tour",
+  "common.cta.bookDemo": "Book a demo",
   "common.cta.openFullQa": "Open full Q&A",
   "common.cta.reviewSecurity": "Review security",
   "common.cta.securityPolicy": "Security policy",
   "common.cta.privacyPolicy": "Privacy policy",
   "common.cta.readQa": "Read Q&A",
   "common.cta.readTerms": "Read terms",
+  "common.theme.dark": "Dark",
+  "common.theme.light": "Light",
+  "common.theme.system": "System",
+  "common.theme.switch": "Switch theme",
   "common.footer.tagline": "Revenue recovery console for dental clinics.",
 
-  "home.hero.kicker": "AI recovery command center for dental clinics",
-  "home.hero.title": "Turn missed messages into booked patient appointments.",
+  "home.hero.kicker": "Dash Dental console",
+  "home.hero.title": "Stop losing implant, veneer, and emergency leads in DMs.",
   "home.hero.body":
-    "Dash Dental unifies WhatsApp, Instagram, Telegram, and website inquiries, detects SLA risk, and shows the revenue your team can still recover today.",
+    "Dash Dental gives your front desk one prioritized recovery queue across WhatsApp, Instagram, Telegram, and website forms — with response-time risk, safe AI-assisted reply drafts, and owner-level recovery reports.",
   "home.hero.secondaryCta": "Watch the recovery flow",
   "home.hero.proofTrial": "14-day guided trial",
   "home.hero.proofInvoice": "IBAN invoice ready",
@@ -633,9 +633,9 @@ export const english = {
   "team.metric.workload": "Open workload",
   "team.metric.workloadSub": "Assigned active conversations",
   "team.add.eyebrow": "Add seat",
-  "team.add.title": "Invite teammate",
+  "team.add.title": "Create teammate account",
   "team.add.description":
-    "Invite operators by email with clear roles. New teammates receive a secure setup link to create their password.",
+    "Create an active login immediately. For now, share the initial password with the employee securely; email invites can be added later.",
   "team.add.limit": "Upgrade the plan or deactivate another seat before adding more people.",
   "team.roster.eyebrow": "Roster",
   "team.roster.title": "Team members",
@@ -658,11 +658,11 @@ export const english = {
   "team.form.name": "Name",
   "team.form.namePlaceholder": "Front desk manager",
   "team.form.email": "Email",
-  "team.form.password": "Setup link",
-  "team.form.passwordPlaceholder": "Sent by email",
+  "team.form.password": "Initial password",
+  "team.form.passwordPlaceholder": "10+ characters",
   "team.form.role": "Role",
-  "team.form.adding": "Sending invite...",
-  "team.form.addSeat": "Send invite",
+  "team.form.adding": "Adding seat...",
+  "team.form.addSeat": "Add active seat",
   "team.form.addError": "Could not add team member.",
   "team.form.addErrorRetry": "Could not add team member. Try again.",
   "team.form.activeSeat": "now has an active seat.",
@@ -841,7 +841,7 @@ export const english = {
   "dashboard.cockpit.riskLabel": "Risk signal",
   "dashboard.cockpit.nextActionLabel": "Suggested next action",
   "dashboard.cockpit.aiDraftLabel": "AI draft reply",
-  "dashboard.cockpit.draftNotice": "Draft only - staff review required before sending.",
+  "dashboard.cockpit.draftNotice": "Draft only — staff review required before sending.",
   "dashboard.cockpit.recoverySettings": "Recovery settings",
   "dashboard.cockpit.sectionChannels": "Active channels",
   "dashboard.cockpit.sectionAiBoundaries": "AI boundaries",
@@ -849,9 +849,8 @@ export const english = {
   "dashboard.cockpit.sectionChannelHealth": "Channel health",
   "dashboard.cockpit.healthLine1": "Delivery and provider status stay visible here.",
   "dashboard.cockpit.healthLine2": "Provider approvals stay manual until configured.",
-  "dashboard.cockpit.sampleNoticeTitle": "Sample data only",
-  "dashboard.cockpit.sampleNoticeBody":
-    "This dashboard uses illustrative data and does not show real patients.",
+  "dashboard.cockpit.sampleNoticeTitle": "Sample data",
+  "dashboard.cockpit.sampleNoticeBody": "Illustrative data only — not real patients.",
   "dashboard.metric.activeChannels": "Active channels",
   "dashboard.metric.activeChannelsSub": "Connected or monitored intake surfaces",
   "dashboard.panel.nextBestAction": "Next best action",
@@ -1199,28 +1198,16 @@ export const english = {
 
 export type TranslationKey = keyof typeof english;
 
-const generatedDictionaryMap = generatedDictionaries as Record<
-  string,
-  Partial<Record<TranslationKey, string>>
->;
-
 const dictionaries: Record<string, Partial<Record<TranslationKey, string>>> = {
   en: english,
-  ...generatedDictionaryMap,
+  ...generatedDictionaries,
   uk: {
     "common.language.label": "Мова",
     "common.language.aria": "Оберіть мову інтерфейсу",
-    "common.theme.dark": "Темна",
-    "common.theme.light": "Світла",
-    "common.theme.system": "Системна",
-    "common.theme.switch": "Змінити тему. Зараз: {current}. Далі: {next}.",
     "common.nav.platform": "Платформа",
     "common.nav.pricing": "Ціни",
     "common.nav.faq": "Q&A",
     "common.nav.security": "Безпека",
-    "common.nav.demo": "Демо",
-    "common.nav.docs": "Документи",
-    "common.nav.support": "Підтримка",
     "common.nav.login": "Увійти",
     "common.nav.startTrial": "Почати пробний період",
     "common.cta.startTrial3": "Start 14-day guided trial",
@@ -2147,8 +2134,7 @@ const dictionaries: Record<string, Partial<Record<TranslationKey, string>>> = {
     "terms.shell.title": "Чіткі правила роблять SaaS безпечнішим для покупки.",
     "terms.shell.description":
       "Plain-language service terms, які задають очікування до trial, підключення каналів або manual invoice.",
-  },
-};
+  },};
 
 const localeOverrides: Record<string, Partial<Record<TranslationKey, string>>> = {
   ru: {
@@ -2991,174 +2977,10 @@ const workspaceLocaleOverrides: Record<string, Partial<Record<TranslationKey, st
   },
 };
 
-const curatedLocaleOverrides: Record<string, Partial<Record<TranslationKey, string>>> = {
-  uk: {
-    "common.language.label": "Мова",
-    "common.language.aria": "Оберіть мову інтерфейсу",
-    "common.nav.platform": "Платформа",
-    "common.nav.pricing": "Ціни",
-    "common.nav.faq": "Q&A",
-    "common.nav.security": "Безпека",
-    "common.nav.demo": "Демо",
-    "common.nav.docs": "Документи",
-    "common.nav.support": "Підтримка",
-    "common.nav.login": "Увійти",
-    "common.nav.startTrial": "Почати пробний період",
-    "common.cta.startTrial3": "Почати 14-денний пробний період",
-    "common.cta.bookDemo": "Записатися на демо",
-    "common.cta.viewPricing": "Переглянути ціни",
-    "common.cta.viewDashboard": "Відкрити панель",
-    "common.cta.reviewSecurity": "Переглянути безпеку",
-    "common.footer.tagline":
-      "Операційна консоль для повернення пацієнтів і виручки стоматологічних клінік.",
-    "home.hero.kicker": "AI-консоль повернення звернень для стоматологічних клінік",
-    "home.hero.title": "Перетворюйте пропущені звернення на записаних пацієнтів.",
-    "home.hero.body":
-      "Dash Dental об'єднує WhatsApp, Instagram, Telegram і форми сайту, виявляє SLA-ризики та показує виручку, яку команда ще може повернути сьогодні.",
-    "home.console.money": "Виручка під ризиком сьогодні",
-    "home.console.unanswered": "Пацієнти без відповіді",
-    "home.console.avgResponse": "Середній час першої відповіді",
-    "home.console.queue": "Пріоритетна черга",
-    "home.console.replyFirst": "Відповісти першим",
-    "home.console.flow": "Шлях повернення",
-    "home.console.flowTitle": "Від повідомлення до запису",
-    "home.console.ai": "AI-помічник",
-    "home.console.aiBoundary": "Перед відправкою потрібна перевірка людиною.",
-    "pricing.hero.kicker": "Ціни для повернення пропущених звернень",
-    "pricing.hero.title": "Оберіть план робочої консолі, який клініка може запустити цього тижня.",
-    "pricing.hero.body":
-      "Почніть з 14-денного пробного періоду, підключіть один канал пацієнтів і перевірте процес повернення звернень до першого рахунку.",
-    "workspace.nav.group.operate": "Операції",
-    "workspace.nav.group.optimize": "Оптимізація",
-    "workspace.nav.group.govern": "Керування",
-    "workspace.nav.dashboard": "Панель",
-    "workspace.nav.setup": "Налаштування",
-    "workspace.nav.queue": "Черга",
-    "workspace.nav.alerts": "Ризики",
-    "workspace.nav.leads": "Звернення",
-    "workspace.nav.inbox": "Вхідні",
-    "workspace.nav.notes": "Нотатки",
-    "workspace.nav.automations": "Автоматизації",
-    "workspace.nav.integrations": "Інтеграції",
-    "workspace.nav.ai": "AI-інсайти",
-    "workspace.nav.reports": "Звіти",
-    "workspace.nav.team": "Команда",
-    "workspace.nav.billing": "Оплата",
-    "workspace.nav.compliance": "Контроль",
-    "workspace.command.unanswered": "без відповіді",
-    "workspace.command.atRisk": "під ризиком",
-    "workspace.command.askAi": "Запитати AI",
-    "workspace.command.prompt": "Запитайте AI про пацієнтів, виручку, відповіді чи ліміти...",
-    "dashboard.metric.revenueAtRisk": "Виручка під ризиком",
-    "dashboard.metric.recovered": "Збережена виручка",
-    "dashboard.metric.unanswered": "Без відповіді",
-    "dashboard.metric.avgResponse": "Середній час першої відповіді",
-    "dashboard.metric.bookedRate": "Записані пацієнти",
-    "dashboard.metric.activeChannels": "Активні канали",
-    "queue.header.title": "Черга повернення",
-    "queue.metric.queued": "Звернення в черзі",
-    "queue.metric.atRisk": "Під ризиком",
-    "queue.metric.avgResponse": "Сер. відповідь",
-    "queue.metric.openThreads": "Відкриті діалоги",
-    "alerts.header.title": "Ризики та SLA",
-    "leads.header.title": "Звернення пацієнтів",
-    "inbox.header.title": "Єдині вхідні пацієнтів",
-    "ai.header.title": "AI-інсайти",
-    "reports.header.title": "Звіти про повернення виручки",
-    "billing.header.title": "Підписка та оплата",
-    "integrations.header.title": "Стан каналів",
-    "team.header.title": "Команда та місця",
-    "notes.page.title": "Командні нотатки",
-  },
-  pl: {
-    "common.language.label": "Język",
-    "common.language.aria": "Wybierz język interfejsu",
-    "common.theme.dark": "Ciemny",
-    "common.theme.light": "Jasny",
-    "common.theme.system": "Systemowy",
-    "common.theme.switch": "Zmień motyw. Teraz: {current}. Następny: {next}.",
-    "common.nav.platform": "Platforma",
-    "common.nav.pricing": "Cennik",
-    "common.nav.faq": "Q&A",
-    "common.nav.security": "Bezpieczeństwo",
-    "common.nav.demo": "Demo",
-    "common.nav.docs": "Dokumenty",
-    "common.nav.support": "Wsparcie",
-    "common.nav.login": "Zaloguj się",
-    "common.nav.startTrial": "Rozpocznij okres próbny",
-    "common.cta.startTrial3": "Rozpocznij 14-dniowy okres próbny",
-    "common.cta.bookDemo": "Umów demo",
-    "common.cta.viewPricing": "Zobacz cennik",
-    "common.cta.viewDashboard": "Otwórz panel",
-    "common.cta.reviewSecurity": "Zobacz bezpieczeństwo",
-    "common.footer.tagline":
-      "Konsola operacyjna do odzyskiwania pacjentów i przychodów klinik stomatologicznych.",
-    "home.hero.kicker": "Konsola AI do odzyskiwania zgłoszeń dla klinik stomatologicznych",
-    "home.hero.title": "Zamieniaj przeoczone wiadomości w umówionych pacjentów.",
-    "home.hero.body":
-      "Dash Dental łączy zapytania z WhatsApp, Instagrama, Telegrama i formularzy, wykrywa ryzyko SLA oraz pokazuje przychód, który zespół może jeszcze odzyskać dzisiaj.",
-    "home.console.money": "Przychód zagrożony dzisiaj",
-    "home.console.unanswered": "Pacjenci bez odpowiedzi",
-    "home.console.avgResponse": "Średni czas pierwszej odpowiedzi",
-    "home.console.queue": "Kolejka priorytetowa",
-    "home.console.replyFirst": "Odpowiedz najpierw",
-    "home.console.flow": "Proces odzyskiwania",
-    "home.console.flowTitle": "Od wiadomości do wizyty",
-    "home.console.ai": "Asystent AI",
-    "home.console.aiBoundary": "Przed wysłaniem wymagana jest weryfikacja człowieka.",
-    "pricing.hero.kicker": "Cennik dla odzyskiwania przeoczonych zgłoszeń",
-    "pricing.hero.title": "Wybierz plan konsoli, który klinika może uruchomić w tym tygodniu.",
-    "pricing.hero.body":
-      "Zacznij od 14-dniowego okresu próbnego, podłącz jeden kanał pacjentów i sprawdź proces odzyskiwania przed pierwszą fakturą.",
-    "workspace.nav.group.operate": "Operacje",
-    "workspace.nav.group.optimize": "Optymalizacja",
-    "workspace.nav.group.govern": "Zarządzanie",
-    "workspace.nav.dashboard": "Panel",
-    "workspace.nav.setup": "Konfiguracja",
-    "workspace.nav.queue": "Kolejka",
-    "workspace.nav.alerts": "Ryzyka",
-    "workspace.nav.leads": "Zgłoszenia",
-    "workspace.nav.inbox": "Skrzynka",
-    "workspace.nav.notes": "Notatki",
-    "workspace.nav.automations": "Automatyzacje",
-    "workspace.nav.integrations": "Integracje",
-    "workspace.nav.ai": "AI-insighty",
-    "workspace.nav.reports": "Raporty",
-    "workspace.nav.team": "Zespół",
-    "workspace.nav.billing": "Płatności",
-    "workspace.nav.compliance": "Kontrola",
-    "workspace.command.unanswered": "bez odpowiedzi",
-    "workspace.command.atRisk": "zagrożone",
-    "workspace.command.askAi": "Zapytaj AI",
-    "workspace.command.prompt": "Zapytaj AI o pacjentów, przychód, odpowiedzi lub limity...",
-    "dashboard.metric.revenueAtRisk": "Przychód zagrożony",
-    "dashboard.metric.recovered": "Odzyskany przychód",
-    "dashboard.metric.unanswered": "Bez odpowiedzi",
-    "dashboard.metric.avgResponse": "Średni czas pierwszej odpowiedzi",
-    "dashboard.metric.bookedRate": "Umówieni pacjenci",
-    "dashboard.metric.activeChannels": "Aktywne kanały",
-    "queue.header.title": "Kolejka odzyskiwania",
-    "queue.metric.queued": "Zgłoszenia w kolejce",
-    "queue.metric.atRisk": "Zagrożone",
-    "queue.metric.avgResponse": "Śr. odpowiedź",
-    "queue.metric.openThreads": "Otwarte rozmowy",
-    "alerts.header.title": "Ryzyka i SLA",
-    "leads.header.title": "Zgłoszenia pacjentów",
-    "inbox.header.title": "Jedna skrzynka pacjentów",
-    "ai.header.title": "AI-insighty",
-    "reports.header.title": "Raporty odzyskanego przychodu",
-    "billing.header.title": "Subskrypcja i płatności",
-    "integrations.header.title": "Stan kanałów",
-    "team.header.title": "Zespół i miejsca",
-    "notes.page.title": "Notatki zespołu",
-  },
-};
-
 const activeDictionaryCodes = new Set([
   ...Object.keys(dictionaries),
   ...Object.keys(localeOverrides),
   ...Object.keys(workspaceLocaleOverrides),
-  ...Object.keys(curatedLocaleOverrides),
 ]);
 
 const disabledLanguageCodes = new Set(["ru"]);
@@ -3180,26 +3002,21 @@ function normalizeLanguageCode(code: string): string {
 export function translate(key: TranslationKey, languageCode: string): string {
   const normalized = normalizeLanguageCode(languageCode);
   return (
-    curatedLocaleOverrides[normalized]?.[key] ??
     workspaceLocaleOverrides[normalized]?.[key] ??
     localeOverrides[normalized]?.[key] ??
     dictionaries[normalized]?.[key] ??
-    generatedDictionaryMap[normalized]?.[key] ??
     english[key]
   );
 }
 
-export function getMergedDictionary(
-  languageCode: string,
-): Partial<Record<TranslationKey, string>> {
+export function getMergedDictionary(languageCode = "en"): Record<TranslationKey, string> {
   const normalized = normalizeLanguageCode(languageCode);
 
   return {
-    ...generatedDictionaryMap[normalized],
-    ...dictionaries[normalized],
-    ...localeOverrides[normalized],
-    ...workspaceLocaleOverrides[normalized],
-    ...curatedLocaleOverrides[normalized],
+    ...english,
+    ...(dictionaries[normalized] ?? {}),
+    ...(localeOverrides[normalized] ?? {}),
+    ...(workspaceLocaleOverrides[normalized] ?? {}),
   };
 }
 

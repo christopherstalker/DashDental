@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { MarketingShell } from "@/features/marketing/components/landing-system";
-import { SecurityTrustContent } from "@/features/marketing/components/trust-support-pages";
+import { SecurityRedesignPage } from "@/components/marketing/marketing-redesign";
 
 export const metadata: Metadata = {
   title: "Security and Trust - Dash Dental",
   description:
-    "Dash Dental trust center for patient inquiry recovery: security controls, privacy boundaries, AI limitations, compliance posture, incident contact, and honest certification claims.",
+    "Dash Dental trust center for patient inquiry recovery: security controls, privacy boundaries, AI limitations, and honest certification claims.",
   alternates: {
     canonical: "/security",
   },
@@ -18,9 +17,5 @@ export const metadata: Metadata = {
 };
 
 export default function SecurityPage() {
-  return (
-    <MarketingShell launchPage="/security">
-      <SecurityTrustContent />
-    </MarketingShell>
-  );
+  return <SecurityRedesignPage />;
 }

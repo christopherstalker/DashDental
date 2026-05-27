@@ -1,4 +1,6 @@
-# Dependencies
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
 /node_modules
 **/node_modules
 /.pnp
@@ -9,62 +11,62 @@
 !.yarn/releases
 !.yarn/versions
 
-# Next.js and build output
+# testing
+/coverage
+/.data
+/playwright-report
+/test-results
+
+# next.js
 /.next/
-/.next-broken/
-/.next-verify/
-/.next-codex-*/
-/out/
-/build/
-/dist/
-/backend/dist/
-
-# Generated clients and caches
-/src/generated/
-*.tsbuildinfo
-master.bundle
-
-# Test and report output
-/coverage/
-/playwright-report/
-/test-results/
-dashboard-uk-audit*.png
-dashboard-uk-audit*.txt
-
-# Local data and temp files
-/.data/
+/.next-codex-build/
+/.next-codex-browser/
+/.next-codex-e2e/
+/.next-codex-launch/
+/.next-codex-dev/
+/.next-codex-i18n-dev/
 /.tmp/
-/.vercel/
-.cursor/
-*.log
-*.err.log
-*.out.log
+/out/
+
+# production
+/build
+/backend/dist
+
+# misc
+.DS_Store
+*.pem
+
+# Unreadable / corrupted on some Windows volumes; restore from backup if you need these in git.
+.github/workflows/go-live-rehearsal.yml
+scripts/synthetic-monitor-guard.ts
+docs/superpowers/
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# Environment files
-.env
-.env.local
-.env.development
-.env.development.local
-.env.production
-.env.production.local
-.env.staging
-.env.staging.local
-.env*.local
-.env.staging.example
-.env.staging.repaired.example
+# env files (can opt-in for committing if needed)
+.env*
 !.env.example
 !.env.production.example
 
-# OS / misc
-.DS_Store
-*.pem
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
 next-env.d.ts
 
-# Known unreadable local artifacts on some Windows volumes.
-.github/workflows/go-live-rehearsal.yml
-scripts/synthetic-monitor-guard.ts
-docs/superpowers/
+.env*.local
+
+# local generated clients and QA artifacts
+/src/generated/
+/.next-broken/
+/.next-codex-*/
+.cursor/
+master.bundle
+dashboard-uk-audit*.png
+dashboard-uk-audit*.txt
