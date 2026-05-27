@@ -85,9 +85,9 @@ export type RedesignContentPageProps = {
 
 const navLinks = [
   { href: "/#product", label: "Product" },
+  { href: "/#how-it-works", label: "How it works" },
   { href: "/demo", label: "Demo" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/integrations-guide", label: "Integrations" },
   { href: "/security", label: "Security" },
   { href: "/support", label: "Support" },
 ] as const;
@@ -142,7 +142,6 @@ function isActiveLink(current: RouteTone, href: string): boolean {
   if (current === "demo") return href === "/demo";
   if (current === "security") return href === "/security";
   if (current === "support") return href === "/support";
-  if (current === "docs") return href === "/docs" || href === "/integrations-guide";
   return false;
 }
 
