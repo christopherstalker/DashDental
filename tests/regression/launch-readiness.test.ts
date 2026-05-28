@@ -6,8 +6,10 @@ import nextConfig from "../../next.config";
 import { proxy } from "../../src/proxy";
 
 function createProxyRequest(url: string, host: string): NextRequest {
+  const parsedUrl = new URL(url);
   return {
-    headers: new Headers({ host }),
+    headers: new Headers({ host, "x-forwarded-proto": parsedUrl.protocol.replace(":", "") }),
+    nextUrl: parsedUrl,
     url,
   } as NextRequest;
 }
@@ -47,6 +49,7 @@ test("proxy does not force preview hosts away from public pages by default", () 
 
   assert.notEqual(response.status, 308);
   assert.equal(response.headers.get("location"), null);
+  assert.match(response.headers.get("Content-Security-Policy") ?? "", /default-src 'self'/);
 });
 
 test("proxy never redirects Vercel preview deployments to production canonical host", () => {

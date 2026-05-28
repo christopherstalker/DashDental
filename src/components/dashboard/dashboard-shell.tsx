@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { ThemeColorPicker } from "@/components/ui/theme-color-picker";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
@@ -135,6 +136,7 @@ export function DashboardShell({
               <Building2 size={15} />
               <span>Account</span>
             </Link>
+            <ThemeColorPicker />
             <ThemeToggle />
             <span className="ddr-user-avatar" title={userName}>
               {initials(userName) || "DD"}

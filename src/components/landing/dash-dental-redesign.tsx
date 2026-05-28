@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PublicAccountCta } from "@/components/marketing/public-account-cta";
+import { ThemeColorPicker } from "@/components/ui/theme-color-picker";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   integrationRows,
@@ -157,6 +158,7 @@ export function DashDentalRedesignLanding() {
           <Link href="/support">Support</Link>
         </div>
         <div className="ddr-landing-actions">
+          <ThemeColorPicker />
           <ThemeToggle />
           <PublicAccountCta className="ddr-button ddr-button-primary" />
         </div>
@@ -661,7 +663,7 @@ export function DashDentalRedesignLanding() {
         <h2>Turn missed DMs into booked treatment.</h2>
         <p>Create a workspace and get the receptionist workflow live before your next busy week.</p>
         <div className="ddr-final-cta-actions">
-          <Link className="ddr-button ddr-button-primary" href="/support#request">
+          <Link className="ddr-button ddr-button-primary" href="/demo/start">
             {primaryCta}
             <ArrowRight size={15} />
           </Link>
@@ -676,7 +678,7 @@ export function DashDentalRedesignLanding() {
         <nav aria-label="Footer links">
           <a href="#product">Product</a>
           <a href="#how-it-works">How it works</a>
-          <Link href="/demo">Demo</Link>
+          <Link href="/demo/start">Demo</Link>
           <Link href="/integrations-guide">Integrations</Link>
           <Link href="/pricing">Pricing</Link>
           <Link href="/security">Security</Link>

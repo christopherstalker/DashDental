@@ -1,6 +1,12 @@
 import { ApiError } from "./api-error";
 
-type PublicRouteLimit = "health_storage" | "launch_events";
+type PublicRouteLimit =
+  | "health_storage"
+  | "launch_events"
+  | "demo_session"
+  | "support_request"
+  | "billing_action"
+  | "api_key";
 
 const windowMs = 60_000;
 const limits: Record<PublicRouteLimit, { limit: number; message: string }> = {
@@ -11,6 +17,22 @@ const limits: Record<PublicRouteLimit, { limit: number; message: string }> = {
   launch_events: {
     limit: 120,
     message: "Too many launch event requests. Wait a minute and try again.",
+  },
+  demo_session: {
+    limit: 12,
+    message: "Too many demo launches. Wait a minute and try again.",
+  },
+  support_request: {
+    limit: 6,
+    message: "Too many support requests. Wait a minute and try again.",
+  },
+  billing_action: {
+    limit: 12,
+    message: "Too many billing actions. Wait a minute and try again.",
+  },
+  api_key: {
+    limit: 8,
+    message: "Too many API key requests. Wait a minute and try again.",
   },
 };
 

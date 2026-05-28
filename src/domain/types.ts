@@ -220,6 +220,7 @@ export interface PartnerApiKey {
   id: string;
   organizationId: string;
   name: string;
+  keyHash: string;
   keyPrefix: string;
   scopes: string[];
   status: "active" | "revoked";

@@ -17,7 +17,7 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 - `REDIS_URL`: Redis connection string.
 - `SESSION_SECRET`: Next.js workspace session signing secret.
 - `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`: backend JWT validation secrets.
-- `INTEGRATION_SECRET`: encryption key for clinic integration credentials.
+- `INTEGRATION_SECRET`: encryption key for clinic integration credentials and MFA TOTP secrets.
 - `APP_URL`: public HTTPS app URL used by providers.
 - `BACKEND_INTERNAL_URL`: internal URL from Next.js to Nest backend.
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`: live billing.
@@ -37,11 +37,12 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 4. Build backend with `cd backend && npm run build`.
 5. Build frontend with `npm run build`.
 6. Apply `docs/edge-protection.md` at the CDN/edge layer before broad self-serve traffic.
-7. Start backend and verify `/api/v1/admin/overview` with a super-admin token.
-8. Start frontend and open `/platform`.
-9. Run a non-destructive lifecycle dry-run from the platform console.
-10. Run `npm run go-live:check` in staging. Block launch until the command reports `ready`.
-11. Run `npm run monitor:preview` against a public Vercel preview, then `npm run monitor:synthetic:guarded` against controlled staging when demo reset/support paths are approved.
+7. Confirm app-level HTTPS redirect, HSTS, CSP, COOP/CORP, frame deny, referrer policy, and permissions policy headers on a staging page.
+8. Start backend and verify `/api/v1/admin/overview` with a super-admin token.
+9. Start frontend and open `/platform`.
+10. Run a non-destructive lifecycle dry-run from the platform console.
+11. Run `npm run go-live:check` in staging. Block launch until the command reports `ready`.
+12. Run `npm run monitor:preview` against a public Vercel preview, then `npm run monitor:synthetic:guarded` against controlled staging when demo reset/support paths are approved.
 
 ## Staging Rehearsal
 
@@ -86,6 +87,7 @@ Before taking broad paid self-serve traffic, confirm the commercial handoff is c
 - External setup checklist: use `docs/external-launch-setup.md` for Turnstile,
   CDN/edge rules, GitHub monitor variables, and legal approval evidence.
 - Manual invoice path: set `BILLING_PROVIDER=manual` or `hybrid`, fill `MANUAL_BILLING_*`, verify `/billing` shows only non-secret bank/payment instructions, and document the support SLA for activating paid access after payment confirmation.
+- Hard lock path: after the 14-day trial or current period ends, verify `/dashboard`, `/inbox`, `/settings`, integrations, exports, sends, AI, and workspace API reads return billing-only access while `/billing`, `/workspaces`, and logout remain reachable.
 - Stripe-ready path: if Stripe is enabled, confirm live `STRIPE_PRICE_*`, Checkout, Portal, webhook signature verification, and subscription ledger reconciliation in staging before enabling production plan changes.
 - Stripe live-mode rehearsal: run `npm run stripe:rehearsal` in staging. The command must report `ready` before enabling broad Stripe self-serve; blocked checks are launch blockers for card billing.
 - Go-live readiness gate: run `npm run go-live:check` after edge rules, bot protection, legal review, support ownership, billing mode, and synthetic monitor scheduling are configured. Treat any `BLOCK` as a launch blocker.
@@ -127,10 +129,12 @@ Review launch funnel logs daily during launch week:
 Run these monitors from the public production hostname and at least one preview hostname:
 
 - `GET /`, `/pricing`, `/demo`, `/trial`, `/qa`, `/security`, `/privacy`, `/terms`: expect status below 400 and no 403.
+- Open `/demo/start`: expect an immediate redirect to `/demo/live`, a 15-minute countdown, fake data only, and no access to `/api/v1/state` with the demo cookie.
 - Click the homepage hero trial CTA and confirm a `public.home.start_trial_clicked` event reaches `/api/v1/launch/events`.
 - Load `/register`, submit a synthetic non-production clinic, and confirm a 14-day trial workspace reaches `/setup`.
 - Load `/setup` as owner/admin and confirm the Launch drop-off review shows the next measurable action.
 - Load `/billing` after an expired trial and confirm read-only billing activation is still reachable.
+- Verify privileged owner/admin routes require a fresh MFA session in production.
 - Call `/api/v1/health/storage` and confirm no connection strings, tokens, secrets, or credentials appear in the response.
 
 The repository includes `.github/workflows/synthetic-monitor.yml` for a scheduled

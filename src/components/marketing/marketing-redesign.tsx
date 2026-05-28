@@ -28,7 +28,6 @@ import type { Subscription } from "@/domain/types";
 import {
   integrationRows,
   pilotCta,
-  primaryCta,
   privacyEmail,
   sampleConversations,
   securityEmail,
@@ -87,7 +86,7 @@ export type RedesignContentPageProps = {
 const navLinks = [
   { href: "/#product", label: "Product" },
   { href: "/#how-it-works", label: "How it works" },
-  { href: "/demo", label: "Demo" },
+  { href: "/demo/start", label: "Demo" },
   { href: "/pricing", label: "Pricing" },
   { href: "/security", label: "Security" },
   { href: "/support", label: "Support" },
@@ -493,8 +492,8 @@ export function DemoRedesignPage() {
             prepares safe drafts, and keeps ownership clear for reception teams.
           </p>
           <div className="ddr-public-hero-actions">
-            <Link className="ddr-button ddr-button-primary" href="/support#request">
-              {primaryCta}
+            <Link className="ddr-button ddr-button-primary" href="/demo/start">
+              Open live demo
               <ArrowRight size={15} />
             </Link>
             <Link className="ddr-button ddr-button-ghost" href="/register">

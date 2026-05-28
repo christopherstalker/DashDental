@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     const nextPayload = createSessionPayload({
       userId: user.id,
       organizationId,
+      mfaVerifiedAt: currentPayload?.mfaVerifiedAt,
       sessionVersion: user.sessionVersion ?? 0,
     });
     const context = resolveSessionContext(state, nextPayload, "manager");

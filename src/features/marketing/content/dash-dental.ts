@@ -2,7 +2,7 @@ export const supportEmail = "support@dashdental.space";
 export const securityEmail = "security@dashdental.space";
 export const privacyEmail = "privacy@dashdental.space";
 
-export const primaryCta = "Book 15-min demo";
+export const primaryCta = "Open live demo";
 export const secondaryCta = "View sample dashboard";
 export const pilotCta = "Create account";
 

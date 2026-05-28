@@ -309,9 +309,10 @@ function serializeOutgoingWebhookEndpoint(endpoint: OutgoingWebhookEndpoint) {
 function serializePartnerApiKey(key: PartnerApiKey) {
   return {
     id: key.id,
-    organizationId: key.organizationId,
-    name: key.name,
-    keyPrefix: key.keyPrefix,
+      organizationId: key.organizationId,
+      name: key.name,
+      keyHash: key.keyHash || "",
+      keyPrefix: key.keyPrefix,
     scopesJson: jsonArrayOrObject(key.scopes),
     status: key.status,
     lastUsedAt: toDate(key.lastUsedAt) ?? null,
@@ -852,8 +853,9 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
       (key): PartnerApiKey => ({
         id: key.id,
         organizationId: key.organizationId,
-        name: key.name,
-        keyPrefix: key.keyPrefix,
+          name: key.name,
+          keyHash: key.keyHash || "",
+          keyPrefix: key.keyPrefix,
         scopes: Array.isArray(key.scopesJson)
           ? key.scopesJson.filter((item): item is string => typeof item === "string")
           : [],

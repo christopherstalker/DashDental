@@ -150,15 +150,19 @@ model UserCredential {
   emailVerificationTokenHash       String?   @unique
   emailVerificationExpiresAt       DateTime?
   emailVerificationSentAt          DateTime?
-  passwordResetTokenHash           String?   @unique
-  passwordResetExpiresAt           DateTime?
-  passwordResetRequestedAt         DateTime?
-  createdAt                        DateTime  @default(now())
-  updatedAt                        DateTime  @updatedAt
-
-  @@index([emailVerificationExpiresAt])
-  @@index([passwordResetExpiresAt])
-}
+    passwordResetTokenHash           String?   @unique
+    passwordResetExpiresAt           DateTime?
+    passwordResetRequestedAt         DateTime?
+    totpSecretEncrypted              String?
+    totpEnabledAt                    DateTime?
+    mfaRecoveryCodesJson             Json?
+    createdAt                        DateTime  @default(now())
+    updatedAt                        DateTime  @updatedAt
+  
+    @@index([emailVerificationExpiresAt])
+    @@index([passwordResetExpiresAt])
+    @@index([totpEnabledAt])
+  }
 
 model Organization {
   id                  String              @id @default(cuid())
@@ -393,10 +397,11 @@ model OutgoingWebhookEndpoint {
 
 model PartnerApiKey {
   id             String       @id @default(cuid())
-  organizationId String
-  name           String
-  keyPrefix      String
-  scopesJson     Json
+    organizationId String
+    name           String
+    keyHash        String
+    keyPrefix      String
+    scopesJson     Json
   status         String       @default("active")
   lastUsedAt     DateTime?
   createdBy      String

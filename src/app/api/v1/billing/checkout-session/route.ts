@@ -7,9 +7,11 @@ import {
 } from "@/server/api-helpers";
 import { optionalString, requiredSubscriptionPlan } from "@/server/validation";
 import { createStripeCheckoutSession } from "@/server/stripe";
+import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
 
 export async function POST(request: Request) {
   try {
+    assertPublicRouteRateLimit(request, { route: "billing_action" });
     const state = await readAppState();
     const context = getRequestContext(request, state, "owner");
     const payload = await readJsonObject(request);

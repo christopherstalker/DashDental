@@ -1,12 +1,16 @@
 import { scopeAppStateToOrganization } from "@/domain/state-scope";
+import { isDemoOrganizationId } from "@/domain/seed-data";
 import type { AppState, Membership, Role, User } from "@/domain/types";
 import { ApiError } from "./api-error";
+import { assertWorkspaceFeatureAccess } from "./entitlements";
 import {
   decodeSession,
   getSessionTokenFromRequest,
   resolveSessionContext,
 } from "./session";
 import { captureError } from "./observability";
+import { assertSameOriginRequest } from "./request-security";
+import { assertPrivilegedMfaSatisfied } from "./mfa";
 export { ApiError } from "./api-error";
 
 export interface RequestContext {
@@ -16,6 +20,7 @@ export interface RequestContext {
   role: Role;
   membership?: Membership;
   isSuperAdmin: boolean;
+  mfaVerifiedAt?: number;
 }
 
 export function errorResponse(error: unknown): Response {
@@ -51,6 +56,7 @@ export function errorResponse(error: unknown): Response {
 }
 
 export async function readJsonObject(request: Request): Promise<Record<string, unknown>> {
+  assertSameOriginRequest(request);
   const value = await request.json().catch(() => ({}));
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -62,10 +68,32 @@ export function getRequestContext(
   state: AppState,
   requiredRole: Role = "manager",
 ): RequestContext {
-  return resolveSessionContext(
+  const context = resolveSessionContext(
     state,
     decodeSession(getSessionTokenFromRequest(request)),
     requiredRole,
+  );
+  if (!shouldSkipBillingLock(request, context)) {
+    assertWorkspaceFeatureAccess(state, context.organizationId, "inbox_read");
+  }
+  assertPrivilegedMfaSatisfied(context, requiredRole);
+
+  return context;
+}
+
+function shouldSkipBillingLock(request: Request, context: RequestContext): boolean {
+  if (context.isSuperAdmin || isDemoOrganizationId(context.organizationId)) {
+    return true;
+  }
+
+  const pathname = new URL(request.url).pathname;
+  return (
+    pathname.startsWith("/api/v1/auth/") ||
+    pathname.startsWith("/api/v1/billing/") ||
+    pathname.startsWith("/api/v1/admin/") ||
+    pathname.startsWith("/api/v1/health/") ||
+    pathname.startsWith("/api/v1/launch/") ||
+    pathname.startsWith("/api/v1/webhooks/")
   );
 }
 

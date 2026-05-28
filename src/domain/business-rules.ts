@@ -381,11 +381,7 @@ export function isSubscriptionAccessActive(
   return (
     (
       subscription?.status === "active" ||
-      subscription?.status === "trialing" ||
-      subscription?.status === "past_due" ||
-      subscription?.status === "canceled" ||
-      subscription?.status === "unpaid" ||
-      subscription?.status === "read_only"
+      subscription?.status === "trialing"
     ) &&
     isSubscriptionPeriodCurrent(subscription, nowIso)
   );
@@ -399,10 +395,7 @@ export function getSubscriptionAccessStatus(
     return "not_configured";
   }
 
-  if (
-    (subscription.status === "active" || subscription.status === "trialing") &&
-    !isSubscriptionPeriodCurrent(subscription, nowIso)
-  ) {
+  if (!isSubscriptionPeriodCurrent(subscription, nowIso)) {
     return "expired";
   }
 

@@ -79,7 +79,7 @@ test("duplicate Stripe billing event is ledgered once and does not double-apply"
   );
 });
 
-test("invoice payment failure makes subscription past_due with read-only data policy", async () => {
+test("invoice payment failure moves tenant to billing-only data lock", async () => {
   const { applyStripeBillingEventToState } = await import("../../src/server/billing-ledger");
   const { canAccessFeature, canSendMessage, getBillingAccessPolicy } = await import(
     "../../src/server/entitlements"
@@ -107,13 +107,15 @@ test("invoice payment failure makes subscription past_due with read-only data po
   const policy = getBillingAccessPolicy(result.state, defaultOrganizationId, "2026-05-02T00:00:00.000Z");
 
   assert.equal(subscription?.status, "past_due");
-  assert.equal(policy.canReadData, true);
+  assert.equal(policy.status, "billing_only");
+  assert.equal(policy.canReadData, false);
   assert.equal(policy.paidActionsAllowed, false);
-  assert.equal(canAccessFeature(result.state, defaultOrganizationId, "inbox_read").allowed, true);
+  assert.equal(canAccessFeature(result.state, defaultOrganizationId, "inbox_read").allowed, false);
+  assert.equal(canAccessFeature(result.state, defaultOrganizationId, "billing_admin").allowed, true);
   assert.equal(canSendMessage(result.state, defaultOrganizationId).allowed, false);
 });
 
-test("manual admin grant can put a clinic on read-only hold and audit the change", async () => {
+test("manual read-only hold becomes billing-only and audits the change", async () => {
   const { activateManualSubscription } = await import("../../src/server/state-mutations");
   const { canAccessFeature, canSendMessage, getBillingAccessPolicy } = await import(
     "../../src/server/entitlements"
@@ -135,9 +137,11 @@ test("manual admin grant can put a clinic on read-only hold and audit the change
   const policy = getBillingAccessPolicy(result, defaultOrganizationId, "2026-05-10T10:00:00.000Z");
 
   assert.equal(subscription?.status, "read_only");
-  assert.equal(policy.canReadData, true);
+  assert.equal(policy.status, "billing_only");
+  assert.equal(policy.canReadData, false);
   assert.equal(policy.paidActionsAllowed, false);
-  assert.equal(canAccessFeature(result, defaultOrganizationId, "inbox_read").allowed, true);
+  assert.equal(canAccessFeature(result, defaultOrganizationId, "inbox_read").allowed, false);
+  assert.equal(canAccessFeature(result, defaultOrganizationId, "billing_admin").allowed, true);
   assert.equal(canSendMessage(result, defaultOrganizationId).allowed, false);
   assert.ok(
     result.auditLogs.some(
@@ -146,6 +150,26 @@ test("manual admin grant can put a clinic on read-only hold and audit the change
         log.metadataJson.externalReference === "INV-READONLY-001",
     ),
   );
+});
+
+test("expired trial blocks workspace reads while keeping billing admin reachable", async () => {
+  const { canAccessFeature, canSendMessage, getBillingAccessPolicy } = await import(
+    "../../src/server/entitlements"
+  );
+  const state = withSubscription(cloneState(), {
+    status: "trialing",
+    plan: "starter",
+    currentPeriodStart: "2026-05-01T00:00:00.000Z",
+    currentPeriodEnd: "2026-05-15T00:00:00.000Z",
+  });
+  const policy = getBillingAccessPolicy(state, defaultOrganizationId, "2026-05-15T00:00:00.000Z");
+
+  assert.equal(policy.status, "expired");
+  assert.equal(policy.canReadData, false);
+  assert.equal(canAccessFeature(state, defaultOrganizationId, "inbox_read", "2026-05-15T00:00:00.000Z").allowed, false);
+  assert.equal(canAccessFeature(state, defaultOrganizationId, "lead_read", "2026-05-15T00:00:00.000Z").allowed, false);
+  assert.equal(canAccessFeature(state, defaultOrganizationId, "billing_admin", "2026-05-15T00:00:00.000Z").allowed, true);
+  assert.equal(canSendMessage(state, defaultOrganizationId, "2026-05-15T00:00:00.000Z").allowed, false);
 });
 
 test("subscription update changes entitlement limits without changing pricing logic", async () => {
@@ -225,7 +249,7 @@ test("usage events are immutable and idempotent while maintaining monthly snapsh
   assert.equal(after, (before ?? 0) + 1);
 });
 
-test("quota service blocks paid actions over limit and canceled tenants keep read access", async () => {
+test("quota service blocks over-limit paid actions and canceled tenants are billing-only", async () => {
   const { canAccessFeature, canConnectChannel, canSendMessage } = await import(
     "../../src/server/entitlements"
   );
@@ -246,7 +270,8 @@ test("quota service blocks paid actions over limit and canceled tenants keep rea
 
   assert.equal(canSendMessage(activeOverLimit, defaultOrganizationId).allowed, false);
   assert.equal(canConnectChannel(activeOverLimit, defaultOrganizationId).allowed, false);
-  assert.equal(canAccessFeature(canceled, defaultOrganizationId, "inbox_read").allowed, true);
+  assert.equal(canAccessFeature(canceled, defaultOrganizationId, "inbox_read").allowed, false);
+  assert.equal(canAccessFeature(canceled, defaultOrganizationId, "billing_admin").allowed, true);
   assert.equal(canSendMessage(canceled, defaultOrganizationId).allowed, false);
 });
 

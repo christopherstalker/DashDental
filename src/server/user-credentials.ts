@@ -3,7 +3,8 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { getCurrentCalendarMonthPeriod, getPlanLimits } from "@/domain/business-rules";
+import { Prisma } from "@/generated/prisma";
+import { getFreeTrialPeriod, getPlanLimits } from "@/domain/business-rules";
 import type { AppState, Organization, Subscription, UsageLimits } from "@/domain/types";
 import { prisma } from "./prisma";
 import { addAudit } from "./state-mutations";
@@ -28,6 +29,9 @@ interface CredentialRecord {
   passwordResetExpiresAt?: string;
   passwordResetRequestedAt?: string;
   passwordResetTokenHash?: string;
+  totpSecretEncrypted?: string;
+  totpEnabledAt?: string;
+  mfaRecoveryCodesJson?: string[];
   userId: string;
 }
 
@@ -39,6 +43,9 @@ type CredentialRecordPatch = {
   passwordResetExpiresAt?: string | null;
   passwordResetRequestedAt?: string | null;
   passwordResetTokenHash?: string | null;
+  totpSecretEncrypted?: string | null;
+  totpEnabledAt?: string | null;
+  mfaRecoveryCodesJson?: string[] | null;
 };
 
 export type UserCredentialRecord = CredentialRecord;
@@ -127,6 +134,28 @@ async function writeCredentialRecordsToFile(records: CredentialRecord[]): Promis
   await credentialWriteQueue;
 }
 
+function setStringCredentialPatchValue(
+  record: CredentialRecord,
+  key: keyof CredentialRecordPatch,
+  value: string,
+) {
+  switch (key) {
+    case "emailVerificationExpiresAt":
+    case "emailVerificationSentAt":
+    case "emailVerificationTokenHash":
+    case "passwordHash":
+    case "passwordResetExpiresAt":
+    case "passwordResetRequestedAt":
+    case "passwordResetTokenHash":
+    case "totpEnabledAt":
+    case "totpSecretEncrypted":
+      record[key] = value;
+      break;
+    case "mfaRecoveryCodesJson":
+      break;
+  }
+}
+
 async function getPasswordHash(userId: string): Promise<string | undefined> {
   if (isPrismaStorageEnabled()) {
     try {
@@ -164,6 +193,11 @@ async function getCredentialRecord(userId: string): Promise<CredentialRecord | u
             passwordResetTokenHash: record.passwordResetTokenHash ?? undefined,
             passwordResetExpiresAt: record.passwordResetExpiresAt?.toISOString(),
             passwordResetRequestedAt: record.passwordResetRequestedAt?.toISOString(),
+            totpSecretEncrypted: record.totpSecretEncrypted ?? undefined,
+            totpEnabledAt: record.totpEnabledAt?.toISOString(),
+            mfaRecoveryCodesJson: Array.isArray(record.mfaRecoveryCodesJson)
+              ? record.mfaRecoveryCodesJson.filter((item): item is string => typeof item === "string")
+              : undefined,
           }
         : undefined;
     } catch (error) {
@@ -215,6 +249,16 @@ async function setCredentialRecord(
             : patch.passwordResetRequestedAt === null
               ? null
               : undefined,
+          totpSecretEncrypted: patch.totpSecretEncrypted,
+          totpEnabledAt: patch.totpEnabledAt
+            ? new Date(patch.totpEnabledAt)
+            : patch.totpEnabledAt === null
+              ? null
+              : undefined,
+          mfaRecoveryCodesJson:
+            patch.mfaRecoveryCodesJson === null
+              ? Prisma.JsonNull
+              : patch.mfaRecoveryCodesJson,
         },
         create: {
           userId,
@@ -233,6 +277,14 @@ async function setCredentialRecord(
           passwordResetRequestedAt: patch.passwordResetRequestedAt
             ? new Date(patch.passwordResetRequestedAt)
             : undefined,
+          totpSecretEncrypted: patch.totpSecretEncrypted,
+          totpEnabledAt: patch.totpEnabledAt
+            ? new Date(patch.totpEnabledAt)
+            : undefined,
+          mfaRecoveryCodesJson:
+            patch.mfaRecoveryCodesJson === null
+              ? Prisma.JsonNull
+              : patch.mfaRecoveryCodesJson,
         },
       });
       return;
@@ -251,8 +303,10 @@ async function setCredentialRecord(
     const recordKey = key as keyof CredentialRecordPatch;
     if (value === null) {
       delete nextRecord[recordKey as keyof CredentialRecord];
+    } else if (recordKey === "mfaRecoveryCodesJson" && Array.isArray(value)) {
+      nextRecord.mfaRecoveryCodesJson = value;
     } else if (value !== undefined) {
-      nextRecord[recordKey as keyof CredentialRecord] = value;
+      setStringCredentialPatchValue(nextRecord, recordKey, value as string);
     }
   }
 
@@ -419,18 +473,18 @@ function createStarterSubscription(
   organizationId: string,
   nowIso: string,
 ): Subscription {
-  const billingPeriod = getCurrentCalendarMonthPeriod(nowIso);
+  const billingPeriod = getFreeTrialPeriod(nowIso);
 
   return {
     id: createRuntimeId("sub"),
     organizationId,
     provider: getBillingProvider() === "stripe" ? "stripe" : "manual",
     plan: "starter",
-    status: "active",
+    status: "trialing",
     currentPeriodStart: billingPeriod.startIso,
     currentPeriodEnd: billingPeriod.endIso,
     externalCustomerId: "",
-    externalSubscriptionId: "self-serve-active",
+    externalSubscriptionId: "self-serve-trial",
   };
 }
 

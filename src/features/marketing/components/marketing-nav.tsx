@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PublicAccountCta } from "@/components/marketing/public-account-cta";
+import { ThemeColorPicker } from "@/components/ui/theme-color-picker";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -40,6 +41,7 @@ export function MarketingNav({
       </div>
 
       <div className="recovery-nav-actions">
+        <ThemeColorPicker />
         <ThemeToggle />
         <Link
           className="ddr-button ddr-button-ghost"

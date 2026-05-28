@@ -14,6 +14,7 @@ export interface SessionPayload {
   organizationId?: string;
   issuedAt: number;
   expiresAt: number;
+  mfaVerifiedAt?: number;
   nonce: string;
   sessionVersion: number;
 }
@@ -101,6 +102,7 @@ export function getSessionCookieOptions(maxAge = SESSION_MAX_AGE_SECONDS) {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge,
+    priority: "high" as const,
   };
 }
 
@@ -130,6 +132,7 @@ export function createSessionPayload(input: {
   userId: string;
   organizationId?: string;
   now?: number;
+  mfaVerifiedAt?: number;
   sessionVersion?: number;
 }): SessionPayload {
   const issuedAt = input.now ?? Date.now();
@@ -139,6 +142,7 @@ export function createSessionPayload(input: {
     organizationId: input.organizationId,
     issuedAt,
     expiresAt: issuedAt + SESSION_MAX_AGE_SECONDS * 1000,
+    mfaVerifiedAt: input.mfaVerifiedAt,
     nonce: crypto.randomBytes(12).toString("hex"),
     sessionVersion: input.sessionVersion ?? 0,
   };
@@ -225,6 +229,7 @@ export function resolveSessionContext(
     role,
     membership: effectiveMembership,
     isSuperAdmin: role === "super_admin",
+    mfaVerifiedAt: payload.mfaVerifiedAt,
   };
 }
 

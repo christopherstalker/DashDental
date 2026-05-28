@@ -8,6 +8,9 @@ abuse boundary for public auth and buyer traffic.
 
 - `/api/v1/auth/register`: rate limit to 8-10 requests per minute per IP. Challenge suspicious traffic with Cloudflare Turnstile or an equivalent bot check.
 - `/api/v1/auth/session`: rate limit to 60 requests per minute per IP. Increase friction after repeated failed password attempts.
+- `/demo/start` and `/api/v1/demo/session`: rate limit to 10-12 demo sessions per minute per IP. Never connect anonymous demo sessions to tenant APIs.
+- `/api/v1/billing/*` and `/api/v1/api-keys`: rate limit sensitive owner/admin actions and alert on repeated failures.
+- `/api/v1/support/request`: rate limit uploads, keep maximum file size at the app limit, and avoid browser challenges after a valid authenticated support path exists.
 - `/api/v1/launch/events`: rate limit to 120 requests per minute per IP. Drop oversized requests and never challenge normal page navigation.
 - `/api/v1/health/storage`: rate limit to 30 requests per minute per IP. Allow synthetic monitor IPs.
 - `/api/v1/webhooks/*`: do not use browser challenges. Webhooks must be protected by provider signatures, idempotency, and secret verification.
@@ -43,7 +46,9 @@ does not replace a real CDN/edge control for broad paid self-serve traffic.
 - Allow known uptime and synthetic monitor IPs.
 - Block known malicious user agents before they reach Next.js.
 - Keep public pages reachable without auth; never challenge `GET /`, `/pricing`,
-  `/demo`, `/trial`, `/qa`, `/security`, `/privacy`, or `/terms` unless the
+  `/demo`, `/demo/start`, `/demo/live`, `/trial`, `/qa`, `/security`, `/privacy`, or `/terms` unless the
   request is already clearly abusive.
+- Keep HTTPS redirect, HSTS, CSP, COOP/CORP, frame deny, referrer policy, and
+  permissions policy enabled at the edge as well as in the app.
 - Log rule id, client IP hash, route, and action. Do not log patient text,
   emails, phone numbers, secrets, tokens, or provider payloads.

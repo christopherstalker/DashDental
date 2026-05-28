@@ -32,6 +32,8 @@ export function LoginForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState<string | null>(
@@ -54,6 +56,9 @@ export function LoginForm({
     }
     if (code === "email_unverified") {
       return "Verify your work email before signing in, or open the verification link from your account email.";
+    }
+    if (code === "mfa_required") {
+      return "Enter the 6-digit code from your authenticator app.";
     }
 
     return fallback;
@@ -87,6 +92,9 @@ export function LoginForm({
       };
 
       if (!response.ok) {
+        if (result.code === "mfa_required") {
+          setMfaRequired(true);
+        }
         setError(friendlyAuthError(result.code, result.error ?? "Could not sign in."));
         setTurnstileResetKey((value) => value + 1);
         return;
@@ -108,7 +116,10 @@ export function LoginForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await signIn({ email, password }, { requiresChallenge: true });
+    await signIn(
+      mfaRequired ? { email, password, mfaCode } : { email, password },
+      { requiresChallenge: true },
+    );
   }
 
   return (
@@ -145,6 +156,22 @@ export function LoginForm({
             value={email}
           />
         </label>
+        {mfaRequired ? (
+          <label className="login-field">
+            <span>MFA code</span>
+            <input
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              maxLength={6}
+              minLength={6}
+              name="mfaCode"
+              onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              required
+              value={mfaCode}
+            />
+          </label>
+        ) : null}
         <label className="login-field">
           <span>Password</span>
           <input

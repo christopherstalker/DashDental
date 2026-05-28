@@ -22,9 +22,11 @@ import {
 } from "@/server/session";
 import {
   activateInvitedUserOnLogin,
+  readUserCredentialRecord,
   resolvePasswordLogin,
   touchUserLastLogin,
 } from "@/server/user-credentials";
+import { decryptTotpSecret, verifyTotpCode } from "@/server/mfa";
 import { optionalString, requiredString } from "@/server/validation";
 
 export async function GET() {
@@ -109,12 +111,24 @@ export async function POST(request: Request) {
       );
     }
 
+    let mfaVerifiedAt: number | undefined;
+    const credential = await readUserCredentialRecord(userId);
+    if (credential?.totpEnabledAt) {
+      const secret = decryptTotpSecret(credential.totpSecretEncrypted);
+      const code = optionalString(payload, "mfaCode");
+      if (!secret || !code || !verifyTotpCode({ code, secret })) {
+        throw new ApiError(403, "Enter a valid MFA code", "mfa_required");
+      }
+      mfaVerifiedAt = Date.now();
+    }
+
     await activateInvitedUserOnLogin(userId);
     const state = await touchUserLastLogin(userId);
     const userForSession = state.users.find((item) => item.id === userId);
     const sessionPayload = createSessionPayload({
       userId,
       organizationId,
+      mfaVerifiedAt,
       sessionVersion: userForSession?.sessionVersion ?? 0,
     });
     const cookieStore = await cookies();

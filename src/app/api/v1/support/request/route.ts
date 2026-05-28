@@ -3,6 +3,8 @@ import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { ApiError, errorResponse } from "@/server/api-helpers";
+import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
+import { assertSameOriginRequest } from "@/server/request-security";
 
 export const runtime = "nodejs";
 
@@ -40,6 +42,8 @@ function getSupportDirectory(id: string): string {
 
 export async function POST(request: Request) {
   try {
+    assertSameOriginRequest(request);
+    assertPublicRouteRateLimit(request, { route: "support_request" });
     const formData = await request.formData();
     const kind = readText(formData, "kind");
     const email = readText(formData, "email");

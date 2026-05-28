@@ -13,6 +13,16 @@
       "evidence": "CDN rules applied from docs/edge-protection.md"
     },
     {
+      "id": "security_headers_verified",
+      "owner": "engineering",
+      "evidence": "HTTPS redirect, HSTS, CSP, COOP/CORP, frame deny, referrer policy, and permissions policy verified in staging"
+    },
+    {
+      "id": "privileged_mfa_verified",
+      "owner": "security",
+      "evidence": "Owner/admin/super-admin privileged routes require a fresh MFA session in production"
+    },
+    {
       "id": "public_auth_bot_protection_required",
       "owner": "engineering",
       "evidence": "Turnstile widget and server secret configured"
@@ -91,6 +101,16 @@
       "id": "manual_billing_ready",
       "owner": "finance",
       "evidence": "Manual billing recipient, instructions, and support inbox configured"
+    },
+    {
+      "id": "expired_trial_billing_lock_verified",
+      "owner": "finance",
+      "evidence": "Expired trial blocks workspace data and keeps only billing, workspaces, and logout reachable"
+    },
+    {
+      "id": "self_serve_demo_verified",
+      "owner": "growth",
+      "evidence": "Book demo opens /demo/live instantly, expires after 15 minutes, and cannot access tenant APIs"
     },
     {
       "id": "manual_invoice_template_approved",

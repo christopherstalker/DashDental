@@ -14,10 +14,12 @@ import {
   getManualBillingMissingFields,
   isManualBillingConfigured,
 } from "@/server/manual-billing";
+import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
 import { optionalString, requiredSubscriptionPlan } from "@/server/validation";
 
 export async function POST(request: Request) {
   try {
+    assertPublicRouteRateLimit(request, { route: "billing_action" });
     const state = await readAppState();
     const context = getRequestContext(request, state, "owner");
     const payload = await readJsonObject(request);

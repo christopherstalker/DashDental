@@ -10,9 +10,11 @@ import {
   stateForContext,
 } from "@/server/api-helpers";
 import { optionalString, requiredSubscriptionPlan } from "@/server/validation";
+import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
 
 export async function POST(request: Request) {
   try {
+    assertPublicRouteRateLimit(request, { route: "billing_action" });
     if (!canUseDirectBillingPlanChange({ requestUrl: request.url })) {
       throw new ApiError(
         403,

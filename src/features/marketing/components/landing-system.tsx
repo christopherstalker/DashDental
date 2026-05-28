@@ -27,8 +27,7 @@ import {
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import styles from "./landing-system.module.css";
 
-export const demoRequestHref =
-  "/support?category=Demo%20or%20onboarding%20call&urgency=Normal&channel=Not%20channel-specific&message=Please%20book%20or%20reschedule%20a%20Dash%20Dental%20demo.%20I%20want%20to%20see%20the%20dashboard%20workflow.#request";
+export const demoRequestHref = "/demo/start";
 
 export function MarketingShell({
   children,
@@ -279,7 +278,7 @@ export function PricingCard({
           {ctaLabel ?? `Compare ${catalog.label}`}
           <ArrowRight size={15} />
         </Link>
-        <Link className={styles.buttonGhost} href="/support#request">
+        <Link className={styles.buttonGhost} href="/demo/start">
           Book demo
         </Link>
       </div>
@@ -563,7 +562,7 @@ export function LandingFooter() {
         <Link href="/">Home</Link>
         <Link href="/demo">Sample dashboard</Link>
         <Link href="/pricing">Pricing</Link>
-        <Link href="/support#request">Book demo</Link>
+        <Link href="/demo/start">Book demo</Link>
       </nav>
       <nav aria-label="Trust footer links">
         <strong>Trust</strong>

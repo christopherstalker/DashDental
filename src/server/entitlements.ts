@@ -22,6 +22,14 @@ type FeatureKey =
   | "add_seat"
   | "connect_channel";
 
+export type BillingAccessStatus =
+  | "active"
+  | "trialing"
+  | "expired"
+  | "billing_only"
+  | "not_configured"
+  | "forbidden_role";
+
 const readableFeatures = new Set<FeatureKey>([
   "billing_admin",
   "inbox_read",
@@ -50,25 +58,35 @@ export function getBillingAccessPolicy(
 ) {
   const subscription = activeSubscriptionForOrganization(state, organizationId);
   const periodCurrent = isSubscriptionPeriodCurrent(subscription, nowIso);
-  const status = subscription?.status ?? "not_configured";
-  const canReadData = Boolean(subscription) && periodCurrent;
+  const subscriptionStatus = subscription?.status ?? "not_configured";
   const paidActionsAllowed =
-    periodCurrent && (status === "active" || status === "trialing");
+    periodCurrent && (subscriptionStatus === "active" || subscriptionStatus === "trialing");
+  const canReadData = paidActionsAllowed;
+  const accessStatus: BillingAccessStatus = !subscription
+    ? "not_configured"
+    : paidActionsAllowed
+      ? subscriptionStatus === "trialing"
+        ? "trialing"
+        : "active"
+      : periodCurrent
+        ? "billing_only"
+        : "expired";
 
   return {
-    status,
+    status: accessStatus,
+    subscriptionStatus,
     subscription,
     periodCurrent,
     canReadData,
     paidActionsAllowed,
-    readOnly: canReadData && !paidActionsAllowed,
+    readOnly: Boolean(subscription) && !paidActionsAllowed,
     reason: !subscription
       ? "subscription_missing"
       : !periodCurrent
         ? "subscription_period_expired"
         : paidActionsAllowed
           ? undefined
-          : "billing_read_only",
+          : "billing_only",
   };
 }
 
@@ -220,7 +238,7 @@ export function assertEntitlement(decision: EntitlementDecision) {
       decision.reason === "usage_limit_exceeded" ? 429 : 402,
       decision.reason === "usage_limit_exceeded"
         ? "Plan usage limit reached"
-        : "Billing status is read-only for this action",
+        : "Billing status allows billing-only access for this action",
       decision.reason ?? "billing_action_blocked",
       {
         current: decision.current,
@@ -228,4 +246,13 @@ export function assertEntitlement(decision: EntitlementDecision) {
       },
     );
   }
+}
+
+export function assertWorkspaceFeatureAccess(
+  state: AppState,
+  organizationId: string,
+  feature: FeatureKey,
+  nowIso?: string,
+) {
+  assertEntitlement(canAccessFeature(state, organizationId, feature, nowIso));
 }

@@ -836,6 +836,7 @@ export const partnerApiKeys: PartnerApiKey[] = [
     id: "api-key-001",
     organizationId: defaultOrganizationId,
     name: "Clinic partner dashboard",
+    keyHash: "seed-demo-key-hash-not-a-real-secret",
     keyPrefix: "dd_live_demo",
     scopes: ["conversations:read", "analytics:read"],
     status: "active",

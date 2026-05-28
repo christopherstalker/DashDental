@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const CANONICAL_HOST = "dashdental.space";
+const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
 
 function shouldRedirectVercelHostToCanonical() {
   return (
@@ -11,6 +12,18 @@ function shouldRedirectVercelHostToCanonical() {
 
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0]?.toLowerCase();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+
+  if (
+    host &&
+    !localHosts.has(host) &&
+    (forwardedProto === "http" || request.nextUrl.protocol === "http:")
+  ) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https:";
+    url.port = "";
+    return NextResponse.redirect(url, 308);
+  }
 
   if (shouldRedirectVercelHostToCanonical() && host?.endsWith(".vercel.app")) {
     const url = new URL(request.url);
@@ -21,12 +34,55 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  return NextResponse.next();
+  const nonce = crypto.randomUUID().replaceAll("-", "");
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  const scriptSrc = [
+    "'self'",
+    `'nonce-${nonce}'`,
+    "'strict-dynamic'",
+    "https://challenges.cloudflare.com",
+    isDevelopment ? "'unsafe-eval'" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const directives = [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    "frame-src https://challenges.cloudflare.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    isDevelopment ? "" : "upgrade-insecure-requests",
+  ].filter(Boolean);
+
+  response.headers.set("Content-Security-Policy", directives.join("; "));
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  response.headers.set("X-DNS-Prefetch-Control", "off");
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
+  response.headers.set("x-nonce", nonce);
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
 
