@@ -30,8 +30,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: [{ url: "/favicon.svg?v=4", sizes: "any", type: "image/svg+xml" }],
-    shortcut: [{ url: "/favicon.svg?v=4" }],
+    icon: [{ url: "/icon-512.png?v=5", sizes: "512x512", type: "image/png" }],
+    shortcut: [{ url: "/icon-192.png?v=5" }],
+    apple: [{ url: "/apple-touch-icon.png?v=5", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/site.webmanifest",
   openGraph: {

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -9,7 +10,6 @@ import {
   CheckCircle2,
   Clock3,
   Inbox,
-  MessageCircle,
   Send,
   ShieldCheck,
   Sparkles,
@@ -160,7 +160,7 @@ export function SelfServeDemo({
       <header className="demo-live-topbar">
         <Link className="ddr-public-brand" href="/" aria-label="Dash Dental home">
           <span>
-            <MessageCircle size={17} />
+            <Image alt="" height={52} src="/dental-recovery-mark.png" unoptimized width={52} />
           </span>
           <strong>Dash Dental</strong>
         </Link>

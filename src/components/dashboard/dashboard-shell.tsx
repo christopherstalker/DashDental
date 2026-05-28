@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,7 +13,6 @@ import {
   Search,
   Settings,
   Users,
-  Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ThemeColorPicker } from "@/components/ui/theme-color-picker";
@@ -76,7 +76,7 @@ export function DashboardShell({
       <aside className="ddr-sidebar" aria-label="Workspace navigation">
         <Link className="ddr-sidebar-brand" href="/dashboard">
           <span className="ddr-logo-mark" aria-hidden="true">
-            <Zap size={16} />
+            <Image alt="" height={52} src="/dental-recovery-mark.png" unoptimized width={52} />
           </span>
           <div>
             <strong>Dash Dental</strong>

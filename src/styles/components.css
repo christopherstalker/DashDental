@@ -1123,6 +1123,13 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   color: var(--accent);
 }
 
+.ddr-logo-mark img,
+.ddr-public-brand span img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
 .ddr-landing-links {
   display: inline-flex;
   align-items: center;

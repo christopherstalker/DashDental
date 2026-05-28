@@ -30,7 +30,7 @@ export function RecoveryCockpitSidebar({
     <aside className="dd-cockpit-sidebar" aria-label="Dashboard navigation">
       <div className="dd-cockpit-brand">
         <span className="dd-cockpit-brand-mark" aria-hidden="true">
-          <Image alt="" height={160} src="/dental-recovery-mark.svg" unoptimized width={160} />
+          <Image alt="" height={160} src="/dental-recovery-mark.png" unoptimized width={160} />
         </span>
         <div>
           <strong>Dash Dental</strong>

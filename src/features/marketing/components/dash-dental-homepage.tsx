@@ -91,7 +91,7 @@ export function DashDentalHomepage() {
 
       <section className="dd-home-hero">
         <div aria-hidden="true" className="recovery-dental-backdrop dd-dental-backdrop">
-          <Image alt="" height={640} priority src="/dental-recovery-mark.svg" unoptimized width={640} />
+          <Image alt="" height={640} priority src="/dental-recovery-mark.png" unoptimized width={640} />
         </div>
         <div className="dd-home-hero-copy">
           <h1>Stop losing implant, veneer, and emergency leads in DMs.</h1>
@@ -321,7 +321,7 @@ function HeroDashboardPreview() {
     <aside className="dd-hero-dashboard" aria-label="Dash Dental cockpit preview">
       <div className="dd-preview-topbar">
         <div className="dd-preview-brand">
-          <Image alt="" height={160} src="/dental-recovery-mark.svg" unoptimized width={160} />
+          <Image alt="" height={160} src="/dental-recovery-mark.png" unoptimized width={160} />
           <span>Dash Dental cockpit</span>
         </div>
         <span className="dd-sample-badge">Sample data</span>

@@ -19,7 +19,7 @@ export function MarketingNav({
             className="recovery-brand-mark-compact"
             height={160}
             loading="eager"
-            src="/dental-recovery-mark.svg"
+            src="/dental-recovery-mark.png"
             unoptimized
             width={160}
           />

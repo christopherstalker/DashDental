@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   poweredByHeader: false,
   async redirects() {
-    return [{ destination: "/favicon.svg?v=4", permanent: false, source: "/favicon.ico" }];
+    return [{ destination: "/icon-192.png?v=5", permanent: false, source: "/favicon.ico" }];
   },
   async headers() {
     return [

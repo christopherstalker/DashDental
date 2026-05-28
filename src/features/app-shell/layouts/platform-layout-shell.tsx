@@ -11,7 +11,7 @@ export function PlatformLayoutShell({ children }: { children: ReactNode }) {
             <Image
               alt=""
               height={160}
-              src="/dental-recovery-mark.svg"
+              src="/dental-recovery-mark.png"
               unoptimized
               width={160}
             />

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -145,7 +146,7 @@ export function DashDentalRedesignLanding() {
       <nav className="ddr-landing-nav" aria-label="Main navigation">
         <Link className="ddr-logo" href="/">
           <span className="ddr-logo-mark" aria-hidden="true">
-            <MessageCircle size={17} />
+            <Image alt="" height={52} src="/dental-recovery-mark.png" unoptimized width={52} />
           </span>
           <span>Dash Dental</span>
         </Link>

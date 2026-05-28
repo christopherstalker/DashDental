@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -157,7 +158,7 @@ export function MarketingRedesignShell({
       <header className="ddr-public-nav">
         <Link className="ddr-public-brand" href="/" aria-label="Dash Dental home">
           <span>
-            <MessageCircle size={17} />
+            <Image alt="" height={52} src="/dental-recovery-mark.png" unoptimized width={52} />
           </span>
           <strong>Dash Dental</strong>
         </Link>
@@ -182,7 +183,7 @@ export function MarketingRedesignShell({
         <div>
           <Link className="ddr-public-brand" href="/">
             <span>
-              <MessageCircle size={17} />
+              <Image alt="" height={52} src="/dental-recovery-mark.png" unoptimized width={52} />
             </span>
             <strong>Dash Dental</strong>
           </Link>
