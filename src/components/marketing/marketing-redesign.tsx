@@ -187,7 +187,7 @@ export function MarketingRedesignShell({
             </span>
             <strong>Dash Dental</strong>
           </Link>
-          <p>Unified patient inquiry recovery for dental clinics. Dash Dental (c) 2025.</p>
+          <p>Unified patient inquiry recovery for dental clinics. Dash Dental (c) 2026.</p>
         </div>
         {footerGroups.map((group) => (
           <nav aria-label={group.title} key={group.title}>

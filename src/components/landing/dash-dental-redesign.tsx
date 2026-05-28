@@ -675,7 +675,7 @@ export function DashDentalRedesignLanding() {
       </section>
 
       <footer className="ddr-footer">
-        <span>Dash Dental (c) 2025</span>
+        <span>Dash Dental (c) 2026</span>
         <nav aria-label="Footer links">
           <a href="#product">Product</a>
           <a href="#how-it-works">How it works</a>

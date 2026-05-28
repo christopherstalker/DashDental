@@ -7,6 +7,8 @@ import {
   Building2,
   CheckCircle2,
   Clock3,
+  CreditCard,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -14,15 +16,33 @@ import {
 } from "lucide-react";
 import type { AccountSession } from "@/server/session";
 
-export function WorkspaceSelector({ account }: { account: AccountSession }) {
+export function WorkspaceSelector({
+  account,
+  mfaEnabled,
+}: {
+  account: AccountSession;
+  mfaEnabled: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
   const [pendingWorkspace, setPendingWorkspace] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [isStartingMfa, setIsStartingMfa] = useState(false);
+  const [isVerifyingMfa, setIsVerifyingMfa] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
+  const [mfaOtpAuthUrl, setMfaOtpAuthUrl] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaMessage, setMfaMessage] = useState<string | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [mfaActive, setMfaActive] = useState(mfaEnabled);
   const [error, setError] = useState<string | null>(null);
   const emailVerified = Boolean(account.user.emailVerifiedAt);
+  const isSuperAdmin = account.workspaces.some((workspace) => workspace.role === "super_admin");
+  const hasPrivilegedWorkspace = account.workspaces.some((workspace) =>
+    ["owner", "admin", "super_admin"].includes(workspace.role),
+  );
 
   async function signOut() {
     setError(null);
@@ -37,7 +57,7 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
     }
   }
 
-  function openWorkspace(organizationId: string) {
+  function openWorkspace(organizationId: string, destination = "/dashboard") {
     setError(null);
     setPendingWorkspace(organizationId);
     startTransition(async () => {
@@ -56,13 +76,83 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
           return;
         }
 
-        window.location.assign("/dashboard");
+        window.location.assign(destination);
       } catch {
         setError("Could not open this clinic workspace. Try again.");
       } finally {
         setPendingWorkspace(null);
       }
     });
+  }
+
+  async function startMfaSetup() {
+    setError(null);
+    setMfaMessage(null);
+    setRecoveryCodes([]);
+    setIsStartingMfa(true);
+
+    try {
+      const response = await fetch("/api/v1/auth/mfa/setup", {
+        method: "POST",
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        otpauthUrl?: string;
+        secret?: string;
+      };
+
+      if (!response.ok || !payload.secret) {
+        setError(payload.error ?? "Could not start MFA setup.");
+        return;
+      }
+
+      setMfaSecret(payload.secret);
+      setMfaOtpAuthUrl(payload.otpauthUrl ?? null);
+      setMfaMessage("Add this secret to your authenticator app, then enter the 6-digit code.");
+    } catch {
+      setError("Could not start MFA setup. Try again.");
+    } finally {
+      setIsStartingMfa(false);
+    }
+  }
+
+  async function verifyMfaSetup() {
+    setError(null);
+    setMfaMessage(null);
+
+    if (!/^\d{6}$/.test(mfaCode)) {
+      setError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+
+    setIsVerifyingMfa(true);
+    try {
+      const response = await fetch("/api/v1/auth/mfa/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: mfaCode }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        recoveryCodes?: string[];
+      };
+
+      if (!response.ok) {
+        setError(payload.error ?? "Could not verify MFA code.");
+        return;
+      }
+
+      setRecoveryCodes(payload.recoveryCodes ?? []);
+      setMfaMessage("MFA is active for this session. Platform billing controls are now available.");
+      setMfaActive(true);
+      setMfaCode("");
+      setMfaSecret(null);
+      setMfaOtpAuthUrl(null);
+    } catch {
+      setError("Could not verify MFA code. Try again.");
+    } finally {
+      setIsVerifyingMfa(false);
+    }
   }
 
   async function sendVerificationEmail() {
@@ -117,10 +207,28 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
             Workspaces
           </Link>
           {account.selectedOrganizationId ? (
-            <Link href="/dashboard">
-              <LayoutDashboard size={15} />
-              Dashboard
-            </Link>
+            <>
+              <Link href="/dashboard">
+                <LayoutDashboard size={15} />
+                Dashboard
+              </Link>
+              <Link href="/billing">
+                <CreditCard size={15} />
+                Billing
+              </Link>
+            </>
+          ) : null}
+          {isSuperAdmin ? (
+            <>
+              <Link href="/platform">
+                <ShieldCheck size={15} />
+                Platform
+              </Link>
+              <Link href="/platform/subscriptions">
+                <CreditCard size={15} />
+                Subscriptions
+              </Link>
+            </>
           ) : null}
         </nav>
         <button
@@ -173,6 +281,85 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
           </section>
         ) : null}
 
+        {hasPrivilegedWorkspace ? (
+          <section className="account-security-panel account-billing-panel">
+            <div>
+              <p className="eyebrow">{isSuperAdmin ? "Super admin security" : "Billing security"}</p>
+              <h2>
+                {mfaActive
+                  ? "MFA is enabled for protected billing actions"
+                  : "Set up MFA before changing subscriptions"}
+              </h2>
+              <p>
+                Dash Dental is free for the first 14 days. After trial expiry,
+                workspace data locks until an owner pays or a platform super admin
+                grants a paid subscription. Billing, workspaces, and logout stay open.
+              </p>
+              {mfaMessage ? <strong>{mfaMessage}</strong> : null}
+              {mfaSecret ? (
+                <div className="account-mfa-setup">
+                  <span>Authenticator secret</span>
+                  <code>{mfaSecret}</code>
+                  {mfaOtpAuthUrl ? <small>{mfaOtpAuthUrl}</small> : null}
+                  <label>
+                    <span>6-digit code</span>
+                    <input
+                      inputMode="numeric"
+                      maxLength={6}
+                      onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="123456"
+                      value={mfaCode}
+                    />
+                  </label>
+                </div>
+              ) : null}
+              {recoveryCodes.length > 0 ? (
+                <div className="account-mfa-setup">
+                  <span>Recovery codes</span>
+                  {recoveryCodes.map((code) => (
+                    <code key={code}>{code}</code>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="account-workspace-actions">
+              {!mfaSecret ? (
+                <button
+                  className="secondary-button"
+                  disabled={mfaActive || isStartingMfa}
+                  onClick={startMfaSetup}
+                  type="button"
+                >
+                  <KeyRound size={15} />
+                  {mfaActive ? "MFA enabled" : isStartingMfa ? "Starting..." : "Set up MFA"}
+                </button>
+              ) : (
+                <button
+                  className="primary-button"
+                  disabled={isVerifyingMfa}
+                  onClick={verifyMfaSetup}
+                  type="button"
+                >
+                  <ShieldCheck size={15} />
+                  {isVerifyingMfa ? "Verifying..." : "Verify MFA"}
+                </button>
+              )}
+              {account.selectedOrganizationId ? (
+                <Link className="secondary-button" href="/billing">
+                  <CreditCard size={15} />
+                  Open billing
+                </Link>
+              ) : null}
+              {isSuperAdmin ? (
+                <Link className="secondary-button" href="/platform/subscriptions">
+                  <CreditCard size={15} />
+                  Subscription admin
+                </Link>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
         {account.workspaces.length > 0 ? (
           <div className="account-workspace-grid">
             {account.workspaces.map((workspace) => {
@@ -193,7 +380,7 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
                   <div>
                     <h2>{workspace.organizationName}</h2>
                     <p>
-                      {workspace.role.replaceAll("_", " ")} access · clinic is{" "}
+                      {workspace.role.replaceAll("_", " ")} access - clinic is{" "}
                       {workspace.organizationStatus}
                     </p>
                   </div>
@@ -207,21 +394,45 @@ export function WorkspaceSelector({ account }: { account: AccountSession }) {
                       {isInvited ? "Activates after first sign-in" : "Membership verified"}
                     </span>
                   </div>
-                  <button
-                    className="primary-button"
-                    disabled={isPending || isInvited}
-                    onClick={() => openWorkspace(workspace.organizationId)}
-                    type="button"
-                  >
-                    {pendingWorkspace === workspace.organizationId
-                      ? "Opening..."
-                      : isInvited
-                        ? "Invite pending"
-                        : isCurrent
-                          ? "Open dashboard"
-                          : "Select and open dashboard"}
-                    <ArrowRight size={16} />
-                  </button>
+                  <div className="account-workspace-card-actions">
+                    <button
+                      className="primary-button"
+                      disabled={isPending || isInvited}
+                      onClick={() => openWorkspace(workspace.organizationId)}
+                      type="button"
+                    >
+                      {pendingWorkspace === workspace.organizationId
+                        ? "Opening..."
+                        : isInvited
+                          ? "Invite pending"
+                          : isCurrent
+                            ? "Open dashboard"
+                            : "Select and open dashboard"}
+                      <ArrowRight size={16} />
+                    </button>
+                    {["owner", "admin", "super_admin"].includes(workspace.role) ? (
+                      <button
+                        className="secondary-button"
+                        disabled={isPending || isInvited}
+                        onClick={() => openWorkspace(workspace.organizationId, "/billing")}
+                        type="button"
+                      >
+                        <CreditCard size={15} />
+                        Billing & payment
+                      </button>
+                    ) : null}
+                    {workspace.role === "super_admin" ? (
+                      <button
+                        className="secondary-button"
+                        disabled={isPending || isInvited}
+                        onClick={() => openWorkspace(workspace.organizationId, "/platform/subscriptions")}
+                        type="button"
+                      >
+                        <ShieldCheck size={15} />
+                        Super admin panel
+                      </button>
+                    ) : null}
+                  </div>
                 </article>
               );
             })}

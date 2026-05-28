@@ -10,7 +10,7 @@ test("demo session cookie payload is signed and expires after fifteen minutes", 
     getDemoSessionCookieOptions,
     DEMO_SESSION_MAX_AGE_SECONDS,
   } = await import("../../src/server/demo-session");
-  const now = Date.UTC(2026, 4, 28, 12, 0, 0);
+  const now = Date.now();
   const payload = createDemoSessionPayload(now);
   const token = encodeDemoSession(payload);
 

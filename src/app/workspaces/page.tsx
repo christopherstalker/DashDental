@@ -12,6 +12,7 @@ import {
   SESSION_COOKIE_NAME,
   toAccountSession,
 } from "@/server/session";
+import { readUserCredentialRecord } from "@/server/user-credentials";
 import { WorkspaceSelector } from "@/features/workspaces/components/workspace-selector";
 
 export const metadata: Metadata = {
@@ -24,10 +25,13 @@ export default async function WorkspacesPage() {
   const cookieStore = await cookies();
   const sessionPayload = decodeSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
   let account: AccountSession | null = null;
+  let mfaEnabled = false;
 
   try {
     const user = resolveAuthenticatedUser(state, sessionPayload);
     account = toAccountSession(state, user, sessionPayload?.organizationId);
+    const credential = await readUserCredentialRecord(user.id);
+    mfaEnabled = Boolean(credential?.totpEnabledAt);
   } catch {
     account = null;
   }
@@ -51,5 +55,5 @@ export default async function WorkspacesPage() {
     );
   }
 
-  return <WorkspaceSelector account={account} />;
+  return <WorkspaceSelector account={account} mfaEnabled={mfaEnabled} />;
 }

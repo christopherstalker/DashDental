@@ -200,6 +200,74 @@ export default async function BillingPage() {
         </div>
       </section>
 
+      <SurfaceCard
+        description="Every new clinic starts with a 14-day free trial. When the period ends, inbox, dashboard, integrations, AI, exports, and settings lock immediately until a paid plan is active."
+        eyebrow="Trial and payment"
+        title="Free for 14 days, then Dash Dental is paid."
+        wide
+      >
+        <div className="billing-purchase-flow">
+          <div className="billing-value-note">
+            <strong>Current payment route</strong>
+            <p>
+              Owners can start a paid plan from this Billing page before the trial expires.
+              Manual bank transfer is the active release path; Stripe checkout can be enabled
+              later without changing the workspace model.
+            </p>
+          </div>
+          <div className="billing-status-card manual-bank-card">
+            <InfoLine
+              label="Trial"
+              value={
+                subscriptionTrialActive
+                  ? `${subscriptionDaysRemaining} days left`
+                  : subscriptionAccessStatus === "expired"
+                    ? "Expired - billing only"
+                    : subscriptionAccessStatus.replaceAll("_", " ")
+              }
+            />
+            <InfoLine label="Monthly amount" value={`${manualInvoice.currency} ${manualInvoice.amount}`} />
+            <InfoLine label="Plan" value={manualInvoice.planLabel} />
+            <InfoLine label="Payment reference" value={manualInvoice.paymentReference} />
+          </div>
+          <div className="billing-payment-steps">
+            <span>1. Choose plan</span>
+            <span>2. Request invoice or pay by bank transfer</span>
+            <span>3. Platform admin confirms payment</span>
+            <span>4. Workspace unlocks for the paid period</span>
+          </div>
+          <div className="dashboard-command-actions">
+            {manualBillingVisible ? (
+              <ManualInvoiceButton
+                className="primary-button"
+                disabled={!manualBillingConfigured || subscriptionPaidActive}
+                label={
+                  subscriptionPaidActive ? (
+                    <LocalizedText k="billing.action.planActive" />
+                  ) : (
+                    "Start paid subscription"
+                  )
+                }
+                organizationId={organization.id}
+                plan={activePlan}
+              />
+            ) : (
+              <BillingActionButton
+                className="primary-button"
+                disabled={!stripeConfigured}
+                label="Launch checkout"
+                mode="checkout"
+                organizationId={organization.id}
+                plan={activePlan}
+              />
+            )}
+            <Link className="secondary-button" href={publicPricingUrl}>
+              Compare plans
+            </Link>
+          </div>
+        </div>
+      </SurfaceCard>
+
       <div className="metrics-row">
         <MetricTile
           icon={CreditCard}
