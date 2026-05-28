@@ -11,6 +11,8 @@ import {
   FileText,
   History,
   Inbox,
+  MessageCircle,
+  MousePointer2,
   Play,
   ShieldCheck,
   TrendingUp,
