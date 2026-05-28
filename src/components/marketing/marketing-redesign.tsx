@@ -87,7 +87,7 @@ export type RedesignContentPageProps = {
 const navLinks = [
   { href: "/#product", label: "Product" },
   { href: "/#how-it-works", label: "How it works" },
-  { href: "/demo/start", label: "Demo" },
+  { href: "/demo", label: "Demo" },
   { href: "/pricing", label: "Pricing" },
   { href: "/security", label: "Security" },
   { href: "/support", label: "Support" },
