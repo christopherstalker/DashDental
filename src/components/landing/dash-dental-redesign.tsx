@@ -11,11 +11,7 @@ import {
   FileText,
   History,
   Inbox,
-  Lock,
-  MessageCircle,
-  MousePointer2,
   Play,
-  Send,
   ShieldCheck,
   TrendingUp,
   UserCheck,
@@ -201,61 +197,20 @@ export function DashDentalRedesignLanding() {
           </div>
         </div>
 
-        <div className="ddr-hero-visual" aria-label="Dash Dental inbox preview">
-          <div className="ddr-card ddr-inbox-mockup">
-            <div className="ddr-mock-sidebar">
-              <div className="ddr-mock-search" />
-              {[
-                ["whatsapp", "Mila K.", "Implant consult today?", "4m", "urgent"],
-                ["instagram", "Daniel R.", "Price for whitening", "11m", "warm"],
-                ["whatsapp", "Ava P.", "Can I book tomorrow?", "18m", ""],
-                ["web_form", "Noah S.", "New website form", "31m", ""],
-              ].map(([channel, name, text, time, state]) => (
-                <div
-                  className={`ddr-mock-thread ${state === "urgent" ? "is-urgent" : ""} ${
-                    state === "warm" ? "is-warm" : ""
-                  }`}
-                  key={name}
-                >
-                  <span className={`ddr-channel-dot ${channel}`}>{channel.slice(0, 2).toUpperCase()}</span>
-                  <div>
-                    <strong>{name}</strong>
-                    <span>{text}</span>
-                  </div>
-                  <span className={state === "urgent" ? "ddr-badge ddr-badge-alert" : "ddr-row-time"}>
-                    {time}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="ddr-mock-main">
-              <div className="ddr-mock-header">
-                <div>
-                  <strong>Mila K.</strong>
-                  <span className="ddr-badge ddr-badge-alert">SLA 2 min</span>
-                </div>
-                <span className="ddr-badge ddr-badge-ok">Assigned to Anna</span>
-              </div>
-              <div className="ddr-mock-messages">
-                <div className="ddr-mock-bubble in">Hi, do you have implant consultation slots this week?</div>
-                <div className="ddr-mock-bubble out">Yes, we can offer today at 16:30 or tomorrow morning.</div>
-                <div className="ddr-mock-bubble in">Today works. Can you send the address?</div>
-              </div>
-              <div className="ddr-mock-note">
-                <span className="ddr-note-label">
-                  <Lock size={13} />
-                  Team-only note
-                </span>
-                Patient asked about implants last month. Mention financing.
-              </div>
-              <div className="ddr-mock-composer">
-                <span />
-                <button className="ddr-icon-button" type="button" aria-label="Send preview">
-                  <Send size={15} />
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="ddr-hero-visual" aria-label="Dash Dental dashboard preview">
+          <Image 
+            alt="Dash Dental recovery cockpit preview"
+            src="/dashboard-preview.png"
+            width={1600}
+            height={1080}
+            priority
+            className="ddr-card"
+            style={{
+              width: "100%",
+              height: "auto",
+              borderRadius: "var(--radius-lg)",
+            }}
+          />
         </div>
       </section>
 
