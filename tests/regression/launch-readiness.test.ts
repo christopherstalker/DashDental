@@ -49,7 +49,11 @@ test("proxy does not force preview hosts away from public pages by default", () 
 
   assert.notEqual(response.status, 308);
   assert.equal(response.headers.get("location"), null);
-  assert.match(response.headers.get("Content-Security-Policy") ?? "", /default-src 'self'/);
+  const csp = response.headers.get("Content-Security-Policy") ?? "";
+  assert.match(csp, /default-src 'self'/);
+  assert.match(csp, /script-src 'self' 'unsafe-inline'/);
+  assert.doesNotMatch(csp, /strict-dynamic/);
+  assert.equal(response.headers.get("x-nonce"), null);
 });
 
 test("proxy never redirects Vercel preview deployments to production canonical host", () => {

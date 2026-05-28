@@ -10,6 +10,37 @@ function shouldRedirectVercelHostToCanonical() {
   );
 }
 
+function buildContentSecurityPolicy() {
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  const scriptSrc = [
+    "'self'",
+    "'unsafe-inline'",
+    "https://challenges.cloudflare.com",
+    isDevelopment ? "'unsafe-eval'" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://challenges.cloudflare.com",
+    "frame-src https://challenges.cloudflare.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    isDevelopment ? "" : "upgrade-insecure-requests",
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
+
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0]?.toLowerCase();
   const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
@@ -34,55 +65,26 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  const nonce = crypto.randomUUID().replaceAll("-", "");
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
+  const response = NextResponse.next();
 
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-  const isDevelopment = process.env.NODE_ENV !== "production";
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    "https://challenges.cloudflare.com",
-    isDevelopment ? "'unsafe-eval'" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const directives = [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://challenges.cloudflare.com",
-    "frame-src https://challenges.cloudflare.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "worker-src 'self'",
-    "manifest-src 'self'",
-    isDevelopment ? "" : "upgrade-insecure-requests",
-  ].filter(Boolean);
-
-  response.headers.set("Content-Security-Policy", directives.join("; "));
+  response.headers.set("Content-Security-Policy", buildContentSecurityPolicy());
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
   response.headers.set("X-DNS-Prefetch-Control", "off");
   response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
-  response.headers.set("x-nonce", nonce);
 
   return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    {
+      missing: [
+        { key: "next-router-prefetch", type: "header" },
+        { key: "purpose", type: "header", value: "prefetch" },
+      ],
+      source: "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    },
   ],
 };
 

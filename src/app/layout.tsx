@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { LanguageRuntime } from "@/features/i18n/components/language-runtime";
 import { LaunchEventTracker } from "@/features/launch-analytics/components/launch-event-tracker";
 import { PwaRuntime } from "@/features/pwa/components/pwa-runtime";
+import { ThemeBootScript } from "@/features/theme/components/theme-boot-script";
 import { ThemeRuntime } from "@/features/theme/components/theme-runtime";
 import "./globals.css";
 import "@/styles/tokens.css";
 import "@/styles/components.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  display: "swap",
   subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 const geistMono = Geist_Mono({
@@ -70,10 +72,11 @@ export default function RootLayout({
     <html
       data-theme="dark"
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${inter.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <body>
+        <ThemeBootScript />
         <ThemeRuntime />
         <PwaRuntime />
         <LanguageRuntime />
