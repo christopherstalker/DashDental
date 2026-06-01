@@ -2,6 +2,7 @@ import { ApiError } from "./api-error";
 import { structuredLog } from "./observability";
 
 const signedWebhookPrefixes = [
+  "/api/webhooks/",
   "/api/v1/webhooks/",
   "/api/v1/launch/events",
   "/api/v1/health/",

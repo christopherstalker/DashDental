@@ -11,6 +11,7 @@ type StripePlan = Subscription["plan"];
 
 interface StripeRequestOptions {
   idempotencyKey?: string;
+  fetchImpl?: typeof fetch;
 }
 
 interface StripeSessionResponse {
@@ -96,7 +97,7 @@ async function stripePost<T>(
   body: URLSearchParams,
   options: StripeRequestOptions = {},
 ): Promise<T> {
-  const response = await fetch(`${stripeApiBase}${path}`, {
+  const response = await (options.fetchImpl ?? fetch)(`${stripeApiBase}${path}`, {
     method: "POST",
     headers: {
       authorization: `Bearer ${getStripeSecretKey()}`,
@@ -127,12 +128,13 @@ export async function createStripeCheckoutSession(input: {
   userEmail: string;
   plan: StripePlan;
   customerId?: string;
+  fetchImpl?: typeof fetch;
 }): Promise<{ url: string }> {
   const appUrl = getAppUrl(input.requestUrl);
   const body = new URLSearchParams({
     mode: "subscription",
-    success_url: `${appUrl}/?billing=success`,
-    cancel_url: `${appUrl}/?billing=cancelled`,
+    success_url: `${appUrl}/billing?checkout=success&plan=${input.plan}`,
+    cancel_url: `${appUrl}/billing?checkout=cancelled&plan=${input.plan}`,
     allow_promotion_codes: "true",
     billing_address_collection: "auto",
     client_reference_id: input.organizationId,
@@ -155,6 +157,7 @@ export async function createStripeCheckoutSession(input: {
 
   const session = await stripePost<StripeSessionResponse>("/checkout/sessions", body, {
     idempotencyKey: `checkout:${input.organizationId}:${input.plan}:${Date.now()}`,
+    fetchImpl: input.fetchImpl,
   });
 
   if (!session.url) {
@@ -167,6 +170,7 @@ export async function createStripeCheckoutSession(input: {
 export async function createStripePortalSession(input: {
   requestUrl: string;
   customerId?: string;
+  fetchImpl?: typeof fetch;
 }): Promise<{ url: string }> {
   if (!input.customerId || input.customerId.startsWith("cus_demo")) {
     throw new ApiError(409, "No live Stripe customer exists for this organization", "stripe_customer_missing");
@@ -174,9 +178,11 @@ export async function createStripePortalSession(input: {
 
   const body = new URLSearchParams({
     customer: input.customerId,
-    return_url: `${getAppUrl(input.requestUrl)}/?billing=portal`,
+    return_url: `${getAppUrl(input.requestUrl)}/billing?billing=portal`,
   });
-  const session = await stripePost<StripeSessionResponse>("/billing_portal/sessions", body);
+  const session = await stripePost<StripeSessionResponse>("/billing_portal/sessions", body, {
+    fetchImpl: input.fetchImpl,
+  });
 
   if (!session.url) {
     throw new ApiError(502, "Stripe did not return a portal URL", "stripe_portal_url_missing");

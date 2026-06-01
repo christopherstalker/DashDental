@@ -23,6 +23,7 @@ import { listInboxConversationProjections } from "@/server/inbox-projections";
 const providerLabelKeys: Record<Provider, TranslationKey> = {
   clinic_database: "inbox.provider.clinicDb",
   instagram: "inbox.provider.instagram",
+  phone: "inbox.provider.phone",
   telegram: "inbox.provider.telegram",
   web_form: "inbox.provider.webForm",
   whatsapp: "inbox.provider.whatsapp",

@@ -152,6 +152,7 @@ function serializeOrganization(organization: Organization) {
     averagePatientValue: organization.averagePatientValue,
     businessHours: jsonArrayOrObject(organization.businessHours),
     status: organization.status,
+    activatedAt: toDate(organization.activatedAt) ?? null,
   };
 }
 
@@ -706,6 +707,7 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
         averagePatientValue: organization.averagePatientValue,
         businessHours: organization.businessHours as unknown as BusinessHours,
         status: organization.status,
+        activatedAt: toIso(organization.activatedAt),
       }),
     ),
     memberships: memberships.map(
@@ -1107,6 +1109,7 @@ export async function writeAppStateToPrisma(
         averagePatientValue: organization.averagePatientValue,
         businessHours: jsonArrayOrObject(organization.businessHours),
         status: organization.status,
+        activatedAt: toDate(organization.activatedAt),
       })),
     });
     await tx.membership.createMany({

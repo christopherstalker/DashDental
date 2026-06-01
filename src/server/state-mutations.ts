@@ -151,7 +151,7 @@ export function createLeadFromInbound(state: AppState, input: CreateLeadInput): 
     phone: input.phone,
     email: input.email,
     source: input.source,
-    status: "new",
+    status: input.source === "phone" ? "at_risk" : "new",
     assignedTo: input.assignedTo ?? "user-manager",
     providerContactId,
     firstMessageAt: nowIso,

@@ -64,6 +64,7 @@ function providerLabel(provider: Provider): string {
   const labels: Record<Provider, string> = {
     clinic_database: "Clinic DB",
     instagram: "Instagram",
+    phone: "Phone",
     telegram: "Telegram",
     web_form: "Web",
     whatsapp: "WhatsApp",

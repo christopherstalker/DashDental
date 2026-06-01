@@ -20,6 +20,7 @@ const providers: readonly Provider[] = [
   "web_form",
   "instagram",
   "whatsapp",
+  "phone",
   "clinic_database",
 ];
 const integrationStatuses: readonly IntegrationStatus[] = [

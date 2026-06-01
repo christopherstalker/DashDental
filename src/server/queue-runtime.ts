@@ -6,11 +6,13 @@ import { structuredLog } from "./observability";
 const queueNames = {
   webhookProcess: "webhook.process",
   outboxDispatch: "outbox.dispatch",
+  pmsSync: "pms.sync",
 } as const;
 
 const jobNames = {
   processWebhook: "process-webhook",
   dispatchOutbox: "dispatch-outbox",
+  pollPmsSync: "poll-pms-sync",
 } as const;
 
 type QueueName = keyof typeof queueNames;
@@ -103,6 +105,37 @@ export async function enqueueOutboxDispatch(outboxEventId: string) {
     queue: queueNames.outboxDispatch,
     jobName: jobNames.dispatchOutbox,
     outboxEventId,
+  });
+
+  return { queued: true };
+}
+
+export async function enqueuePmsSyncPoll(connectionId: string) {
+  const queue = getQueue("pmsSync");
+  if (!queue) {
+    structuredLog("warn", "queue.enqueue.skipped", {
+      queue: queueNames.pmsSync,
+      jobName: jobNames.pollPmsSync,
+      connectionId,
+      reason: "queue_not_configured",
+    });
+    return { queued: false, reason: "queue_not_configured" };
+  }
+
+  await queue.add(
+    jobNames.pollPmsSync,
+    { connectionId },
+    {
+      jobId: `pms-sync-${connectionId}`,
+      repeat: { every: 5 * 60 * 1000 },
+    },
+  );
+
+  structuredLog("info", "queue.enqueue.succeeded", {
+    queue: queueNames.pmsSync,
+    jobName: jobNames.pollPmsSync,
+    connectionId,
+    repeatMs: 5 * 60 * 1000,
   });
 
   return { queued: true };

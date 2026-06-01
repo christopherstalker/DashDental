@@ -68,12 +68,13 @@ const tabs: Array<{ id: SettingsTab; label: string; icon: typeof Settings }> = [
   { id: "notifications", label: "Notifications", icon: BellRing },
 ];
 
-const channels: Provider[] = ["whatsapp", "instagram", "telegram", "web_form", "clinic_database"];
+const channels: Provider[] = ["whatsapp", "instagram", "telegram", "phone", "web_form", "clinic_database"];
 const upgradeOrder: Subscription["plan"][] = ["starter", "growth", "scale"];
 
 const providerLabels: Record<Provider, string> = {
   clinic_database: "Clinic DB",
   instagram: "Instagram",
+  phone: "Missed calls",
   telegram: "Telegram",
   web_form: "Website form",
   whatsapp: "WhatsApp",
@@ -87,6 +88,10 @@ const providerCredentialLinks: Record<Provider, { href: string; label: string }>
   instagram: {
     href: "/integrations#instagram",
     label: "Configure API tokens",
+  },
+  phone: {
+    href: "/integrations#phone",
+    label: "Configure Twilio number",
   },
   telegram: {
     href: "/integrations#telegram",
@@ -105,6 +110,7 @@ const providerCredentialLinks: Record<Provider, { href: string; label: string }>
 const defaultThresholds: Record<Provider, number> = {
   clinic_database: 60,
   instagram: 20,
+  phone: 5,
   telegram: 15,
   web_form: 10,
   whatsapp: 15,

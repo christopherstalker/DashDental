@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     );
     const provider = optionalProvider(payload, "provider");
 
-    if (!provider || provider === "web_form" || provider === "clinic_database") {
+    if (!provider || provider === "web_form" || provider === "phone" || provider === "clinic_database") {
       throw new ApiError(400, "provider must be telegram, whatsapp or instagram", "validation_error", {
         field: "provider",
       });

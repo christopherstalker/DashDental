@@ -9,6 +9,7 @@ import {
   Database,
   Globe2,
   MessageCircle,
+  PhoneCall,
   PlayCircle,
   Send,
   ShieldCheck,
@@ -18,6 +19,9 @@ import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
 import { translate, type TranslationKey } from "@/features/i18n/translations";
 
 type MessagingProvider = Extract<Provider, "telegram" | "whatsapp" | "instagram">;
+
+const publicWebhookOrigin =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://dashdental.space";
 
 interface MessagingSetupGuide {
   provider: MessagingProvider;
@@ -115,6 +119,13 @@ export function IntegrationConnectionPanel({
   });
   const [webForm, setWebForm] = useState({
     webhookSecret: webFormGuide.webhookSecret,
+  });
+  const [phone, setPhone] = useState({
+    accountSid: "",
+    authToken: "",
+    autoReplyEnabled: true,
+    messagingServiceSid: "",
+    phoneNumber: "",
   });
   const [clinicDb, setClinicDb] = useState({
     connectionString: "",
@@ -215,6 +226,19 @@ export function IntegrationConnectionPanel({
         webhookSecret: webForm.webhookSecret,
       },
       translate("integrations.feedback.webForm", languageCode),
+    );
+  }
+
+  function savePhone(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    runJsonAction(
+      "phone",
+      "/api/v1/integrations/phone/config",
+      {
+        organizationId,
+        ...phone,
+      },
+      "Missed-call capture is ready.",
     );
   }
 
@@ -418,6 +442,59 @@ export function IntegrationConnectionPanel({
             value={instagram.webhookVerifyToken}
           />
         </MessagingCard>
+
+        <section className="integration-config-card" id="phone">
+          <ConnectionCardHeader
+            icon={<PhoneCall size={18} />}
+            integration={integrationFor("phone")}
+            title="Missed calls"
+          />
+          <CopyableLine
+            label="Twilio call status webhook"
+            value={`${publicWebhookOrigin}/api/webhooks/twilio/call`}
+          />
+          <form className="integration-config-form" onSubmit={savePhone}>
+            <Field
+              label="Clinic phone number"
+              onChange={(value) => setPhone((current) => ({ ...current, phoneNumber: value }))}
+              placeholder="+15551234567"
+              required
+              value={phone.phoneNumber}
+            />
+            <Field
+              label="Twilio Account SID"
+              onChange={(value) => setPhone((current) => ({ ...current, accountSid: value }))}
+              placeholder="AC..."
+              value={phone.accountSid}
+            />
+            <Field
+              label="Twilio Auth Token"
+              onChange={(value) => setPhone((current) => ({ ...current, authToken: value }))}
+              type="password"
+              value={phone.authToken}
+            />
+            <Field
+              label="Messaging Service SID"
+              onChange={(value) => setPhone((current) => ({ ...current, messagingServiceSid: value }))}
+              placeholder="MG..."
+              value={phone.messagingServiceSid}
+            />
+            <label className="integration-checkbox">
+              <input
+                checked={phone.autoReplyEnabled}
+                onChange={(event) =>
+                  setPhone((current) => ({ ...current, autoReplyEnabled: event.target.checked }))
+                }
+                type="checkbox"
+              />
+              <span>Send instant SMS after missed call</span>
+            </label>
+            <button className="primary-button" disabled={isPending} type="submit">
+              <PhoneCall size={16} />
+              {pendingAction === "phone" ? "Saving..." : "Activate missed calls"}
+            </button>
+          </form>
+        </section>
 
         <section className="integration-config-card" id="web_form">
           <ConnectionCardHeader

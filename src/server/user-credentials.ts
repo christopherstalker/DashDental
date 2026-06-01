@@ -51,7 +51,13 @@ type CredentialRecordPatch = {
 export type UserCredentialRecord = CredentialRecord;
 export type UserCredentialRecordPatch = CredentialRecordPatch;
 
-type DefaultIntegrationProvider = "telegram" | "web_form" | "instagram" | "whatsapp" | "clinic_database";
+type DefaultIntegrationProvider =
+  | "telegram"
+  | "web_form"
+  | "instagram"
+  | "whatsapp"
+  | "phone"
+  | "clinic_database";
 
 let credentialWriteQueue: Promise<unknown> = Promise.resolve();
 
@@ -494,6 +500,7 @@ function createDefaultIntegrationSlots(organizationId: string): AppState["integr
     "web_form",
     "instagram",
     "whatsapp",
+    "phone",
     "clinic_database",
   ];
 

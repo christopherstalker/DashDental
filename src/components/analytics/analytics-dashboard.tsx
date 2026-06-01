@@ -17,9 +17,11 @@ import type { LeadStatus, Provider } from "@/domain/types";
 
 export interface AnalyticsLead {
   assignedTo?: string;
+  estimatedValue: number;
   firstHumanResponseAt?: string;
   firstMessageAt: string;
   id: string;
+  lostReason?: string;
   source: Provider;
   status: LeadStatus;
 }
@@ -27,6 +29,27 @@ export interface AnalyticsLead {
 export interface AnalyticsStaffMember {
   id: string;
   name: string;
+}
+
+export interface AnalyticsRevenueSourceRow {
+  provider: Provider;
+  label: string;
+  inquiries: number;
+  booked: number;
+  bookedRevenue: number;
+  atRiskRevenue: number;
+  lostRevenue: number;
+  averageResponseMinutes: number;
+  conversionRate: number;
+}
+
+export interface AnalyticsRevenueSummary {
+  totalInquiries: number;
+  bookedRevenue: number;
+  atRiskRevenue: number;
+  lostRevenue: number;
+  responseRevenue: number;
+  sourceRows: AnalyticsRevenueSourceRow[];
 }
 
 type RangeKey = "7d" | "14d" | "30d" | "90d";
@@ -41,6 +64,7 @@ const ranges: Array<{ key: RangeKey; label: string; days: number }> = [
 const providerLabels: Record<Provider, string> = {
   clinic_database: "Clinic DB",
   instagram: "Instagram",
+  phone: "Phone",
   telegram: "Telegram",
   web_form: "Web",
   whatsapp: "WhatsApp",
@@ -83,6 +107,14 @@ function formatMinutes(value: number): string {
   return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 }
 
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(value);
+}
+
 function latestDate(leads: AnalyticsLead[]): Date {
   const latest = leads.reduce((max, lead) => Math.max(max, Date.parse(lead.firstMessageAt)), 0);
   return latest ? new Date(latest) : new Date();
@@ -114,6 +146,7 @@ function buildLineData(leads: AnalyticsLead[], range: RangeKey) {
       date: formatDay(dayKey(date)),
       WhatsApp: 0,
       Instagram: 0,
+      Phone: 0,
       Telegram: 0,
       Web: 0,
     });
@@ -180,9 +213,11 @@ function buildStaffRows(leads: AnalyticsLead[], staff: AnalyticsStaffMember[]) {
 
 export function AnalyticsDashboard({
   leads,
+  revenue,
   staff,
 }: {
   leads: AnalyticsLead[];
+  revenue: AnalyticsRevenueSummary;
   staff: AnalyticsStaffMember[];
 }) {
   const [range, setRange] = useState<RangeKey>("7d");
@@ -198,6 +233,20 @@ export function AnalyticsDashboard({
     ? responseMinutes.reduce((sum, value) => sum + value, 0) / responseMinutes.length
     : 0;
   const booked = scopedLeads.filter((lead) => lead.status === "booked").length;
+  const rangeRevenue = scopedLeads.reduce(
+    (summary, lead) => {
+      if (lead.status === "booked") {
+        summary.booked += lead.estimatedValue;
+      } else if (lead.status === "lost") {
+        summary.lost += lead.estimatedValue;
+      } else if (lead.status === "at_risk" || lead.status === "unanswered") {
+        summary.risk += lead.estimatedValue;
+      }
+
+      return summary;
+    },
+    { booked: 0, lost: 0, risk: 0 },
+  );
 
   return (
     <section className="ddr-analytics-page" aria-label="Dashboard analytics">
@@ -257,6 +306,22 @@ export function AnalyticsDashboard({
             tone: "ok",
             points: "2,26 18,19 34,24 50,15 66,14 82,10 98,7",
           },
+          {
+            icon: TrendingUp,
+            label: "Booked revenue",
+            value: formatMoney(rangeRevenue.booked),
+            delta: "+18%",
+            tone: "ok",
+            points: "2,30 18,25 34,22 50,16 66,14 82,9 98,6",
+          },
+          {
+            icon: Clock3,
+            label: "Revenue at risk",
+            value: formatMoney(rangeRevenue.risk + rangeRevenue.lost),
+            delta: "-9%",
+            tone: "alert",
+            points: "2,10 18,16 34,14 50,22 66,20 82,25 98,28",
+          },
         ].map((metric) => {
           const Icon = metric.icon;
 
@@ -280,6 +345,48 @@ export function AnalyticsDashboard({
         })}
       </div>
 
+      <article className="ddr-card ddr-staff-table-card">
+        <div className="ddr-card-heading">
+          <h2>Revenue leakage by source</h2>
+          <p>
+            Source-level view of booked value, at-risk pipeline, and confirmed lost value.
+          </p>
+        </div>
+        <div className="revenue-summary-strip">
+          <span>Booked {formatMoney(revenue.bookedRevenue)}</span>
+          <span>At risk {formatMoney(revenue.atRiskRevenue)}</span>
+          <span>Lost {formatMoney(revenue.lostRevenue)}</span>
+        </div>
+        <div className="ddr-table-wrap">
+          <table className="ddr-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Inquiries</th>
+                <th>Conversion</th>
+                <th>Avg response</th>
+                <th>Booked value</th>
+                <th>At risk</th>
+                <th>Lost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {revenue.sourceRows.map((row) => (
+                <tr key={row.provider}>
+                  <td>{row.label}</td>
+                  <td>{row.inquiries}</td>
+                  <td>{row.conversionRate}%</td>
+                  <td>{formatMinutes(row.averageResponseMinutes)}</td>
+                  <td>{formatMoney(row.bookedRevenue)}</td>
+                  <td>{formatMoney(row.atRiskRevenue)}</td>
+                  <td>{formatMoney(row.lostRevenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
       <div className="ddr-chart-grid">
         <article className="ddr-card ddr-chart-card wide">
           <div className="ddr-card-heading">
@@ -295,6 +402,7 @@ export function AnalyticsDashboard({
                 <Tooltip contentStyle={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10 }} />
                 <Line type="monotone" dataKey="WhatsApp" stroke="#22c55e" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="Instagram" stroke="#a855f7" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Phone" stroke="#38bdf8" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="Telegram" stroke="#3b82f6" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="Web" stroke="#f97316" strokeWidth={2} dot={false} />
               </LineChart>

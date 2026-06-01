@@ -152,7 +152,11 @@ async function dispatchOutboundPayload(
   const state = await readAppState();
   const { conversation, lead } = findConversationAndLead(state, conversationId, leadId);
 
-  if (conversation.provider === "web_form" || conversation.provider === "clinic_database") {
+  if (
+    conversation.provider === "web_form" ||
+    conversation.provider === "phone" ||
+    conversation.provider === "clinic_database"
+  ) {
     throw new ApiError(
       409,
       "This source has no live outbound provider API.",

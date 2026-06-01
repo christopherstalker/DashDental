@@ -3,7 +3,7 @@ import type { Provider } from "@/domain/types";
 import { isPrismaStorageEnabled } from "./data-store";
 import { refreshConversationProjection } from "./inbox-projections";
 
-type MessagingProvider = Extract<Provider, "instagram" | "telegram" | "web_form" | "whatsapp">;
+type MessagingProvider = Extract<Provider, "instagram" | "phone" | "telegram" | "web_form" | "whatsapp">;
 
 interface InboundMessagingPayload {
   channelProvider?: MessagingProvider;
@@ -34,6 +34,7 @@ function readString(value: unknown): string | undefined {
 function isMessagingProvider(value: unknown): value is MessagingProvider {
   return (
     value === "instagram" ||
+    value === "phone" ||
     value === "telegram" ||
     value === "web_form" ||
     value === "whatsapp"
@@ -200,7 +201,7 @@ export async function materializeInboundMessageOutboxEvent(outboxEventId: string
           name: displayName,
           phone: patientPhone,
           source: provider,
-          status: "new",
+          status: provider === "phone" ? "at_risk" : "new",
           assignedTo: assignedMembership?.userId,
           providerContactId: externalContactId,
           firstMessageAt: occurredAt,

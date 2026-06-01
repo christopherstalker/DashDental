@@ -12,6 +12,7 @@ type RiskLevel = "clear" | "watch" | "high" | "critical";
 const providerKeys: Record<Provider, TranslationKey> = {
   clinic_database: "dashboard.provider.clinicDatabase",
   instagram: "dashboard.provider.instagram",
+  phone: "dashboard.provider.phone",
   telegram: "dashboard.provider.telegram",
   web_form: "dashboard.provider.webForm",
   whatsapp: "dashboard.provider.whatsapp",

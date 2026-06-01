@@ -37,6 +37,7 @@ enum Provider {
   web_form
   instagram
   whatsapp
+  phone
   clinic_database
 }
 
@@ -45,6 +46,7 @@ enum WebhookProvider {
   telegram
   meta
   web_form
+  twilio
 }
 
 enum IntegrationStatus {
@@ -52,6 +54,39 @@ enum IntegrationStatus {
   pending
   degraded
   disconnected
+}
+
+enum PmsProvider {
+  jane_app
+  cliniko
+  mindbody
+}
+
+enum PmsConnectionStatus {
+  active
+  pending
+  degraded
+  disconnected
+}
+
+enum PmsSyncDirection {
+  inbound
+  outbound
+}
+
+enum PmsSyncStatus {
+  success
+  failed
+  skipped
+}
+
+enum OnboardingStep {
+  welcome
+  pms
+  phone
+  recall
+  invite
+  done
 }
 
 enum SignatureStatus {
@@ -172,6 +207,7 @@ model Organization {
   averagePatientValue Int                 @default(500)
   businessHours       Json
   status              OrganizationStatus  @default(trial)
+  activatedAt         DateTime?           @map("activated_at")
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   memberships         Membership[]
@@ -204,6 +240,39 @@ model Organization {
   outgoingWebhookEndpoints OutgoingWebhookEndpoint[]
   partnerApiKeys      PartnerApiKey[]
   weeklyDigests       WeeklyDigest[]
+  pmsConnections      PmsConnection[]
+  appointments        Appointment[]
+  pmsSyncLogs         PmsSyncLog[]
+  onboardingProgress  OnboardingProgress[]
+  analyticsEvents     AnalyticsEvent[]
+}
+
+model OnboardingProgress {
+  id             String         @id @default(cuid())
+  organizationId String         @map("clinic_id")
+  step           OnboardingStep
+  completedAt    DateTime?      @map("completed_at")
+  data           Json           @default("{}")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, step])
+  @@index([organizationId, completedAt])
+  @@map("onboarding_progress")
+}
+
+model AnalyticsEvent {
+  id             String       @id @default(cuid())
+  organizationId String?      @map("clinic_id")
+  event          String
+  properties     Json         @default("{}")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([event, createdAt])
+  @@map("analytics_events")
 }
 
 model Membership {
@@ -425,6 +494,59 @@ model WeeklyDigest {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId, periodEnd])
+}
+
+model PmsConnection {
+  id              String              @id @default(cuid())
+  organizationId  String              @map("clinic_id")
+  provider        PmsProvider
+  apiKeyEncrypted String              @map("api_key_encrypted")
+  lastSyncedAt    DateTime?           @map("last_synced_at")
+  status          PmsConnectionStatus @default(pending)
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  organization    Organization        @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, provider])
+  @@index([organizationId, status])
+  @@index([provider, status])
+  @@map("pms_connections")
+}
+
+model Appointment {
+  id            String       @id @default(cuid())
+  organizationId String      @map("clinic_id")
+  pmsId         String       @map("pms_id")
+  patientName   String       @map("patient_name")
+  patientPhone  String?      @map("patient_phone")
+  startAt       DateTime     @map("start_at")
+  endAt         DateTime     @map("end_at")
+  type          String
+  status        String
+  syncedAt      DateTime     @map("synced_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  organization  Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, pmsId])
+  @@index([organizationId, startAt])
+  @@index([organizationId, status, startAt])
+  @@map("appointments")
+}
+
+model PmsSyncLog {
+  id             String           @id @default(cuid())
+  organizationId String           @map("clinic_id")
+  direction      PmsSyncDirection
+  recordId       String           @map("record_id")
+  status         PmsSyncStatus
+  error          String?
+  createdAt      DateTime         @default(now()) @map("created_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status, createdAt])
+  @@map("sync_log")
 }
 
 model MessageDelivery {

@@ -126,6 +126,13 @@ export const memberships: Membership[] = [
     status: "active",
   },
   {
+    id: "mem-owner-bright",
+    userId: "user-owner",
+    organizationId: "org-bright-bite",
+    role: "owner",
+    status: "active",
+  },
+  {
     id: "mem-admin",
     userId: "user-admin",
     organizationId: defaultOrganizationId,
@@ -524,6 +531,17 @@ export const subscriptions: Subscription[] = [
     externalCustomerId: "cus_demo_001",
     externalSubscriptionId: "sub_demo_001",
   },
+  {
+    id: "sub-bright-bite",
+    organizationId: "org-bright-bite",
+    provider: "manual",
+    plan: "starter",
+    status: "active",
+    currentPeriodStart: "2026-04-01T00:00:00.000Z",
+    currentPeriodEnd: "2026-07-01T00:00:00.000Z",
+    externalCustomerId: "manual_bright_bite",
+    externalSubscriptionId: "manual_bright_bite_2026_q2",
+  },
 ];
 
 export const automationRules: AutomationRule[] = [
@@ -621,6 +639,20 @@ export const usageLimits: UsageLimits[] = [
       integrations: 1,
       messages: 811,
       aiRuns: 74,
+    },
+  },
+  {
+    id: "usage-bright-bite",
+    organizationId: "org-bright-bite",
+    maxUsers: 4,
+    maxIntegrations: 5,
+    monthlyMessages: 2000,
+    monthlyAiRuns: 120,
+    periodUsageJson: {
+      users: 1,
+      integrations: 0,
+      messages: 0,
+      aiRuns: 0,
     },
   },
 ];

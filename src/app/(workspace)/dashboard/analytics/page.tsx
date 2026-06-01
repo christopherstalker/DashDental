@@ -6,6 +6,7 @@ import {
   type AnalyticsStaffMember,
 } from "@/components/analytics/analytics-dashboard";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
+import { buildRevenueAnalytics } from "@/server/revenue-analytics";
 
 export default async function DashboardAnalyticsPage() {
   const bootstrap = await getWorkspaceShellBootstrap("manager");
@@ -17,6 +18,8 @@ export default async function DashboardAnalyticsPage() {
       firstHumanResponseAt: lead.firstHumanResponseAt,
       firstMessageAt: lead.firstMessageAt,
       id: lead.id,
+      estimatedValue: lead.estimatedValue,
+      lostReason: lead.lostReason,
       source: lead.source,
       status: lead.status,
     }));
@@ -35,5 +38,11 @@ export default async function DashboardAnalyticsPage() {
       name: user.name,
     }));
 
-  return <AnalyticsDashboard leads={leads} staff={staff} />;
+  const revenue = buildRevenueAnalytics(
+    bootstrap.state,
+    organizationId,
+    new Date().toISOString(),
+  );
+
+  return <AnalyticsDashboard leads={leads} revenue={revenue} staff={staff} />;
 }

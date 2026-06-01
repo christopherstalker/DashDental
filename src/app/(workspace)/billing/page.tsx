@@ -46,7 +46,11 @@ import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-
 const plans: Subscription["plan"][] = ["starter", "growth", "scale"];
 const publicPricingUrl = "https://dashdental.space/pricing";
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ billing?: string | string[]; checkout?: string | string[]; plan?: string | string[] }>;
+}) {
   const bootstrap = await getWorkspaceShellBootstrap("owner");
   const hasAccess = bootstrap.session ? canAccess("owner", bootstrap.session.role) : false;
 
@@ -72,6 +76,12 @@ export default async function BillingPage() {
   const manualBillingConfigured = isManualBillingConfigured(manualBillingDetails);
   const manualBillingMissingFields = getManualBillingMissingFields(manualBillingDetails);
   const manualBillingVisible = shouldShowManualBilling();
+  const canUseStripeCheckout = stripeConfigured;
+  const canUseManualBilling = manualBillingVisible && manualBillingConfigured;
+  const callbackParams = await searchParams;
+  const checkoutStatus = readQueryParam(callbackParams.checkout);
+  const checkoutPlan = readQueryParam(callbackParams.plan);
+  const portalStatus = readQueryParam(callbackParams.billing);
   const manualInvoice = buildManualInvoiceSummary({
     organization,
     plan: activePlan,
@@ -153,6 +163,23 @@ export default async function BillingPage() {
         title={<LocalizedText k="billing.header.title" />}
       />
 
+      {checkoutStatus || portalStatus ? (
+        <div
+          className={`compact-alert aligned-left ${
+            checkoutStatus === "cancelled" ? "warning" : "info"
+          }`}
+        >
+          <CreditCard size={16} />
+          <span>
+            {checkoutStatus === "success"
+              ? `Checkout completed for ${checkoutPlan ?? "selected"} plan. Stripe webhook will activate the subscription after payment confirmation.`
+              : checkoutStatus === "cancelled"
+                ? "Checkout was cancelled. You can retry card checkout or use the bank-transfer invoice path."
+                : "Billing portal closed. Subscription changes are reflected after provider confirmation."}
+          </span>
+        </div>
+      ) : null}
+
       <section className="dashboard-command">
         <div>
           <p className="eyebrow">
@@ -169,10 +196,26 @@ export default async function BillingPage() {
           </p>
         </div>
         <div className="dashboard-command-actions">
+          {canUseStripeCheckout ? (
+            <BillingActionButton
+              className="primary-button"
+              disabled={subscriptionPaidActive}
+              label={
+                subscriptionPaidActive ? (
+                  <LocalizedText k="billing.action.planActive" />
+                ) : (
+                  <LocalizedText k="billing.action.launchCheckout" />
+                )
+              }
+              mode="checkout"
+              organizationId={organization.id}
+              plan={activePlan}
+            />
+          ) : null}
           {manualBillingVisible ? (
             <ManualInvoiceButton
-              className="primary-button"
-              disabled={!manualBillingConfigured || subscriptionPaidActive}
+              className={canUseStripeCheckout ? "secondary-button" : "primary-button"}
+              disabled={!canUseManualBilling || subscriptionPaidActive}
               label={
                 subscriptionPaidActive ? (
                   <LocalizedText k="billing.action.planActive" />
@@ -185,7 +228,7 @@ export default async function BillingPage() {
               organizationId={organization.id}
               plan={activePlan}
             />
-          ) : (
+          ) : !canUseStripeCheckout ? (
             <BillingActionButton
               className="primary-button"
               disabled={!stripeConfigured || !hasLiveStripeCustomer}
@@ -193,7 +236,15 @@ export default async function BillingPage() {
               mode="portal"
               organizationId={organization.id}
             />
-          )}
+          ) : null}
+          {!manualBillingVisible && subscriptionPaidActive && hasLiveStripeCustomer ? (
+            <BillingActionButton
+              className="secondary-button"
+              label={<LocalizedText k="billing.action.manageStripe" />}
+              mode="portal"
+              organizationId={organization.id}
+            />
+          ) : null}
           <Link className="secondary-button" href={publicPricingUrl}>
             <LocalizedText k="billing.action.publicPricing" />
           </Link>
@@ -237,10 +288,26 @@ export default async function BillingPage() {
             <span>4. Workspace unlocks for the paid period</span>
           </div>
           <div className="dashboard-command-actions">
+            {canUseStripeCheckout ? (
+              <BillingActionButton
+                className="primary-button"
+                disabled={subscriptionPaidActive}
+                label={
+                  subscriptionPaidActive ? (
+                    <LocalizedText k="billing.action.planActive" />
+                  ) : (
+                    "Pay by card"
+                  )
+                }
+                mode="checkout"
+                organizationId={organization.id}
+                plan={activePlan}
+              />
+            ) : null}
             {manualBillingVisible ? (
               <ManualInvoiceButton
-                className="primary-button"
-                disabled={!manualBillingConfigured || subscriptionPaidActive}
+                className={canUseStripeCheckout ? "secondary-button" : "primary-button"}
+                disabled={!canUseManualBilling || subscriptionPaidActive}
                 label={
                   subscriptionPaidActive ? (
                     <LocalizedText k="billing.action.planActive" />
@@ -251,7 +318,7 @@ export default async function BillingPage() {
                 organizationId={organization.id}
                 plan={activePlan}
               />
-            ) : (
+            ) : !canUseStripeCheckout ? (
               <BillingActionButton
                 className="primary-button"
                 disabled={!stripeConfigured}
@@ -260,7 +327,7 @@ export default async function BillingPage() {
                 organizationId={organization.id}
                 plan={activePlan}
               />
-            )}
+            ) : null}
             <Link className="secondary-button" href={publicPricingUrl}>
               Compare plans
             </Link>
@@ -525,10 +592,23 @@ export default async function BillingPage() {
                     </small>
                   ))}
                 </div>
+                {canUseStripeCheckout ? (
+                  <BillingActionButton
+                    disabled={isCurrentPlan && subscriptionPaidActive}
+                    label={
+                      isCurrentPlan && subscriptionPaidActive
+                        ? <LocalizedText k="billing.action.currentPlan" />
+                        : <LocalizedText k="billing.action.launchCheckout" />
+                    }
+                    mode="checkout"
+                    organizationId={organization.id}
+                    plan={plan}
+                  />
+                ) : null}
                 {manualBillingVisible ? (
                   <ManualInvoiceButton
                     disabled={
-                      !manualBillingConfigured ||
+                      !canUseManualBilling ||
                       (isCurrentPlan && subscriptionPaidActive)
                     }
                     label={
@@ -541,7 +621,7 @@ export default async function BillingPage() {
                     organizationId={organization.id}
                     plan={plan}
                   />
-                ) : (
+                ) : !canUseStripeCheckout ? (
                   <BillingActionButton
                     disabled={!stripeConfigured || isCurrentPlan}
                     label={isCurrentPlan ? <LocalizedText k="billing.action.currentPlan" /> : <LocalizedText k="billing.action.launchCheckout" />}
@@ -549,7 +629,7 @@ export default async function BillingPage() {
                     organizationId={organization.id}
                     plan={plan}
                   />
-                )}
+                ) : null}
               </div>
             );
           })}
@@ -688,5 +768,9 @@ function formatDate(iso: string): string {
     day: "numeric",
     year: "numeric",
   }).format(new Date(iso));
+}
+
+function readQueryParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 

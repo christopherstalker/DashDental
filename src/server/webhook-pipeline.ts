@@ -16,7 +16,7 @@ import {
 import { captureError, structuredLog } from "./observability";
 import { enqueueOutboxDispatch } from "./queue-runtime";
 
-type WebhookProvider = "telegram" | "meta" | "web_form" | "stripe";
+type WebhookProvider = "telegram" | "meta" | "web_form" | "twilio" | "stripe";
 type SignatureStatus = "valid" | "invalid" | "pending" | "skipped";
 
 interface DurableInboundWebhookInput {

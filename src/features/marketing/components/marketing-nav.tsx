@@ -30,12 +30,13 @@ export function MarketingNav({
       <div className="recovery-nav-links">
         <Link href="/#product">Product</Link>
         <Link href="/demo">Demo</Link>
+        <Link href="/case-study">Case study</Link>
         <Link href="/pricing">
           <LocalizedText fallback="Pricing" k="common.nav.pricing" />
         </Link>
         <Link href="/integrations-guide">Integrations</Link>
-        <Link href="/security">
-          <LocalizedText fallback="Security" k="common.nav.security" />
+        <Link href="/trust">
+          <LocalizedText fallback="Trust" k="common.nav.trust" />
         </Link>
         <Link href="/support">Support</Link>
       </div>

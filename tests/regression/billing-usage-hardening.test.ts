@@ -191,7 +191,7 @@ test("subscription update changes entitlement limits without changing pricing lo
     ),
   };
 
-  assert.equal(canSendMessage(state, defaultOrganizationId).allowed, false);
+  assert.equal(canSendMessage(state, defaultOrganizationId, "2026-05-15T00:00:00.000Z").allowed, false);
 
   const result = applyStripeBillingEventToState(state, {
     eventId: "evt_upgrade_to_growth",
@@ -212,7 +212,7 @@ test("subscription update changes entitlement limits without changing pricing lo
 
   const usage = result.state.usageLimits.find((item) => item.organizationId === defaultOrganizationId);
   assert.equal(usage?.monthlyMessages, 10000);
-  assert.equal(canSendMessage(result.state, defaultOrganizationId).allowed, true);
+  assert.equal(canSendMessage(result.state, defaultOrganizationId, "2026-05-15T00:00:00.000Z").allowed, true);
 });
 
 test("usage events are immutable and idempotent while maintaining monthly snapshot", async () => {

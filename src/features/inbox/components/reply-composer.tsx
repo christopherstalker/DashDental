@@ -2,8 +2,8 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, Send } from "lucide-react";
-import type { Message, ReplyTemplate } from "@/domain/types";
+import { AlertCircle, Bot, CheckCircle2, Send } from "lucide-react";
+import type { AiGuardrailReview, Message, ReplyTemplate } from "@/domain/types";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import {
   translate,
@@ -30,6 +30,7 @@ export function ReplyComposer({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastQueuedText, setLastQueuedText] = useState<string | null>(null);
+  const [draftReview, setDraftReview] = useState<AiGuardrailReview | null>(null);
   const [text, setText] = useState("");
   const [editText, setEditText] = useState(lastOutboundMessage?.text ?? "");
   const t = (key: TranslationKey) => translate(key, languageCode);
@@ -99,6 +100,36 @@ export function ReplyComposer({
     });
   }
 
+  async function loadAiDraft() {
+    setError(null);
+    setDraftReview(null);
+    setIsSubmitting(true);
+
+    const response = await fetch(`/api/v1/ai/conversations/${conversationId}/reply-draft`, {
+      body: JSON.stringify({}),
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    const result = (await response.json().catch(() => ({}))) as {
+      draft?: {
+        text?: string;
+        review?: AiGuardrailReview;
+      };
+      error?: string;
+    };
+
+    setIsSubmitting(false);
+
+    if (!response.ok || !result.draft?.text || !result.draft.review) {
+      setError(result.error ?? t("inbox.reply.error.queue"));
+      return;
+    }
+
+    setText(result.draft.text);
+    setDraftReview(result.draft.review);
+  }
+
   return (
     <section className="reply-composer-panel" aria-label={t("inbox.reply.formAria")}>
       <div className="section-heading compact-heading">
@@ -116,6 +147,15 @@ export function ReplyComposer({
       </div>
 
       <div className="suggestion-row" aria-label={t("inbox.reply.suggestionsAria")}>
+        <button
+          className="suggestion-chip"
+          disabled={isSubmitting || isRefreshing}
+          onClick={() => void loadAiDraft()}
+          type="button"
+        >
+          <Bot size={14} />
+          AI draft
+        </button>
         {suggestedReplyKeys.map((replyKey) => (
           <button
             className="suggestion-chip"
@@ -165,6 +205,19 @@ export function ReplyComposer({
       <p className="blueprint-copy" id="patient-reply-help">
         <LocalizedText k="inbox.reply.help" />
       </p>
+
+      {draftReview ? (
+        <div
+          className={`reply-status ${draftReview.status === "blocked" ? "error" : "success"}`}
+          role="status"
+        >
+          {draftReview.status === "blocked" ? <AlertCircle size={16} /> : <Bot size={16} />}
+          <span>
+            AI draft is {draftReview.status.replaceAll("_", " ")} and requires human approval.
+            {draftReview.warnings.length > 0 ? ` ${draftReview.warnings.join(" ")}` : ""}
+          </span>
+        </div>
+      ) : null}
 
       {lastQueuedText ? (
         <div className="reply-status success" role="status">

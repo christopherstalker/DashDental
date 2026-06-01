@@ -860,6 +860,14 @@ export async function sendLiveProviderMessage(
     );
   }
 
+  if (conversation.provider === "phone") {
+    throw new ApiError(
+      409,
+      "Phone missed-call leads use direct callback or automatic SMS only. Staff replies are not enabled for this source yet.",
+      "channel_not_replyable",
+    );
+  }
+
   throw new ApiError(
     409,
     "Clinic DB conversations are read-only and do not support outbound messaging",

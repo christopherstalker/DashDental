@@ -8,6 +8,7 @@ import {
   Database,
   Globe2,
   MessageCircle,
+  PhoneCall,
   Plug,
   Send,
   ShieldCheck,
@@ -70,6 +71,17 @@ const providerSlots: ProviderSlot[] = [
     ctaKey: "integrations.provider.instagram.cta",
   },
   {
+    provider: "phone",
+    title: "Missed calls",
+    titleKey: "integrations.provider.phone.title",
+    description: "Capture missed calls as urgent inbox threads and send instant SMS follow-up.",
+    descriptionKey: "integrations.provider.phone.description",
+    category: "Phone",
+    categoryKey: "integrations.common.phone",
+    cta: "Connect Twilio",
+    ctaKey: "integrations.provider.phone.cta",
+  },
+  {
     provider: "web_form",
     title: "Website form",
     titleKey: "integrations.provider.webForm.title",
@@ -101,6 +113,8 @@ function getProviderIcon(provider: Provider) {
       return MessageCircle;
     case "instagram":
       return Camera;
+    case "phone":
+      return PhoneCall;
     case "web_form":
       return Globe2;
     case "clinic_database":

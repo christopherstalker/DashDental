@@ -1336,6 +1336,7 @@ html[data-theme] ::-webkit-scrollbar-thumb {
 
 .ddr-channel-dot.web_form,
 .ddr-channel-dot.telegram,
+.ddr-channel-dot.phone,
 .ddr-channel-dot.clinic_database {
   background: #3b82f6;
 }

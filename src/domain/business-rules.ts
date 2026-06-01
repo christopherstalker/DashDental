@@ -240,7 +240,7 @@ export function shouldSendAutoReply(
     .at(0);
 
   if (!lastAutoReply) {
-    return provider === "telegram" || provider === "web_form";
+    return provider === "telegram" || provider === "web_form" || provider === "phone";
   }
 
   return minutesBetween(lastAutoReply.sentAt, new Date().toISOString()) >= 1440;
@@ -438,6 +438,7 @@ export function formatProvider(provider: Provider): string {
     web_form: "Web form",
     instagram: "Instagram",
     whatsapp: "WhatsApp",
+    phone: "Phone",
     clinic_database: "Clinic DB",
   };
 

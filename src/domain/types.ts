@@ -15,6 +15,7 @@ export type Provider =
   | "web_form"
   | "instagram"
   | "whatsapp"
+  | "phone"
   | "clinic_database";
 
 export type IntegrationStatus =
@@ -42,9 +43,19 @@ export type LostReason =
 
 export type AiInsightType =
   | "conversation_summary"
+  | "reply_draft"
   | "risk_detection"
   | "intent_classification"
   | "weekly_insight";
+
+export type AiGuardrailStatus = "approved" | "needs_review" | "blocked";
+
+export interface AiGuardrailReview {
+  status: AiGuardrailStatus;
+  requiresHumanApproval: boolean;
+  blockedTerms: string[];
+  warnings: string[];
+}
 
 export type AutomationTrigger =
   | "first_inbound"
@@ -85,6 +96,7 @@ export interface Organization {
   averagePatientValue: number;
   businessHours: BusinessHours;
   status: OrganizationStatus;
+  activatedAt?: string;
 }
 
 export interface Membership {
@@ -347,6 +359,8 @@ export interface AiInsight {
     riskScore?: number;
     recommendation?: string;
     bullets?: string[];
+    draft?: string;
+    guardrails?: AiGuardrailReview;
   };
   model: string;
   promptVersion: string;

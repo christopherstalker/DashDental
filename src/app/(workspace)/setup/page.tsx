@@ -23,6 +23,7 @@ import { MetricTile } from "@/features/design-system/components/metric-tile";
 import { PageHeader } from "@/features/design-system/components/page-header";
 import { SurfaceCard } from "@/features/design-system/components/surface-card";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
+import { GuidedOnboardingWizard } from "@/features/onboarding/components/guided-onboarding-wizard";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import { LaunchPageEvent } from "@/features/launch-analytics/components/launch-event-tracker";
 import { buildSetupLaunchReview } from "@/server/launch-analytics";
@@ -124,6 +125,11 @@ export default async function SetupPage() {
         description={<LocalizedText k="setup.header.description" />}
         eyebrow={<LocalizedText k="setup.header.eyebrow" />}
         title={<LocalizedText k="setup.header.title" />}
+      />
+
+      <GuidedOnboardingWizard
+        clinicName={organization.name}
+        timezone={organization.timezone}
       />
 
       <section className="dashboard-command">
