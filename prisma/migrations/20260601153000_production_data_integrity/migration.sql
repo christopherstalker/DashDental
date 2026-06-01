@@ -18,25 +18,25 @@ BEGIN
   END IF;
 END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "Membership_organizationId_status_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "Membership_organizationId_status_createdAt_idx"
   ON "Membership"("organizationId", "status", "createdAt");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "Conversation_leadId_idx"
+CREATE INDEX IF NOT EXISTS "Conversation_leadId_idx"
   ON "Conversation"("leadId");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "MessageDelivery_organizationId_updatedAt_idx"
+CREATE INDEX IF NOT EXISTS "MessageDelivery_organizationId_updatedAt_idx"
   ON "MessageDelivery"("organizationId", "updatedAt");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "TeamNote_authorUserId_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "TeamNote_authorUserId_createdAt_idx"
   ON "TeamNote"("authorUserId", "createdAt");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "Subscription_organizationId_updatedAt_idx"
+CREATE INDEX IF NOT EXISTS "Subscription_organizationId_updatedAt_idx"
   ON "Subscription"("organizationId", "updatedAt");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "BillingEvent_subscriptionId_idx"
+CREATE INDEX IF NOT EXISTS "BillingEvent_subscriptionId_idx"
   ON "BillingEvent"("subscriptionId");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "AiInsight_leadId_idx"
+CREATE INDEX IF NOT EXISTS "AiInsight_leadId_idx"
   ON "AiInsight"("leadId");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "WebhookReceipt_integrationId_idx"
+CREATE INDEX IF NOT EXISTS "WebhookReceipt_integrationId_idx"
   ON "WebhookReceipt"("integrationId");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "WebhookReceipt_organizationId_receivedAt_idx"
+CREATE INDEX IF NOT EXISTS "WebhookReceipt_organizationId_receivedAt_idx"
   ON "WebhookReceipt"("organizationId", "receivedAt");
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "OutboxEvent_receiptId_idx"
+CREATE INDEX IF NOT EXISTS "OutboxEvent_receiptId_idx"
   ON "OutboxEvent"("receiptId");
 
 DO $$

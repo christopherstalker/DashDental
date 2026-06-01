@@ -54,7 +54,7 @@ test("new FK and hot-path indexes are represented in schema and migration", () =
     "WebhookReceipt_organizationId_receivedAt_idx",
     "OutboxEvent_receiptId_idx",
   ]) {
-    assert.match(integrityMigration, new RegExp(`CREATE INDEX CONCURRENTLY IF NOT EXISTS "${index}"`));
+    assert.match(integrityMigration, new RegExp(`CREATE INDEX IF NOT EXISTS "${index}"`));
   }
 
   for (const schemaIndex of [
