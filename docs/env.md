@@ -9,6 +9,8 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 | --- | --- | --- | --- | --- |
 | `APP_URL` | server | yes | Public HTTPS origin for links, redirects, and webhooks. | Production/staging domain. |
 | `DATABASE_URL` | server | yes | Managed Postgres database used by Prisma storage. | Neon/Postgres provider. |
+| `PRISMA_MIGRATE_DATABASE_URL` | build | recommended | Direct Postgres URL for explicit Prisma migration builds. Keep runtime `DATABASE_URL` pooled if needed. | Neon direct connection string with `sslmode=verify-full`. |
+| `VERCEL_RUN_PRISMA_MIGRATIONS` | build | no | Set to `true` only for an explicit Vercel migration build. Normal deploys leave this `false`. | Vercel env override for migration deploys. |
 | `REDIS_URL` | server | yes | Runtime queues and background processing. | Managed Redis provider. |
 | `SESSION_SECRET` | server | yes | Session cookie signing. | Password manager/secret generator. |
 | `JWT_ACCESS_SECRET` | server | yes | Backend access token signing. | Password manager/secret generator. |

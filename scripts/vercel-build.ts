@@ -4,8 +4,12 @@ import path from "node:path";
 import { Client } from "pg";
 
 const isProductionDeployment = process.env.VERCEL_ENV === "production";
+const shouldRunVercelPrismaMigrations =
+  process.env.VERCEL_RUN_PRISMA_MIGRATIONS === "true";
 const shouldDeployPrismaMigrations =
-  process.env.VERCEL === "1" && Boolean(process.env.DATABASE_URL?.trim());
+  process.env.VERCEL === "1" &&
+  shouldRunVercelPrismaMigrations &&
+  Boolean(readMigrationDatabaseUrl());
 const shouldRecoverPreviewMigration =
   shouldDeployPrismaMigrations && process.env.VERCEL_ENV !== "production";
 const BASELINE_MIGRATION_NAME = "20260430000000_baseline";
@@ -47,12 +51,33 @@ function getNpmInvocation() {
   };
 }
 
-function runNpm(args: string[], options: { allowFailure?: boolean } = {}): boolean {
+function readMigrationDatabaseUrl(): string | undefined {
+  return (
+    process.env.PRISMA_MIGRATE_DATABASE_URL?.trim() ||
+    process.env.MIGRATION_DATABASE_URL?.trim() ||
+    process.env.DATABASE_URL?.trim() ||
+    undefined
+  );
+}
+
+function getMigrationCommandEnv(): NodeJS.ProcessEnv {
+  const databaseUrl = readMigrationDatabaseUrl();
+
+  return {
+    ...process.env,
+    ...(databaseUrl ? { DATABASE_URL: databaseUrl } : {}),
+  };
+}
+
+function runNpm(
+  args: string[],
+  options: { allowFailure?: boolean; env?: NodeJS.ProcessEnv } = {},
+): boolean {
   const npmInvocation = getNpmInvocation();
   const command = npmInvocation.command;
   const commandArgs = [...npmInvocation.prefixArgs, ...args];
   const result = spawnSync(command, commandArgs, {
-    env: process.env,
+    env: options.env ?? process.env,
     stdio: "inherit",
   });
 
@@ -80,9 +105,13 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runNpmWithRetry(args: string[], attempts = 3) {
+async function runNpmWithRetry(
+  args: string[],
+  attempts = 3,
+  options: { env?: NodeJS.ProcessEnv } = {},
+) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    if (runNpm(args, { allowFailure: attempt < attempts })) {
+    if (runNpm(args, { allowFailure: attempt < attempts, env: options.env })) {
       return;
     }
 
@@ -108,7 +137,7 @@ function readLocalMigrationNames(): string[] {
 }
 
 async function readPrismaMigrationRecords(): Promise<PrismaMigrationRecord[] | undefined> {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
+  const databaseUrl = readMigrationDatabaseUrl();
   if (!databaseUrl) {
     return undefined;
   }
@@ -176,9 +205,16 @@ async function main() {
     runNpm(["run", "go-live:check"]);
   }
 
+  if (process.env.VERCEL === "1" && !shouldRunVercelPrismaMigrations) {
+    console.log(
+      "Skipping Prisma migrations during Vercel build. Run migrations separately, or set VERCEL_RUN_PRISMA_MIGRATIONS=true with PRISMA_MIGRATE_DATABASE_URL for an explicit migration build.",
+    );
+  }
+
   let migrationRecords = shouldDeployPrismaMigrations
     ? await readPrismaMigrationRecords()
     : undefined;
+  const migrationEnv = getMigrationCommandEnv();
 
   if (shouldDeployPrismaMigrations && baselineNeedsResolve(migrationRecords)) {
     await runNpmWithRetry([
@@ -189,7 +225,7 @@ async function main() {
       "resolve",
       "--applied",
       BASELINE_MIGRATION_NAME,
-    ]);
+    ], 3, { env: migrationEnv });
     migrationRecords = await readPrismaMigrationRecords();
   }
 
@@ -205,7 +241,7 @@ async function main() {
       if (migrationNeedsRollback(recordsByName.get(migrationName))) {
         runNpm(
           ["exec", "--", "prisma", "migrate", "resolve", "--rolled-back", migrationName],
-          { allowFailure: true },
+          { allowFailure: true, env: migrationEnv },
         );
       }
     }
@@ -213,7 +249,9 @@ async function main() {
 
   if (shouldDeployPrismaMigrations) {
     if (hasPendingLocalMigrations(migrationRecords)) {
-      await runNpmWithRetry(["exec", "--", "prisma", "migrate", "deploy"]);
+      await runNpmWithRetry(["exec", "--", "prisma", "migrate", "deploy"], 3, {
+        env: migrationEnv,
+      });
     } else {
       console.log("Prisma migrations already applied; skipping migrate deploy.");
     }

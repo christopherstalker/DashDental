@@ -14,6 +14,8 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 ## Required Environment
 
 - `DATABASE_URL`: PostgreSQL connection string.
+- `PRISMA_MIGRATE_DATABASE_URL`: optional direct PostgreSQL connection used only for Prisma deploy migrations. Prefer a non-pooled Neon URL with `sslmode=verify-full`.
+- `VERCEL_RUN_PRISMA_MIGRATIONS`: keep `false` for normal Vercel builds. Set to `true` only for an explicit migration deployment where database reachability has already been verified.
 - `REDIS_URL`: Redis connection string.
 - `SESSION_SECRET`: Next.js workspace session signing secret.
 - `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`: backend JWT validation secrets.
@@ -33,7 +35,7 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 
 1. Run `npm run prisma:generate` from the repo root.
 2. Run `cd backend && npm run prisma:generate`.
-3. Apply schema with migrations in production. For local/dev only, `npm run db:push` is acceptable.
+3. Apply schema with migrations in production from a controlled migration run. For local/dev only, `npm run db:push` is acceptable.
 4. Build backend with `cd backend && npm run build`.
 5. Build frontend with `npm run build`.
 6. Apply `docs/edge-protection.md` at the CDN/edge layer before broad self-serve traffic.
@@ -67,6 +69,9 @@ provider setup is complete.
 7. Keep production runtime secrets in the Vercel project environment. Vercel
    uses `npm run vercel:build`, which runs `npm run go-live:check` only for
    `VERCEL_ENV=production` before the production build is allowed to continue.
+   The build does not run Prisma migrations by default; run migrations as a
+   separate release step, or set `VERCEL_RUN_PRISMA_MIGRATIONS=true` with
+   `PRISMA_MIGRATE_DATABASE_URL` for one explicit migration build.
    Do not rely on `vercel env pull` as proof for sensitive values; sensitive
    values may be listed by name without being readable by local tooling.
 

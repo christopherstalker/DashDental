@@ -170,8 +170,11 @@ test("production env template and checklist cover paid launch blockers", async (
   assert.equal(vercelConfig.buildCommand, "npm run vercel:build");
   assert.match(vercelBuild, /VERCEL_ENV === "production"/);
   assert.match(vercelBuild, /"go-live:check"/);
+  assert.match(vercelBuild, /VERCEL_RUN_PRISMA_MIGRATIONS/);
+  assert.match(vercelBuild, /PRISMA_MIGRATE_DATABASE_URL/);
   assert.match(runbook, /Staging Rehearsal/);
   assert.match(runbook, /VERCEL_ENV=production/);
+  assert.match(runbook, /does not run Prisma migrations by default/i);
   assert.match(runbook, /production monitor\s+tenant and cleanup policy/i);
   assert.doesNotMatch(runbook, /SOC 2 certified|HIPAA compliant|ISO 27001 certified/i);
 });
