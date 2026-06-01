@@ -43,10 +43,10 @@ export const metadata: Metadata = {
       "Missed-message recovery for dental clinics across WhatsApp, Instagram, Telegram, and website forms.",
     images: [
       {
-        alt: "Dash Dental dashboard preview",
-        height: 1080,
-        url: "/dashboard-preview.png",
-        width: 1600,
+        alt: "Dash Dental live patient inbox preview",
+        height: 630,
+        url: "/opengraph-image",
+        width: 1200,
       },
     ],
     locale: "en_US",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     description:
       "Prioritize unanswered patient messages, estimate money at risk, and recover missed consults.",
-    images: ["/dashboard-preview.png"],
+    images: ["/twitter-image"],
     title: "Dash Dental",
   },
 };

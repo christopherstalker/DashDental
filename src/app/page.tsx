@@ -13,10 +13,10 @@ export const metadata: Metadata = {
       "A premium AI recovery cockpit for dental clinics: money-at-risk visibility, prioritized patient queues, and staff-reviewed AI reply drafts.",
     images: [
       {
-        alt: "Dash Dental recovery cockpit preview",
-        height: 1080,
-        url: "/dashboard-preview.png",
-        width: 1600,
+        alt: "Dash Dental live patient inbox preview",
+        height: 630,
+        url: "/opengraph-image",
+        width: 1200,
       },
     ],
     title: "Dash Dental - Recover dental revenue before patients disappear",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     description:
       "Recover high-intent dental inquiries from patient DMs and website forms before they disappear.",
-    images: ["/dashboard-preview.png"],
+    images: ["/twitter-image"],
     title: "Dash Dental - AI dental revenue recovery cockpit",
   },
 };
