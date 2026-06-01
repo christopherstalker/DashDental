@@ -14,6 +14,7 @@ import {
   MessageCircle,
   MousePointer2,
   Play,
+  SendHorizontal,
   ShieldCheck,
   TrendingUp,
   UserCheck,
@@ -102,6 +103,41 @@ const legacyTrustItems = [
   "Human-reviewed AI drafts",
   "No medical records required",
   "Guided launch available",
+] as const;
+
+const heroThreads = [
+  {
+    accent: "is-urgent",
+    channelClass: "whatsapp",
+    initials: "EP",
+    name: "Eva P.",
+    preview: "Emergency tooth pain",
+    time: "22m",
+  },
+  {
+    accent: "is-warm",
+    channelClass: "instagram",
+    initials: "MK",
+    name: "Mila K.",
+    preview: "Veneers pricing",
+    time: "1h",
+  },
+  {
+    accent: "",
+    channelClass: "web_form",
+    initials: "ON",
+    name: "Oleh N.",
+    preview: "Implant consult",
+    time: "2h",
+  },
+  {
+    accent: "",
+    channelClass: "telegram",
+    initials: "SL",
+    name: "Sara L.",
+    preview: "Whitening inquiry",
+    time: "46m",
+  },
 ] as const;
 
 const frontDeskRows = [
@@ -199,20 +235,59 @@ export function DashDentalRedesignLanding() {
           </div>
         </div>
 
-        <div className="ddr-hero-visual" aria-label="Dash Dental dashboard preview">
-          <Image 
-            alt="Dash Dental recovery cockpit preview"
-            src="/dashboard-preview.png"
-            width={1600}
-            height={1080}
-            priority
-            className="ddr-card"
-            style={{
-              width: "100%",
-              height: "auto",
-              borderRadius: "var(--radius-lg)",
-            }}
-          />
+        <div className="ddr-hero-visual" aria-label="Dash Dental live inbox preview">
+          <div className="ddr-inbox-mockup">
+            <aside className="ddr-mock-sidebar" aria-label="Sample conversation queue">
+              <div className="ddr-mock-search" aria-hidden="true" />
+              {heroThreads.map((thread) => (
+                <article className={`ddr-mock-thread ${thread.accent}`} key={thread.name}>
+                  <span className={`ddr-channel-dot ${thread.channelClass}`}>{thread.initials}</span>
+                  <div>
+                    <strong>{thread.name}</strong>
+                    <span>{thread.preview}</span>
+                  </div>
+                  <span>{thread.time}</span>
+                </article>
+              ))}
+            </aside>
+
+            <section className="ddr-mock-main" aria-label="Sample patient thread">
+              <header className="ddr-mock-header">
+                <div className="ddr-row-title">
+                  <strong>Mila K.</strong>
+                  <span>Instagram DM - cosmetic consult</span>
+                </div>
+                <div className="ddr-thread-header">
+                  <span className="ddr-badge ddr-badge-alert">SLA 12 min</span>
+                  <span className="ddr-badge ddr-badge-ok">Assigned to Anna</span>
+                </div>
+              </header>
+
+              <div className="ddr-mock-messages">
+                <p className="ddr-mock-bubble in">
+                  Hi, do you have veneer consultation slots this week?
+                </p>
+                <p className="ddr-mock-bubble out">
+                  Yes, we can offer today at 16:30 or tomorrow morning.
+                </p>
+                <p className="ddr-mock-bubble in">
+                  Today works. Can you send the address?
+                </p>
+              </div>
+
+              <article className="ddr-mock-note" aria-label="Internal team note">
+                <span className="ddr-badge ddr-badge-warm">Team-only note</span>
+                <strong>Patient asked about veneers last month. Mention financing options.</strong>
+              </article>
+
+              <footer className="ddr-mock-composer" aria-label="Sample reply composer">
+                <span aria-hidden="true" />
+                <button className="ddr-icon-button" type="button" aria-label="Send sample reply">
+                  <SendHorizontal size={16} />
+                </button>
+              </footer>
+            </section>
+          </div>
         </div>
       </section>
 
