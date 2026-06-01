@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, Mail } from "lucide-react";
 
 export function ForgotPasswordForm() {
@@ -11,8 +11,7 @@ export function ForgotPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit() {
     setError(null);
     setDevUrl(null);
     setIsSubmitting(true);
@@ -63,7 +62,7 @@ export function ForgotPasswordForm() {
           </div>
         </div>
       ) : (
-        <form className="login-form" onSubmit={handleSubmit}>
+        <div className="login-form">
           <label className="login-field">
             <span>Work email</span>
             <input
@@ -79,11 +78,11 @@ export function ForgotPasswordForm() {
               value={email}
             />
           </label>
-          <button className="primary-button" disabled={isSubmitting} type="submit">
+          <button className="primary-button" disabled={isSubmitting} onClick={() => void handleSubmit()} type="button">
             {isSubmitting ? "Sending reset link..." : "Send reset link"}
             {isSubmitting ? <Loader2 className="login-spin" size={16} /> : <Mail size={16} />}
           </button>
-        </form>
+        </div>
       )}
 
       {error ? <p className="login-error">{error}</p> : null}

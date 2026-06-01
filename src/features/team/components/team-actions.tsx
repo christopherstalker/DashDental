@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, UserMinus, UserPlus } from "lucide-react";
 import type { Role } from "@/domain/types";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import { translate } from "@/features/i18n/translations";
 import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
+import { safePathSegment } from "@/features/http/safe-url";
 
 type TeamRole = Exclude<Role, "super_admin">;
 
@@ -34,8 +35,7 @@ export function TeamMemberForm({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<TeamRole>("manager");
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submit() {
     setFeedback(null);
     startTransition(async () => {
       try {
@@ -78,7 +78,7 @@ export function TeamMemberForm({
   }
 
   return (
-    <form className="team-form-grid" onSubmit={submit}>
+    <div className="team-form-grid">
       <label className="login-field">
         <span>
           <LocalizedText k="team.form.name" />
@@ -119,12 +119,12 @@ export function TeamMemberForm({
           <option value="owner">{translate("workspace.role.owner", languageCode)}</option>
         </select>
       </label>
-      <button className="primary-button" disabled={disabled || isPending} type="submit">
+      <button className="primary-button" disabled={disabled || isPending} onClick={submit} type="button">
         <UserPlus size={16} />
         {isPending ? <LocalizedText k="team.form.adding" /> : "Invite member"}
       </button>
       {feedback ? <p className="form-help team-form-feedback">{feedback}</p> : null}
-    </form>
+    </div>
   );
 }
 
@@ -148,7 +148,7 @@ export function DeactivateTeamMemberButton({
     setFeedback(null);
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/v1/team/members/${membershipId}/deactivate`, {
+        const response = await fetch(`/api/v1/team/members/${safePathSegment(membershipId, "membership id")}/deactivate`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ organizationId }),

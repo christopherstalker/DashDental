@@ -1,4 +1,4 @@
-import { errorResponse } from "@/server/api-helpers";
+import { errorResponse, readJsonObject } from "@/server/api-helpers";
 import { fetchBackendAdminFromRequest } from "@/server/backend-admin-client";
 import { auditSupportActionFromRequest } from "@/server/support-audit";
 
@@ -8,7 +8,7 @@ export async function POST(
 ) {
   try {
     const { scenario } = await context.params;
-    const body = await request.json().catch(() => ({}));
+    const body = await readJsonObject(request);
     const response = await fetchBackendAdminFromRequest<unknown>(
       request,
       `/admin/runtime/drills/${encodeURIComponent(scenario)}/run`,

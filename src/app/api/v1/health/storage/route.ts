@@ -1,6 +1,7 @@
 import { ApiError } from "@/server/api-error";
 import { getStorageConfiguration } from "@/server/data-store";
 import { getBillingProvider } from "@/server/manual-billing";
+import { captureError } from "@/server/observability";
 import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
 import { isStripeConfigured } from "@/server/stripe";
 import { prisma } from "@/server/prisma";
@@ -68,15 +69,26 @@ export async function GET(request: Request) {
       { status: healthy ? 200 : 503 },
     );
   } catch (error) {
-    const status = error instanceof ApiError ? error.status : 503;
+    if (error instanceof ApiError && error.status < 500) {
+      return Response.json(
+        {
+          status: "unhealthy",
+          error: error.message,
+          code: error.code,
+        },
+        { status: error.status },
+      );
+    }
+
+    captureError(error, { event: "health.storage.failed" });
 
     return Response.json(
       {
         status: "unhealthy",
-        error: error instanceof Error ? error.message : "Storage health check failed.",
-        code: error instanceof ApiError ? error.code : "storage_health_failed",
+        error: "Storage health check failed.",
+        code: "storage_health_failed",
       },
-      { status },
+      { status: 503 },
     );
   }
 }

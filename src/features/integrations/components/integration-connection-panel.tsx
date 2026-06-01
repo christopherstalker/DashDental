@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Camera,
@@ -174,8 +174,7 @@ export function IntegrationConnectionPanel({
     });
   }
 
-  function saveTelegram(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function saveTelegram() {
     runJsonAction(
       "telegram",
       "/api/v1/integrations/messaging/config",
@@ -188,8 +187,7 @@ export function IntegrationConnectionPanel({
     );
   }
 
-  function saveWhatsApp(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function saveWhatsApp() {
     runJsonAction(
       "whatsapp",
       "/api/v1/integrations/messaging/config",
@@ -202,8 +200,7 @@ export function IntegrationConnectionPanel({
     );
   }
 
-  function saveInstagram(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function saveInstagram() {
     runJsonAction(
       "instagram",
       "/api/v1/integrations/messaging/config",
@@ -216,8 +213,7 @@ export function IntegrationConnectionPanel({
     );
   }
 
-  function saveWebForm(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function saveWebForm() {
     runJsonAction(
       "web_form",
       "/api/v1/integrations/web-form/config",
@@ -229,8 +225,7 @@ export function IntegrationConnectionPanel({
     );
   }
 
-  function savePhone(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function savePhone() {
     runJsonAction(
       "phone",
       "/api/v1/integrations/phone/config",
@@ -300,8 +295,7 @@ export function IntegrationConnectionPanel({
     );
   }
 
-  function saveClinicDb(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function saveClinicDb() {
     runJsonAction(
       "clinic_db",
       "/api/v1/integrations/clinic-db/config",
@@ -453,7 +447,7 @@ export function IntegrationConnectionPanel({
             label="Twilio call status webhook"
             value={`${publicWebhookOrigin}/api/webhooks/twilio/call`}
           />
-          <form className="integration-config-form" onSubmit={savePhone}>
+          <div className="integration-config-form">
             <Field
               label="Clinic phone number"
               onChange={(value) => setPhone((current) => ({ ...current, phoneNumber: value }))}
@@ -489,11 +483,11 @@ export function IntegrationConnectionPanel({
               />
               <span>Send instant SMS after missed call</span>
             </label>
-            <button className="primary-button" disabled={isPending} type="submit">
+            <button className="primary-button" disabled={isPending} onClick={savePhone} type="button">
               <PhoneCall size={16} />
               {pendingAction === "phone" ? "Saving..." : "Activate missed calls"}
             </button>
-          </form>
+          </div>
         </section>
 
         <section className="integration-config-card" id="web_form">
@@ -503,7 +497,7 @@ export function IntegrationConnectionPanel({
             title={translate("integrations.provider.webForm.title", languageCode)}
           />
           <CopyableLine label={translate("integrations.webForm.post", languageCode)} value={webFormGuide.endpointUrl} />
-          <form className="integration-config-form" onSubmit={saveWebForm}>
+          <div className="integration-config-form">
             <Field
               label={translate("integrations.form.webhookSecret", languageCode)}
               onChange={(value) => setWebForm({ webhookSecret: value })}
@@ -511,7 +505,7 @@ export function IntegrationConnectionPanel({
               value={webForm.webhookSecret}
             />
             <div className="integration-form-actions">
-              <button className="primary-button" disabled={isPending} type="submit">
+              <button className="primary-button" disabled={isPending} onClick={saveWebForm} type="button">
                 <ShieldCheck size={16} />
                 {pendingAction === "web_form"
                   ? translate("integrations.form.activating", languageCode)
@@ -529,7 +523,7 @@ export function IntegrationConnectionPanel({
                   : translate("integrations.form.sendTest", languageCode)}
               </button>
             </div>
-          </form>
+          </div>
         </section>
 
         <section className="integration-config-card" id="clinic_database">
@@ -558,7 +552,7 @@ export function IntegrationConnectionPanel({
                 : translate("integrations.form.approveContract", languageCode)}
             </button>
           </div>
-          <form className="integration-config-form" onSubmit={saveClinicDb}>
+          <div className="integration-config-form">
             <Field
               label={translate("integrations.form.postgresUrl", languageCode)}
               onChange={(value) => setClinicDb((current) => ({ ...current, connectionString: value }))}
@@ -577,13 +571,13 @@ export function IntegrationConnectionPanel({
               />
               <span>{translate("integrations.form.useSsl", languageCode)}</span>
             </label>
-            <button className="primary-button" disabled={isPending} type="submit">
+            <button className="primary-button" disabled={isPending} onClick={saveClinicDb} type="button">
               <Database size={16} />
               {pendingAction === "clinic_db"
                 ? translate("integrations.form.saving", languageCode)
                 : translate("integrations.form.saveClinicDb", languageCode)}
             </button>
-          </form>
+          </div>
         </section>
       </div>
     </div>
@@ -606,7 +600,7 @@ function MessagingCard({
   icon: ReactNode;
   integration?: Integration;
   isPending: boolean;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: () => void;
   title: string;
 }) {
   const languageCode = useCurrentLanguageCode();
@@ -620,15 +614,15 @@ function MessagingCard({
           <CopyableLine label={translate("integrations.form.verifyToken", languageCode)} value={guide.verifyToken} />
         </>
       ) : null}
-      <form className="integration-config-form" onSubmit={onSubmit}>
+      <div className="integration-config-form">
         {children}
-        <button className="primary-button" disabled={isPending} type="submit">
+        <button className="primary-button" disabled={isPending} onClick={onSubmit} type="button">
           <ShieldCheck size={16} />
           {isPending
             ? translate("integrations.form.connecting", languageCode)
             : `${translate("integrations.form.connect", languageCode)} ${title}`}
         </button>
-      </form>
+      </div>
     </section>
   );
 }

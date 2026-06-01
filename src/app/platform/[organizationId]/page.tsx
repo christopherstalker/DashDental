@@ -71,6 +71,10 @@ function renderJson(value: unknown) {
   return JSON.stringify(redactForLog(value), null, 2);
 }
 
+function tenantReceiptHref(organizationId: string, receiptId: string): string {
+  return `/platform/${encodeURIComponent(organizationId)}?receiptId=${encodeURIComponent(receiptId)}`;
+}
+
 async function loadTenantDebugData(
   organizationId: string,
   receiptId: string | string[] | undefined,
@@ -85,9 +89,9 @@ async function loadTenantDebugData(
     });
 
     return { debugView };
-  } catch (error) {
+  } catch {
     return {
-      error: error instanceof Error ? error.message : "Tenant debug data is unavailable.",
+      error: "Tenant debug data is unavailable.",
     };
   }
 }
@@ -384,7 +388,7 @@ export default async function PlatformOrganizationPage({
                   <div className="row-actions">
                     <Link
                       className="secondary-button compact-button"
-                      href={`/platform/${organizationId}?receiptId=${receipt.id}`}
+                      href={tenantReceiptHref(organizationId, receipt.id)}
                     >
                       Inspect
                     </Link>
@@ -474,7 +478,7 @@ export default async function PlatformOrganizationPage({
                 <div className="row-actions admin-row-actions">
                   <Link
                     className="secondary-button compact-button"
-                    href={`/platform/${organizationId}?receiptId=${receipt.id}`}
+                    href={tenantReceiptHref(organizationId, receipt.id)}
                   >
                     Inspect
                   </Link>

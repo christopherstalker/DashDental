@@ -59,7 +59,7 @@ export async function POST(
       nextState = addAudit(nextState, {
         organizationId: conversation.organizationId,
         actorUserId: requestContext.userId,
-        action: "ai.reply_draft_created",
+        action: "ai_message_log.reply_draft_created",
         entityType: "conversation",
         entityId: conversation.id,
         metadataJson: {

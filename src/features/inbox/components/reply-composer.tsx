@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Bot, CheckCircle2, Send } from "lucide-react";
 import type { AiGuardrailReview, Message, ReplyTemplate } from "@/domain/types";
@@ -10,6 +10,7 @@ import {
   type TranslationKey,
 } from "@/features/i18n/translations";
 import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
+import { safePathSegment } from "@/features/http/safe-url";
 
 export function ReplyComposer({
   conversationId,
@@ -35,9 +36,7 @@ export function ReplyComposer({
   const [editText, setEditText] = useState(lastOutboundMessage?.text ?? "");
   const t = (key: TranslationKey) => translate(key, languageCode);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function handleSubmit() {
     const trimmed = text.trim();
     if (!trimmed) {
       setError(t("inbox.reply.error.empty"));
@@ -47,7 +46,8 @@ export function ReplyComposer({
     setError(null);
     setIsSubmitting(true);
 
-    const response = await fetch(`/api/v1/conversations/${conversationId}/messages`, {
+    const conversationPathId = safePathSegment(conversationId, "conversation id");
+    const response = await fetch(`/api/v1/conversations/${conversationPathId}/messages`, {
       body: JSON.stringify({ text: trimmed }),
       credentials: "same-origin",
       headers: { "content-type": "application/json" },
@@ -78,8 +78,10 @@ export function ReplyComposer({
 
     setError(null);
     setIsSubmitting(true);
+    const conversationPathId = safePathSegment(conversationId, "conversation id");
+    const messagePathId = safePathSegment(lastOutboundMessage.id, "message id");
     const response = await fetch(
-      `/api/v1/conversations/${conversationId}/messages/${lastOutboundMessage.id}`,
+      `/api/v1/conversations/${conversationPathId}/messages/${messagePathId}`,
       {
         body: action === "edit" ? JSON.stringify({ text: editText }) : undefined,
         credentials: "same-origin",
@@ -105,7 +107,8 @@ export function ReplyComposer({
     setDraftReview(null);
     setIsSubmitting(true);
 
-    const response = await fetch(`/api/v1/ai/conversations/${conversationId}/reply-draft`, {
+    const conversationPathId = safePathSegment(conversationId, "conversation id");
+    const response = await fetch(`/api/v1/ai/conversations/${conversationPathId}/reply-draft`, {
       body: JSON.stringify({}),
       credentials: "same-origin",
       headers: { "content-type": "application/json" },
@@ -178,7 +181,7 @@ export function ReplyComposer({
         ))}
       </div>
 
-      <form className="composer recovery-reply-form" onSubmit={handleSubmit}>
+      <div className="composer recovery-reply-form">
         <label className="reply-field" htmlFor="patient-reply">
           <span>
             <LocalizedText k="inbox.reply.label" />
@@ -195,12 +198,13 @@ export function ReplyComposer({
         <button
           className="primary-button"
           disabled={isSubmitting || isRefreshing}
-          type="submit"
+          onClick={() => void handleSubmit()}
+          type="button"
         >
           {isSubmitting || isRefreshing ? t("inbox.reply.queueing") : t("inbox.reply.queue")}
           <Send size={16} />
         </button>
-      </form>
+      </div>
 
       <p className="blueprint-copy" id="patient-reply-help">
         <LocalizedText k="inbox.reply.help" />

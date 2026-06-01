@@ -1,6 +1,6 @@
 import { Prisma } from "@/generated/prisma";
 import { prisma } from "./prisma";
-import { structuredLog } from "./observability";
+import { captureError, structuredLog } from "./observability";
 
 const sensitiveKeyPattern = /(email|phone|name|token|secret|password|credential|message|patient)/i;
 
@@ -29,10 +29,15 @@ export async function recordProductEvent(input: {
       },
     });
   } catch (error) {
+    const captured = captureError(error, {
+      event: "analytics.event.persist_exception",
+      organizationId: input.organizationId,
+      operation: "analytics.event.persist",
+    });
     structuredLog("warn", "analytics.event.persist_failed", {
       organizationId: input.organizationId,
       event: input.event,
-      error: error instanceof Error ? error.message : String(error),
+      errorCode: captured.id,
     });
   }
 

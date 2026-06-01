@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 
 export function ResetPasswordForm({ token }: { token: string }) {
@@ -11,8 +11,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit() {
     setError(null);
 
     if (password !== confirmPassword) {
@@ -65,7 +64,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           </div>
         </div>
       ) : (
-        <form className="login-form login-form-grid" onSubmit={handleSubmit}>
+        <div className="login-form login-form-grid">
           <label className="login-field">
             <span>New password</span>
             <input
@@ -92,11 +91,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
               value={confirmPassword}
             />
           </label>
-          <button className="primary-button" disabled={isSubmitting || !token} type="submit">
+          <button className="primary-button" disabled={isSubmitting || !token} onClick={() => void handleSubmit()} type="button">
             {isSubmitting ? "Saving password..." : "Save new password"}
             {isSubmitting ? <Loader2 className="login-spin" size={16} /> : <ShieldCheck size={16} />}
           </button>
-        </form>
+        </div>
       )}
 
       {error ? <p className="login-error">{error}</p> : null}

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { Clock3, Loader2, MessageSquareText, SendHorizonal, UserRound } from "lucide-react";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { TeamNotesApiResponse, TeamNoteView } from "@/features/notes/types";
 import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
 import { translate } from "@/features/i18n/translations";
+import { safeQueryString } from "@/features/http/safe-url";
 
 function buildNotesEndpoint(input: {
   organizationId: string;
@@ -13,20 +14,14 @@ function buildNotesEndpoint(input: {
   leadId?: string;
   limit?: number;
 }) {
-  const params = new URLSearchParams({
+  const params = safeQueryString({
     organizationId: input.organizationId,
-    limit: String(input.limit ?? 50),
+    limit: input.limit ?? 50,
+    conversationId: input.conversationId,
+    leadId: input.leadId,
   });
 
-  if (input.conversationId) {
-    params.set("conversationId", input.conversationId);
-  }
-
-  if (input.leadId) {
-    params.set("leadId", input.leadId);
-  }
-
-  return `/api/v1/notes?${params.toString()}`;
+  return `/api/v1/notes?${params}`;
 }
 
 function initials(name: string) {
@@ -122,8 +117,7 @@ export function LiveNotesPanel({
     };
   }, [endpoint, languageCode]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleSubmit() {
     const nextBody = body.trim();
     if (!nextBody) {
       setFeedback(translate("notes.panel.writeBeforeSaving", languageCode));
@@ -188,7 +182,7 @@ export function LiveNotesPanel({
         </div>
       </div>
 
-      <form className="live-note-form" onSubmit={handleSubmit}>
+      <div className="live-note-form">
         <textarea
           aria-label={translate("notes.panel.textareaAria", languageCode)}
           maxLength={2000}
@@ -198,14 +192,14 @@ export function LiveNotesPanel({
         />
         <div>
           <span>{feedback}</span>
-          <button className="primary-button compact-button" disabled={isPending} type="submit">
+          <button className="primary-button compact-button" disabled={isPending} onClick={handleSubmit} type="button">
             <SendHorizonal size={15} />
             {isPending
               ? translate("notes.panel.savingButton", languageCode)
               : translate("notes.panel.addNote", languageCode)}
           </button>
         </div>
-      </form>
+      </div>
 
       <div className="live-note-list">
         {notes.map((note) => {

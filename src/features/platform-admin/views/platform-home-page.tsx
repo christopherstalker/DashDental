@@ -39,6 +39,10 @@ function formatTimestamp(value: string | null): string {
   }).format(new Date(value));
 }
 
+function platformTenantHref(organizationId: string): string {
+  return `/platform/${encodeURIComponent(organizationId)}`;
+}
+
 async function loadPlatformAdminData(): Promise<
   | {
       overview: Awaited<ReturnType<typeof getPlatformOverviewData>>;
@@ -53,9 +57,9 @@ async function loadPlatformAdminData(): Promise<
     ]);
 
     return { overview, drillCatalog };
-  } catch (error) {
+  } catch {
     return {
-      error: error instanceof Error ? error.message : "Platform admin data is unavailable.",
+      error: "Platform admin data is unavailable.",
     };
   }
 }
@@ -427,7 +431,7 @@ export default async function PlatformPage() {
                 <div className="row-actions">
                   <Link
                     className="secondary-button compact-button"
-                    href={`/platform/${integration.organizationId}`}
+                    href={platformTenantHref(integration.organizationId)}
                   >
                     Open tenant
                   </Link>
@@ -550,7 +554,7 @@ export default async function PlatformPage() {
                   {failure.organizationId ? (
                     <Link
                       className="secondary-button compact-button"
-                      href={`/platform/${failure.organizationId}`}
+                      href={platformTenantHref(failure.organizationId)}
                     >
                       Open tenant
                     </Link>
@@ -615,7 +619,7 @@ export default async function PlatformPage() {
                 <div className="row-actions">
                   <Link
                     className="secondary-button compact-button"
-                    href={`/platform/${organization.id}`}
+                    href={platformTenantHref(organization.id)}
                   >
                     Open timeline
                   </Link>
@@ -776,7 +780,7 @@ function CommercialAdminOverview({ overview }: { overview: PlatformCommercialOve
                   organizationId={clinic.id}
                   plan="scale"
                 />
-                <Link className="secondary-button compact-button" href={`/platform/${clinic.id}`}>
+                <Link className="secondary-button compact-button" href={platformTenantHref(clinic.id)}>
                   Debug
                 </Link>
               </div>

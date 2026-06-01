@@ -1,10 +1,10 @@
-import { ApiError } from "./api-error";
 import { isProductionRuntime } from "./feature-flags";
+import { captureError, structuredLog } from "./observability";
 
 export interface EmailDeliveryResult {
   error?: string;
   providerMessageId?: string;
-  status: "sent" | "skipped";
+  status: "failed" | "sent" | "skipped";
 }
 
 interface SendEmailInput {
@@ -25,6 +25,12 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function subjectContainsPatientData(subject: string): boolean {
+  return /\b(patient|dob|date of birth|diagnosis|hiv|cancer|depression|mrn|\+?\d[\d\s().-]{7,})\b/i.test(
+    subject,
+  );
+}
+
 export async function sendEmailWithResend(
   input: SendEmailInput,
 ): Promise<EmailDeliveryResult> {
@@ -33,11 +39,13 @@ export async function sendEmailWithResend(
 
   if (!apiKey || !from) {
     if (isProductionRuntime()) {
-      throw new ApiError(
-        500,
-        "Resend email delivery is not configured.",
-        "email_delivery_not_configured",
-      );
+      structuredLog("error", "email.delivery.not_configured", {
+        provider: "resend",
+      });
+      return {
+        error: "email_delivery_not_configured",
+        status: "failed",
+      };
     }
 
     return {
@@ -46,35 +54,59 @@ export async function sendEmailWithResend(
     };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      html: input.html,
-      subject: input.subject,
-      text: input.text,
-      to: input.to,
-    }),
-    cache: "no-store",
-  });
-  const payload = asRecord(await response.json().catch(() => ({})));
-
-  if (!response.ok) {
-    const message =
-      typeof payload.message === "string"
-        ? payload.message
-        : "Resend email delivery failed.";
-    throw new ApiError(502, message, "email_delivery_failed", {
-      status: response.status,
+  if (subjectContainsPatientData(input.subject)) {
+    structuredLog("warn", "email.delivery.blocked_subject", {
+      provider: "resend",
+      reason: "subject_contains_patient_data",
     });
+    return {
+      error: "email_subject_contains_patient_data",
+      status: "failed",
+    };
   }
 
-  return {
-    providerMessageId: typeof payload.id === "string" ? payload.id : undefined,
-    status: "sent",
-  };
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        html: input.html,
+        subject: input.subject,
+        text: input.text,
+        to: input.to,
+      }),
+      cache: "no-store",
+    });
+    const payload = asRecord(await response.json().catch(() => ({})));
+
+    if (!response.ok) {
+      structuredLog("warn", "email.delivery.failed", {
+        provider: "resend",
+        status: response.status,
+      });
+      return {
+        error: "email_delivery_failed",
+        status: "failed",
+      };
+    }
+
+    return {
+      providerMessageId: typeof payload.id === "string" ? payload.id : undefined,
+      status: "sent",
+    };
+  } catch (error) {
+    const captured = captureError(error, { operation: "email.delivery", provider: "resend" });
+    structuredLog("warn", "email.delivery.exception", {
+      errorCode: captured.id,
+      provider: "resend",
+    });
+    return {
+      error: "email_delivery_failed",
+      status: "failed",
+    };
+  }
 }

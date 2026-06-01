@@ -9,6 +9,7 @@ import { decryptIntegrationSecret } from "./integration-secrets";
 import { structuredLog } from "./observability";
 import { prisma } from "./prisma";
 import { enqueuePmsSyncPoll } from "./queue-runtime";
+import { withRedisLease } from "./redis-lock";
 
 export type PmsProvider = "jane_app" | "cliniko" | "mindbody";
 export type PmsConnectionStatus = "active" | "pending" | "degraded" | "disconnected";
@@ -16,6 +17,16 @@ export type PmsSyncStatus = "success" | "failed" | "skipped";
 
 const pmsProviders = new Set<PmsProvider>(["jane_app", "cliniko", "mindbody"]);
 const appointmentDeletedActions = new Set(["delete", "deleted", "destroy", "removed"]);
+const normalizedAppointmentStatuses = new Set([
+  "scheduled",
+  "confirmed",
+  "completed",
+  "canceled",
+  "deleted",
+  "no_show",
+]);
+const pmsApiTimeoutMs = 5000;
+const pmsApiAttempts = 2;
 
 export interface PmsConnectionRecord {
   id: string;
@@ -181,7 +192,29 @@ function normalizeAppointmentStatus(
     return "deleted";
   }
 
-  return firstString(appointment.status, appointment.state, appointment.appointment_status) ?? "scheduled";
+  const raw = firstString(appointment.status, appointment.state, appointment.appointment_status)
+    ?.toLowerCase()
+    .trim()
+    .replaceAll("-", "_")
+    .replaceAll(" ", "_");
+  if (!raw) {
+    return "scheduled";
+  }
+
+  if (raw === "cancelled") {
+    return "canceled";
+  }
+  if (raw === "noshow" || raw === "no_showed" || raw === "missed") {
+    return "no_show";
+  }
+  if (raw === "done" || raw === "finished") {
+    return "completed";
+  }
+  if (raw === "booked") {
+    return "confirmed";
+  }
+
+  return normalizedAppointmentStatuses.has(raw) ? raw : "scheduled";
 }
 
 function normalizeAppointmentSnapshot(input: {
@@ -629,6 +662,54 @@ function resolvePmsApiKey(provider: PmsProvider, credentials: PmsCredentialPaylo
   );
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchPmsJsonWithRetry(url: URL, apiKey: string): Promise<Record<string, unknown>> {
+  let lastStatus: number | undefined;
+
+  for (let attempt = 1; attempt <= pmsApiAttempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), pmsApiTimeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${apiKey}`,
+        },
+        signal: controller.signal,
+      });
+      lastStatus = response.status;
+
+      if (response.ok) {
+        return asRecord(await response.json());
+      }
+
+      if (attempt === pmsApiAttempts || response.status >= 400 && response.status < 500) {
+        throw new ApiError(response.status, "PMS API request failed", "pms_api_failed");
+      }
+    } catch (error) {
+      if (attempt === pmsApiAttempts || error instanceof ApiError) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw new ApiError(504, "PMS API request timed out", "pms_api_timeout");
+        }
+        if (error instanceof ApiError) {
+          throw error;
+        }
+        throw new ApiError(502, "PMS API request failed", "pms_api_failed");
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    await delay(250 * attempt);
+  }
+
+  throw new ApiError(lastStatus ?? 502, "PMS API request failed", "pms_api_failed");
+}
+
 async function fetchPmsAppointmentChanges(connection: PmsConnectionRecord) {
   const credentials = decryptPmsCredentials(connection.apiKeyEncrypted);
   const baseUrl = resolvePmsApiBaseUrl(connection.provider, credentials);
@@ -642,17 +723,7 @@ async function fetchPmsAppointmentChanges(connection: PmsConnectionRecord) {
     url.searchParams.set("updated_since", connection.lastSyncedAt.toISOString());
   }
 
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-  });
-  if (!response.ok) {
-    throw new ApiError(response.status, "PMS API request failed", "pms_api_failed");
-  }
-
-  const body = asRecord(await response.json());
+  const body = await fetchPmsJsonWithRetry(url, apiKey);
   const rows = Array.isArray(body.appointments)
     ? body.appointments
     : Array.isArray(body.data)
@@ -672,6 +743,19 @@ export async function pollPmsConnection(
   repository: PmsRepository,
   connection: PmsConnectionRecord,
   syncedAt = new Date(),
+) {
+  return withRedisLease({
+    key: `pms-sync:${connection.id}`,
+    ttlSeconds: 5 * 60,
+    onLockUnavailable: () => ({ processed: 0, skipped: true as const, reason: "lock_held" }),
+    run: () => pollPmsConnectionUnlocked(repository, connection, syncedAt),
+  });
+}
+
+async function pollPmsConnectionUnlocked(
+  repository: PmsRepository,
+  connection: PmsConnectionRecord,
+  syncedAt: Date,
 ) {
   try {
     const appointments = await fetchPmsAppointmentChanges(connection);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -18,6 +18,7 @@ import type {
   TeamNote,
   User,
 } from "@/domain/types";
+import { safePathSegment } from "@/features/http/safe-url";
 
 type ApiResult = { error?: string };
 
@@ -89,18 +90,20 @@ export function ConversationOpsPanel({
     startTransition(() => router.refresh());
   }
 
-  function submitAssignment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function conversationActionEndpoint() {
+    return `/api/v1/conversations/${safePathSegment(conversationId, "conversation id")}/actions`;
+  }
+
+  function submitAssignment() {
     void runAction("assign", () =>
-      postJson(`/api/v1/conversations/${conversationId}/actions`, {
+      postJson(conversationActionEndpoint(), {
         intent: "assign",
         assignedTo: assignee || undefined,
       }),
     );
   }
 
-  function submitNote(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submitNote() {
     const body = note.trim();
     if (!body) {
       setError("Note cannot be empty");
@@ -120,14 +123,13 @@ export function ConversationOpsPanel({
     });
   }
 
-  function submitSnooze(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submitSnooze() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(9, 0, 0, 0);
 
     void runAction("snooze", () =>
-      postJson(`/api/v1/conversations/${conversationId}/actions`, {
+      postJson(conversationActionEndpoint(), {
         intent: "snooze",
         note: reminderNote,
         remindAt: tomorrow.toISOString(),
@@ -135,8 +137,7 @@ export function ConversationOpsPanel({
     );
   }
 
-  function submitTemplate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submitTemplate() {
     void runAction("template", async () => {
       const result = await postJson("/api/v1/reply-templates", {
         title: templateTitle,
@@ -156,7 +157,7 @@ export function ConversationOpsPanel({
   return (
     <section className="ops-panel" aria-label="Conversation operations">
       <div className="ops-grid">
-        <form className="ops-card" onSubmit={submitAssignment}>
+        <div className="ops-card">
           <span>
             <UserRoundCheck size={15} />
             Assign
@@ -169,12 +170,12 @@ export function ConversationOpsPanel({
               </option>
             ))}
           </select>
-          <button className="secondary-button compact-button" disabled={loading} type="submit">
+          <button className="secondary-button compact-button" disabled={loading} onClick={submitAssignment} type="button">
             Save owner
           </button>
-        </form>
+        </div>
 
-        <form className="ops-card" onSubmit={submitNote}>
+        <div className="ops-card">
           <span>
             <FileText size={15} />
             Internal note
@@ -184,23 +185,23 @@ export function ConversationOpsPanel({
             placeholder="Visible only to clinic staff"
             value={note}
           />
-          <button className="secondary-button compact-button" disabled={loading} type="submit">
+          <button className="secondary-button compact-button" disabled={loading} onClick={submitNote} type="button">
             Add note
           </button>
-        </form>
+        </div>
 
-        <form className="ops-card" onSubmit={submitSnooze}>
+        <div className="ops-card">
           <span>
             <Clock3 size={15} />
             Snooze
           </span>
           <input value={reminderNote} onChange={(event) => setReminderNote(event.target.value)} />
-          <button className="secondary-button compact-button" disabled={loading} type="submit">
+          <button className="secondary-button compact-button" disabled={loading} onClick={submitSnooze} type="button">
             Remind tomorrow
           </button>
-        </form>
+        </div>
 
-        <form className="ops-card" onSubmit={submitTemplate}>
+        <div className="ops-card">
           <span>
             <CheckCircle2 size={15} />
             Saved reply
@@ -215,10 +216,10 @@ export function ConversationOpsPanel({
             placeholder="Reply text"
             value={templateBody}
           />
-          <button className="secondary-button compact-button" disabled={loading} type="submit">
+          <button className="secondary-button compact-button" disabled={loading} onClick={submitTemplate} type="button">
             Save template
           </button>
-        </form>
+        </div>
       </div>
 
       <div className="ops-status-row">
@@ -235,7 +236,7 @@ export function ConversationOpsPanel({
           disabled={loading}
           onClick={() =>
             void runAction("archive", () =>
-              postJson(`/api/v1/conversations/${conversationId}/actions`, {
+              postJson(conversationActionEndpoint(), {
                 intent: "archive",
               }),
             )

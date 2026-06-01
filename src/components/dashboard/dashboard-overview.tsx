@@ -45,6 +45,10 @@ function iconForActivity(label: string) {
   return MessageCircle;
 }
 
+function inboxThreadHref(conversationId?: string): string {
+  return conversationId ? `/inbox/${encodeURIComponent(conversationId)}` : "/inbox";
+}
+
 export function DashboardOverview({
   activities,
   channels,
@@ -130,7 +134,7 @@ export function DashboardOverview({
               priorityThreads.map((thread) => (
                 <Link
                   className={`ddr-priority-row ${thread.tone}`}
-                  href={thread.conversationId ? `/inbox/${thread.conversationId}` : "/inbox"}
+                  href={inboxThreadHref(thread.conversationId)}
                   key={`${thread.patientName}-${thread.waiting}`}
                 >
                   <span className={`ddr-channel-dot ${thread.channel}`}>

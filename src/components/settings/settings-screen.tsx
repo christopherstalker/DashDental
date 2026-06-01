@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { getPlanCatalog } from "@/domain/business-rules";
 import type { FeatureFlagKey, IntegrationStatus, Provider, Subscription } from "@/domain/types";
+import { safePathSegment } from "@/features/http/safe-url";
 
 export interface SettingsIntegration {
   errorState?: string;
@@ -176,16 +177,14 @@ export function SettingsScreen({
     setStatusMessage(null);
 
     try {
-      const response = await fetch(`/api/v1/integrations/${integration.id}/status`, {
+      const response = await fetch(`/api/v1/integrations/${safePathSegment(integration.id, "integration id")}/status`, {
         body: JSON.stringify({ status: nextStatus }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      const result = (await response.json().catch(() => ({}))) as { error?: string };
-
       if (!response.ok) {
-        throw new Error(result.error ?? "Could not update channel status.");
+        throw new Error("channel_status_update_failed");
       }
 
       setChannelState((current) =>
@@ -201,10 +200,10 @@ export function SettingsScreen({
         ),
       );
       setStatusMessage({ kind: "success", text: `${providerLabels[integration.provider]} updated.` });
-    } catch (error) {
+    } catch {
       setStatusMessage({
         kind: "error",
-        text: error instanceof Error ? error.message : "Could not update channel status.",
+        text: "Could not update channel status. Check credentials and try again.",
       });
     } finally {
       setLoadingChannelId(null);
@@ -238,10 +237,8 @@ export function SettingsScreen({
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      const result = (await response.json().catch(() => ({}))) as { error?: string };
-
       if (!response.ok) {
-        throw new Error(result.error ?? "Could not upgrade plan.");
+        throw new Error("plan_upgrade_failed");
       }
 
       const catalog = getPlanCatalog(nextPlan);
@@ -252,10 +249,10 @@ export function SettingsScreen({
       }));
       setStatusMessage({ kind: "success", text: `Plan upgraded to ${catalog.label}.` });
       window.setTimeout(() => router.refresh(), 250);
-    } catch (error) {
+    } catch {
       setStatusMessage({
         kind: "error",
-        text: error instanceof Error ? error.message : "Could not upgrade plan.",
+        text: "Could not open the plan upgrade flow. Try billing again in a moment.",
       });
     } finally {
       setUpgradingPlan(false);

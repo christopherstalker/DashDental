@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, Loader2, ShieldCheck } from "lucide-react";
 import type { OAuthPublicConfig } from "@/server/oauth";
@@ -114,8 +114,7 @@ export function LoginForm({
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit() {
     await signIn(
       mfaRequired ? { email, password, mfaCode } : { email, password },
       { requiresChallenge: true },
@@ -140,7 +139,7 @@ export function LoginForm({
         </a>
       ) : null}
 
-      <form className="login-form login-form-grid" onSubmit={handleSubmit}>
+      <div className="login-form login-form-grid">
         <label className="login-field">
           <span>Email</span>
           <input
@@ -195,11 +194,11 @@ export function LoginForm({
           onError={setError}
           onTokenChange={setTurnstileToken}
         />
-        <button className="primary-button" disabled={isBusy} type="submit">
+        <button className="primary-button" disabled={isBusy} onClick={() => void handleSubmit()} type="button">
           {isBusy ? "Checking access..." : "Continue to account"}
           {isBusy ? <Loader2 className="login-spin" size={16} /> : <ArrowRight size={16} />}
         </button>
-      </form>
+      </div>
 
       {error ? <p className="login-error">{error}</p> : null}
 

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { MessageDirection, Provider, SenderType } from "@/domain/types";
+import { safePathSegment } from "@/features/http/safe-url";
 
 export interface InboxTeamMember {
   id: string;
@@ -212,13 +213,9 @@ export function RedesignedInbox({
       headers: { "content-type": "application/json" },
       method: "POST",
     });
-    const result = (await response.json().catch(() => ({}))) as { error?: string };
-
     if (!response.ok) {
-      throw new Error(result.error ?? "The inbox action failed.");
+      throw new Error("inbox_action_failed");
     }
-
-    return result;
   }
 
   async function runAction(label: string, action: () => Promise<void>) {
@@ -228,10 +225,10 @@ export function RedesignedInbox({
       await action();
       setStatus({ kind: "success", text: label });
       router.refresh();
-    } catch (error) {
+    } catch {
       setStatus({
         kind: "error",
-        text: error instanceof Error ? error.message : "The inbox action failed.",
+        text: "The inbox action failed. Refresh and try again.",
       });
     } finally {
       setIsLoading(false);
@@ -276,7 +273,7 @@ export function RedesignedInbox({
     await runAction("Selected threads assigned.", async () => {
       await Promise.all(
         ids.map((id) =>
-          postJson(`/api/v1/conversations/${id}/actions`, {
+          postJson(`/api/v1/conversations/${safePathSegment(id, "conversation id")}/actions`, {
             assignedTo: currentUserId,
             intent: "assign",
           }),
@@ -305,7 +302,7 @@ export function RedesignedInbox({
 
     const member = teamMembers.find((item) => item.id === assignedTo);
     await runAction("Thread assignment updated.", async () => {
-      await postJson(`/api/v1/conversations/${activeThread.id}/actions`, {
+      await postJson(`/api/v1/conversations/${safePathSegment(activeThread.id, "conversation id")}/actions`, {
         assignedTo: assignedTo || undefined,
         intent: "assign",
       });
@@ -324,7 +321,7 @@ export function RedesignedInbox({
     }
 
     await runAction("Reminder set for tomorrow.", async () => {
-      await postJson(`/api/v1/conversations/${activeThread.id}/actions`, {
+      await postJson(`/api/v1/conversations/${safePathSegment(activeThread.id, "conversation id")}/actions`, {
         intent: "snooze",
         note: "Call back tomorrow",
         remindAt: tomorrowIso(),
@@ -341,7 +338,7 @@ export function RedesignedInbox({
     }
 
     await runAction("Reply queued.", async () => {
-      await postJson(`/api/v1/conversations/${activeThread.id}/messages`, { text: trimmed });
+      await postJson(`/api/v1/conversations/${safePathSegment(activeThread.id, "conversation id")}/messages`, { text: trimmed });
       updateThread(activeThread.id, (thread) => ({
         ...thread,
         messages: [
@@ -377,7 +374,7 @@ export function RedesignedInbox({
 
     await runAction(action === "edit" ? "Message updated." : "Last send undone.", async () => {
       const response = await fetch(
-        `/api/v1/conversations/${activeThread.id}/messages/${lastOutbound.id}`,
+        `/api/v1/conversations/${safePathSegment(activeThread.id, "conversation id")}/messages/${safePathSegment(lastOutbound.id, "message id")}`,
         {
           body: action === "edit" ? JSON.stringify({ text: nextText }) : undefined,
           credentials: "same-origin",
@@ -385,9 +382,8 @@ export function RedesignedInbox({
           method: action === "edit" ? "PATCH" : "DELETE",
         },
       );
-      const result = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
-        throw new Error(result.error ?? "Could not update the recent message.");
+        throw new Error("recent_message_update_failed");
       }
       updateThread(activeThread.id, (thread) => ({
         ...thread,

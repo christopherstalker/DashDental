@@ -5,7 +5,7 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 type LogFields = Record<string, unknown>;
 
 const sensitiveKeyPattern =
-  /(authorization|cookie|secret|token|password|signature|credential|rawbody|rawpayload|body|email|phone|text|message|patient)/i;
+  /(authorization|cookie|secret|token|password|signature|credential|rawbody|rawpayload|body|email|phone|text|message|patient|errormessage|stack|sql|query)/i;
 const safeStatusKeyPattern = /^(status|processingStatus|deliveryStatus|verificationStatus|signatureStatus)$/i;
 const redacted = "__redacted__";
 
@@ -84,8 +84,10 @@ export function captureError(
   error: unknown,
   context: LogFields & { event?: string } = {},
 ) {
+  const id = createCorrelationId("err");
   const normalized = {
     event: context.event ?? "error.captured",
+    errorId: id,
     errorName: error instanceof Error ? error.name : "Error",
     errorMessage: error instanceof Error ? error.message : String(error),
     ...context,
@@ -94,6 +96,7 @@ export function captureError(
   structuredLog("error", normalized.event, normalized);
 
   return {
+    id,
     captured: Boolean(process.env.SENTRY_DSN?.trim()),
     ...(redactForLog(normalized) as LogFields),
   };

@@ -289,6 +289,7 @@ model Membership {
 
   @@unique([userId, organizationId])
   @@index([organizationId, role])
+  @@index([organizationId, status, createdAt])
 }
 
 model TeamInviteToken {
@@ -380,6 +381,7 @@ model Conversation {
   @@unique([organizationId, provider, providerThreadId])
   @@index([organizationId, lastMessageAt])
   @@index([organizationId, contactId])
+  @@index([leadId])
 }
 
 model Message {
@@ -574,6 +576,7 @@ model MessageDelivery {
 
   @@unique([conversationId, localMessageId])
   @@index([organizationId, status, updatedAt])
+  @@index([organizationId, updatedAt])
   @@index([conversationId, status])
   @@index([provider, providerMessageId])
 }
@@ -597,6 +600,7 @@ model TeamNote {
   @@index([organizationId, createdAt])
   @@index([organizationId, conversationId, createdAt])
   @@index([organizationId, leadId, createdAt])
+  @@index([authorUserId, createdAt])
   @@index([authorMembershipId, createdAt])
 }
 
@@ -666,6 +670,7 @@ model Subscription {
   @@unique([organizationId, externalSubscriptionId])
   @@index([organizationId, lastProviderEventAt])
   @@index([organizationId, status])
+  @@index([organizationId, updatedAt])
 }
 
 model BillingEvent {
@@ -696,6 +701,7 @@ model BillingEvent {
   subscription      Subscription?      @relation(fields: [subscriptionId], references: [id])
 
   @@index([organizationId, eventCreatedAt])
+  @@index([subscriptionId])
   @@index([status, createdAt])
   @@index([externalCustomerId, eventCreatedAt])
 }
@@ -725,13 +731,14 @@ model AiInsight {
   model          String
   promptVersion  String
   confidence     Float
-  costEstimate   Float
+  costEstimate   Decimal
   createdAt      DateTime     @default(now())
   organization   Organization @relation(fields: [organizationId], references: [id])
   lead           Lead?        @relation(fields: [leadId], references: [id])
   conversation   Conversation? @relation(fields: [conversationId], references: [id])
 
   @@index([organizationId, type, createdAt])
+  @@index([leadId])
   @@index([conversationId])
 }
 
@@ -890,6 +897,8 @@ model WebhookReceipt {
 
   @@index([processingStatus, receivedAt])
   @@index([provider, receivedAt])
+  @@index([integrationId])
+  @@index([organizationId, receivedAt])
   @@index([organizationId, provider, receivedAt])
 }
 
@@ -922,6 +931,7 @@ model OutboxEvent {
 
   @@index([status, availableAt])
   @@index([partitionKey, createdAt])
+  @@index([receiptId])
   @@index([organizationId, createdAt])
 }
 

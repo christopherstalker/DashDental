@@ -970,7 +970,7 @@ export async function readAppStateFromPrisma(client: PrismaClient = prisma): Pro
         model: insight.model,
         promptVersion: insight.promptVersion,
         confidence: insight.confidence,
-        costEstimate: insight.costEstimate,
+        costEstimate: Number(insight.costEstimate),
         createdAt: insight.createdAt.toISOString(),
       }),
     ),

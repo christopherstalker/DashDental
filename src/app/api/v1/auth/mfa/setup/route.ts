@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { errorResponse } from "@/server/api-helpers";
+import { assertSameOriginRequest } from "@/server/request-security";
 import { readAppState } from "@/server/data-store";
 import {
   decodeSession,
@@ -15,8 +16,10 @@ import { writeUserCredentialRecord } from "@/server/user-credentials";
 import { addAudit } from "@/server/state-mutations";
 import { mutateAppState } from "@/server/data-store";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    assertSameOriginRequest(request);
+
     const cookieStore = await cookies();
     const sessionPayload = decodeSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
     const state = await readAppState();

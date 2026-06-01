@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { sendLaunchEvent } from "@/features/launch-analytics/components/launch-event-tracker";
 import { TurnstileChallenge } from "./turnstile-challenge";
@@ -34,8 +34,7 @@ export function RegisterForm({ turnstileSiteKey }: { turnstileSiteKey?: string }
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit() {
     setError(null);
     setIsSubmitting(true);
 
@@ -109,14 +108,13 @@ export function RegisterForm({ turnstileSiteKey }: { turnstileSiteKey?: string }
         </div>
       </div>
 
-      <form
+      <div
         className="login-form login-form-grid"
         data-launch-event="auth.register.submitted"
         data-launch-page="/register"
         data-launch-plan="starter"
         data-launch-section="registration-form"
         data-launch-target="/workspaces"
-        onSubmit={handleSubmit}
       >
         <label className="login-field">
           <span>Clinic name</span>
@@ -200,11 +198,11 @@ export function RegisterForm({ turnstileSiteKey }: { turnstileSiteKey?: string }
           onError={setError}
           onTokenChange={setTurnstileToken}
         />
-        <button className="primary-button" disabled={isSubmitting} type="submit">
+        <button className="primary-button" disabled={isSubmitting} onClick={() => void handleSubmit()} type="button">
           {isSubmitting ? "Creating account..." : "Create account"}
           {isSubmitting ? <Loader2 className="login-spin" size={16} /> : <ArrowRight size={16} />}
         </button>
-      </form>
+      </div>
 
       {error ? <p className="login-error">{error}</p> : null}
 

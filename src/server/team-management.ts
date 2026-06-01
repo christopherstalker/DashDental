@@ -2,6 +2,7 @@ import { getPlanLimits } from "@/domain/business-rules";
 import type { AppState, Membership, Role, User } from "@/domain/types";
 import { ApiError } from "./api-error";
 import { mutateAppState } from "./data-store";
+import { captureError } from "./observability";
 import { addAudit } from "./state-mutations";
 import {
   createTeamInviteInState,
@@ -245,9 +246,13 @@ export async function createClinicTeamMember(input: {
       state: deliveryState,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invite email delivery failed.";
+    const captured = captureError(error, {
+      inviteId: createdInvite.invite.id,
+      operation: "team.invite.email_delivery",
+    });
+    const message = "Invite email delivery failed.";
     const deliveryState = await markInviteEmailDelivery({
-      error: message,
+      error: captured.id,
       inviteId: createdInvite.invite.id,
       status: "failed",
     });

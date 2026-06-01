@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit --pretty false",
     "test:regression": "node --import tsx --test tests/regression/*.test.ts",
+    "eval:guardrails": "tsx scripts/eval-guardrails.ts",
     "test:e2e": "playwright test",
     "i18n:check": "tsx scripts/i18n-check.ts",
     "test:ready": "npm run lint && npm run typecheck && npm run build && npm run test:e2e",

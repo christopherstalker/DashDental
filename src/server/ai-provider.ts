@@ -153,6 +153,8 @@ function buildConversationSummaryPrompt(input: ConversationSummaryInput): string
     "You are analyzing a dental clinic lead recovery conversation for the front desk team.",
     "Return only JSON that matches the provided schema.",
     "Do not diagnose, do not invent clinical facts, and do not claim that an appointment is booked unless the transcript says so.",
+    "Be conservative: if a fact is uncertain, say it needs staff review instead of presenting it as true.",
+    "Do not include patient identifiers in recommendations unless they are already operationally necessary for the front desk.",
     "",
     `Lead name: ${input.lead.name}`,
     `Lead status: ${input.lead.status}`,

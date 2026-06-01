@@ -8,7 +8,7 @@ import {
   getSessionTokenFromRequest,
   resolveSessionContext,
 } from "./session";
-import { captureError } from "./observability";
+import { captureError, redactForLog } from "./observability";
 import { assertSameOriginRequest } from "./request-security";
 import { assertPrivilegedMfaSatisfied } from "./mfa";
 export { ApiError } from "./api-error";
@@ -42,7 +42,9 @@ export function errorResponse(error: unknown): Response {
       {
         error: error.message,
         code: error.code,
-        details: error.details,
+        details: error.details
+          ? (redactForLog(error.details) as Record<string, unknown>)
+          : undefined,
       },
       { status: error.status },
     );
@@ -68,6 +70,8 @@ export function getRequestContext(
   state: AppState,
   requiredRole: Role = "manager",
 ): RequestContext {
+  assertSameOriginRequest(request);
+
   const context = resolveSessionContext(
     state,
     decodeSession(getSessionTokenFromRequest(request)),

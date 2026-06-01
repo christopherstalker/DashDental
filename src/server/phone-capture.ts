@@ -6,7 +6,7 @@ import { isProductionRuntime } from "./feature-flags";
 import { addAudit } from "./state-mutations";
 import { acceptInboundWebhook, resolveWebhookExternalEventId } from "./webhook-pipeline";
 import { recordProductEvent } from "./product-analytics";
-import { structuredLog } from "./observability";
+import { captureError, structuredLog } from "./observability";
 
 export interface PhoneIntegrationCredentials {
   accountSid?: string;
@@ -22,6 +22,8 @@ interface ResolvedPhoneIntegration {
 }
 
 const missedCallStatuses = new Set(["busy", "canceled", "failed", "no-answer", "missed"]);
+const twilioSmsAttempts = 3;
+const twilioSmsTimeoutMs = 5000;
 
 function createRuntimeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -70,7 +72,11 @@ export function parseTwilioWebhookPayload(
   contentType: string | null,
 ): Record<string, unknown> {
   if (contentType?.includes("application/json")) {
-    return asRecord(JSON.parse(rawBody || "{}"));
+    try {
+      return asRecord(JSON.parse(rawBody || "{}"));
+    } catch {
+      throw new ApiError(400, "Twilio webhook payload is invalid", "validation_error");
+    }
   }
 
   return parseTwilioFormBody(rawBody);
@@ -282,30 +288,53 @@ async function sendTwilioSms(input: {
     body.set("From", input.credentials.phoneNumber);
   }
 
-  const response = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${input.credentials.accountSid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        authorization: `Basic ${Buffer.from(`${input.credentials.accountSid}:${input.credentials.authToken}`).toString("base64")}`,
-        "content-type": "application/x-www-form-urlencoded",
-      },
-      body,
-      cache: "no-store",
-    },
-  );
-  const payload = asRecord(await response.json().catch(() => ({})));
+  let lastReason = "twilio_sms_failed";
 
-  if (!response.ok) {
-    return {
-      status: "failed" as const,
-      reason: readString(payload.message) ?? "twilio_sms_failed",
-    };
+  for (let attempt = 1; attempt <= twilioSmsAttempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), twilioSmsTimeoutMs);
+
+    try {
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${input.credentials.accountSid}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Basic ${Buffer.from(`${input.credentials.accountSid}:${input.credentials.authToken}`).toString("base64")}`,
+            "content-type": "application/x-www-form-urlencoded",
+          },
+          body,
+          cache: "no-store",
+          signal: controller.signal,
+        },
+      );
+      const payload = asRecord(await response.json().catch(() => ({})));
+
+      if (response.ok) {
+        return {
+          status: "sent" as const,
+          providerMessageId: readString(payload.sid),
+        };
+      }
+
+      lastReason = readString(payload.code) ?? `twilio_http_${response.status}`;
+      if (response.status >= 400 && response.status < 500) {
+        break;
+      }
+    } catch (error) {
+      lastReason = error instanceof Error && error.name === "AbortError"
+        ? "twilio_sms_timeout"
+        : "twilio_sms_network_error";
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
   }
 
   return {
-    status: "sent" as const,
-    providerMessageId: readString(payload.sid),
+    status: "failed" as const,
+    reason: lastReason,
   };
 }
 
@@ -335,6 +364,13 @@ export async function acceptTwilioMissedCallWebhook(input: {
     : isProductionRuntime()
       ? "invalid"
       : "skipped";
+  if (signatureStatus === "invalid") {
+    structuredLog("warn", "twilio.signature_invalid", {
+      organizationId: resolved.integration.organizationId,
+      provider: "twilio",
+    });
+    throw new ApiError(403, "Invalid Twilio signature", "invalid_webhook_signature");
+  }
   const canonical = buildCanonicalMissedCall({
     organizationId: resolved.integration.organizationId,
     payload,
@@ -358,9 +394,13 @@ export async function acceptTwilioMissedCallWebhook(input: {
       to: canonical.patientPhone,
       body: "We saw your missed call. Reply here or call us back and the clinic team will help you book the right appointment.",
     }).catch((error) => {
+      const captured = captureError(error, {
+        operation: "twilio.sms.auto_reply",
+        organizationId: resolved.integration.organizationId,
+      });
       structuredLog("warn", "phone.auto_reply_failed", {
         organizationId: resolved.integration.organizationId,
-        error: error instanceof Error ? error.message : String(error),
+        errorCode: captured.id,
       });
       return { status: "failed" as const, reason: "phone_auto_reply_failed" };
     });

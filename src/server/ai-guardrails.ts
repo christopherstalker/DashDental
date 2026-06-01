@@ -2,12 +2,33 @@ import { estimateAiInsightCost } from "@/domain/business-rules";
 import type { AiGuardrailReview, AiInsight, Lead, Message } from "@/domain/types";
 
 const blockedPatterns: Array<{ label: string; pattern: RegExp }> = [
+  {
+    label: "phi:name_dob",
+    pattern:
+      /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b[\s\S]{0,80}\b(?:dob|date of birth|born)\b\s*:?\s*(?:\d{4}-\d{2}-\d{2}|\d{1,2}[/. -]\d{1,2}[/. -]\d{2,4})/i,
+  },
+  {
+    label: "phi:dob",
+    pattern: /\b(?:dob|date of birth|born)\b\s*:?\s*(?:\d{4}-\d{2}-\d{2}|\d{1,2}[/. -]\d{1,2}[/. -]\d{2,4})/i,
+  },
+  {
+    label: "phi:mrn",
+    pattern: /\b(?:mrn|medical record|record number)\b\s*[:#-]?\s*[A-Z0-9-]{5,}\b/i,
+  },
+  {
+    label: "phi:diagnosis_keyword",
+    pattern: /(depression|cancer|hiv|aids|diabetes|pregnant|infection|abscess|diagnóstico|diagnostico|діагноз|рак|віл|депресія)/i,
+  },
+  {
+    label: "phi:medication",
+    pattern: /\b(amoxicillin|penicillin|ibuprofen|oxycodone|hydrocodone|metformin|prozac|sertraline|antibiotic|opioid)\b/i,
+  },
   { label: "diagnosis", pattern: /\b(diagnose|diagnosis|diagnosed)\b/i },
-  { label: "prescription", pattern: /\b(prescribe|prescription|antibiotic|opioid)\b/i },
-  { label: "guarantee", pattern: /\b(guarantee|guaranteed|cure|100%)\b/i },
+  { label: "prescription", pattern: /\b(prescribe|prescription|antibiotic|opioid|prescribir|рецепт|антибіотик)\b/i },
+  { label: "guarantee", pattern: /(guarantee|guaranteed|cure|100%|garantizamos|гарантуємо)/i },
   { label: "booking certainty", pattern: /\b(appointment is booked|we have booked|confirmed booking)\b/i },
   { label: "insurance promise", pattern: /\b(insurance will cover|covered by insurance|refund guaranteed)\b/i },
-  { label: "unsafe triage", pattern: /\b(no need to see|ignore the pain|wait it out)\b/i },
+  { label: "unsafe triage", pattern: /\b(no need to see|ignore the pain|wait it out|probably fine|not urgent)\b/i },
 ];
 
 function createRuntimeId(prefix: string): string {
@@ -16,6 +37,10 @@ function createRuntimeId(prefix: string): string {
 
 function normalizeText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function hasPhiBlock(review: AiGuardrailReview): boolean {
+  return review.blockedTerms.some((term) => term.startsWith("phi:"));
 }
 
 function latestInboundMessage(messages: Message[]): Message | undefined {
@@ -52,6 +77,14 @@ export function evaluateAiReplyDraft(text: string): AiGuardrailReview {
 
   if (normalized.length > 700) {
     warnings.push("Keep patient replies under 700 characters.");
+  }
+
+  if (normalized.length > 0 && normalized.length < 12) {
+    warnings.push("Add enough context for a safe front-desk reply.");
+  }
+
+  if (/^(?:hi\s+)?[A-Z][a-z]{2,}\b[, ]/.test(normalized)) {
+    warnings.push("Avoid unnecessary patient identifiers in AI drafts.");
   }
 
   if (!/\?/.test(normalized)) {
@@ -107,12 +140,13 @@ export function createGuardedAiReplyDraft(input: {
 }): { insight: AiInsight; review: AiGuardrailReview; text: string } {
   const draft = normalizeText(buildDraftText(input.lead, input.messages));
   let review = evaluateAiReplyDraft(draft);
-  const text =
-    review.status === "blocked"
+  const text = hasPhiBlock(review)
+    ? ""
+    : review.status === "blocked"
       ? "Hi, thanks for reaching out. Our front desk can help with the next available appointment options. What phone number should we use to contact you?"
       : draft;
 
-  if (review.status === "blocked") {
+  if (text && review.status === "blocked") {
     review = evaluateAiReplyDraft(text);
   }
 
@@ -123,7 +157,7 @@ export function createGuardedAiReplyDraft(input: {
     conversationId: input.conversationId,
     type: "reply_draft",
     resultJson: {
-      draft: text,
+      draft: text || undefined,
       guardrails: review,
       intent: classifyIntent(input.messages.map((message) => message.text).join(" ")),
       recommendation: "Review the draft, adjust clinic-specific details, then send manually.",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition } from "react";
 import { CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { TeamInvitePreview } from "@/server/team-invites";
 
@@ -25,8 +25,7 @@ export function InviteAcceptForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const canAccept = preview.status === "valid";
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submit() {
     setFeedback(null);
 
     if (password !== confirmPassword) {
@@ -87,7 +86,7 @@ export function InviteAcceptForm({
         </span>
       </div>
 
-      <form className="login-form" onSubmit={submit}>
+      <div className="login-form">
         <label className="login-field">
           <span>Your name</span>
           <input
@@ -127,11 +126,11 @@ export function InviteAcceptForm({
             value={confirmPassword}
           />
         </label>
-        <button className="primary-button" disabled={!canAccept || isPending} type="submit">
+        <button className="primary-button" disabled={!canAccept || isPending} onClick={submit} type="button">
           {isPending ? "Accepting invite..." : "Accept invite"}
         </button>
         {feedback ? <p className="form-help">{feedback}</p> : null}
-      </form>
+      </div>
     </section>
   );
 }

@@ -29,6 +29,34 @@ function withEnv<T>(values: Record<string, string | undefined>, callback: () => 
   }
 }
 
+async function withEnvAsync<T>(
+  values: Record<string, string | undefined>,
+  callback: () => Promise<T>,
+): Promise<T> {
+  const previous = new Map<string, string | undefined>();
+
+  for (const [key, value] of Object.entries(values)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    return await callback();
+  } finally {
+    for (const [key, value] of previous) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
 function stripeSignature(secret: string, body: string, timestamp: number): string {
   const digest = crypto
     .createHmac("sha256", secret)
@@ -39,7 +67,7 @@ function stripeSignature(secret: string, body: string, timestamp: number): strin
 }
 
 test("structured logger redacts secrets tokens signatures and patient text", async () => {
-  const { redactForLog } = await import("../../src/server/observability");
+  const { captureError, redactForLog } = await import("../../src/server/observability");
 
   const redacted = redactForLog({
     accessToken: "token-live-secret",
@@ -62,6 +90,30 @@ test("structured logger redacts secrets tokens signatures and patient text", asy
   assert.equal(serialized.includes("My tooth hurts"), false);
   assert.match(serialized, /__redacted__/);
   assert.match(serialized, /safeStatus/);
+
+  const captured = captureError(new Error("Patient Jane Doe SELECT * FROM users"));
+  const capturedSerialized = JSON.stringify(captured);
+  assert.equal(capturedSerialized.includes("Jane Doe"), false);
+  assert.equal(capturedSerialized.includes("SELECT *"), false);
+});
+
+test("API error details are redacted before returning JSON", async () => {
+  const { ApiError, errorResponse } = await import("../../src/server/api-helpers");
+
+  const response = errorResponse(
+    new ApiError(400, "Invalid patient payload", "validation_error", {
+      patientName: "Jane Doe",
+      phone: "+15555550123",
+      field: "patientName",
+    }),
+  );
+  const payload = await response.json();
+  const serialized = JSON.stringify(payload);
+
+  assert.equal(response.status, 400);
+  assert.equal(serialized.includes("Jane Doe"), false);
+  assert.equal(serialized.includes("+15555550123"), false);
+  assert.match(serialized, /__redacted__/);
 });
 
 test("Stripe webhook verification rejects stale replay timestamps", async () => {
@@ -79,6 +131,54 @@ test("Stripe webhook verification rejects stale replay timestamps", async () => 
       false,
     );
   });
+});
+
+test("Stripe webhook route rejects malformed signed payloads without leaking parser errors", async () => {
+  const { POST } = await import("../../src/app/api/v1/webhooks/stripe/route");
+  const secret = "whsec_route_secret";
+  const body = "{not-json";
+  const timestamp = Math.floor(Date.now() / 1000);
+
+  const response = await withEnvAsync({ STRIPE_WEBHOOK_SECRET: secret }, () =>
+    POST(
+      new Request("https://dashdental.space/api/v1/webhooks/stripe", {
+        body,
+        headers: {
+          "stripe-signature": stripeSignature(secret, body, timestamp),
+        },
+        method: "POST",
+      }),
+    ),
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(payload.error, "Stripe webhook payload is invalid");
+  assert.equal(JSON.stringify(payload).includes("SyntaxError"), false);
+});
+
+test("PMS webhook route rejects malformed JSON as validation error before DB work", async () => {
+  const { POST } = await import("../../src/app/api/pms/webhook/route");
+
+  const response = await POST(
+    new Request("https://dashdental.space/api/pms/webhook", {
+      body: "{not-json",
+      method: "POST",
+    }),
+  );
+  const payload = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(payload.error, "PMS webhook payload is invalid");
+  assert.equal(JSON.stringify(payload).includes("SyntaxError"), false);
+});
+
+test("public health route uses generic unexpected error responses", async () => {
+  const source = await readFile("src/app/api/v1/health/storage/route.ts", "utf8");
+
+  assert.match(source, /captureError/);
+  assert.match(source, /Storage health check failed/);
+  assert.doesNotMatch(source, /error instanceof Error \\? error\\.message/);
 });
 
 test("runtime health summary distinguishes app up from degraded dependencies", async () => {

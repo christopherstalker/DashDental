@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { errorResponse } from "@/server/api-helpers";
+import { assertSameOriginRequest } from "@/server/request-security";
 import {
   decodeSession,
   SESSION_COOKIE_NAME,
@@ -10,6 +11,8 @@ import { requestEmailVerification } from "@/server/account-security";
 
 export async function POST(request: Request) {
   try {
+    assertSameOriginRequest(request);
+
     const state = await readAppState();
     const cookieStore = await cookies();
     const sessionPayload = decodeSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);

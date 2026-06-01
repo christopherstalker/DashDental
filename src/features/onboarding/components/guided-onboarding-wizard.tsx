@@ -68,6 +68,14 @@ const stepIcons = {
   done: CheckCircle2,
 };
 
+function onboardingStepEndpoint(step: Step): string {
+  if (!(step in stepMeta)) {
+    throw new Error("Invalid onboarding step.");
+  }
+
+  return `/api/onboarding/${step}`;
+}
+
 async function readJson(response: Response) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -170,7 +178,7 @@ export function GuidedOnboardingWizard({
                       name: form.inviteName,
                       role: form.role,
                     };
-        const response = await fetch(`/api/onboarding/${step}`, {
+        const response = await fetch(onboardingStepEndpoint(step), {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
