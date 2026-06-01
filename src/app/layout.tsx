@@ -45,7 +45,7 @@ export const metadata: Metadata = {
       {
         alt: "Dash Dental live patient inbox preview",
         height: 630,
-        url: "/opengraph-image",
+        url: "/social-preview.png?v=20260601-live-inbox",
         width: 1200,
       },
     ],
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     description:
       "Prioritize unanswered patient messages, estimate money at risk, and recover missed consults.",
-    images: ["/twitter-image"],
+    images: ["/social-preview.png?v=20260601-live-inbox"],
     title: "Dash Dental",
   },
 };
