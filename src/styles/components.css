@@ -3450,6 +3450,50 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   width: 100%;
 }
 
+.billing-action-stack {
+  align-items: stretch;
+}
+
+.billing-mfa-challenge {
+  display: grid;
+  width: min(360px, 100%);
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--accent-glow);
+}
+
+.billing-mfa-challenge label {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.billing-mfa-challenge input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.billing-mfa-challenge input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  outline: 0;
+}
+
+.billing-mfa-challenge .secondary-button {
+  justify-content: center;
+  width: 100%;
+}
+
 .checkout-shell {
   min-height: 100vh;
   display: grid;

@@ -105,6 +105,16 @@ test("privileged UI flows have API-layer role gates", () => {
   }
 });
 
+test("billing actions provide an inline MFA verification recovery path", () => {
+  const source = read("src/features/billing/components/billing-action-button.tsx");
+
+  assert.match(source, /payload\.code === "mfa_required"/);
+  assert.match(source, /setMfaRequired\(true\)/);
+  assert.match(source, /\/api\/v1\/auth\/mfa\/verify/);
+  assert.match(source, /Verify and continue/);
+  assert.match(source, /await openBillingAction\(\)/);
+});
+
 test("client bundles only read explicitly public environment variables", () => {
   const offenders = listSourceFiles(join(root, "src"))
     .filter((filePath) => readFileSync(filePath, "utf8").includes('"use client"'))
