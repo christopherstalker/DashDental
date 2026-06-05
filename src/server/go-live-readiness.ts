@@ -127,7 +127,17 @@ export function buildGoLiveReadinessPlan({
 } = {}) {
   const billingProvider = env.BILLING_PROVIDER?.trim().toLowerCase() || "manual";
   const usesManualBilling = billingProvider === "manual" || billingProvider === "hybrid";
-  const usesStripeBilling = billingProvider === "stripe" || billingProvider === "hybrid";
+  const hybridOnlineProvider = env.PADDLE_API_KEY?.trim()
+    ? "paddle"
+    : env.STRIPE_SECRET_KEY?.trim()
+      ? "stripe"
+      : undefined;
+  const usesStripeBilling =
+    billingProvider === "stripe" ||
+    (billingProvider === "hybrid" && hybridOnlineProvider === "stripe");
+  const usesPaddleBilling =
+    billingProvider === "paddle" ||
+    (billingProvider === "hybrid" && hybridOnlineProvider !== "stripe");
   const syntheticBaseUrl =
     env.SYNTHETIC_MONITOR_BASE_URL?.trim() || env.PLAYWRIGHT_BASE_URL?.trim();
 
@@ -306,10 +316,10 @@ export function buildGoLiveReadinessPlan({
       remediation:
         "Approve the production monitor tenant and cleanup policy, then set PRODUCTION_MONITOR_POLICY_APPROVED=true.",
     }),
-    check(["manual", "stripe", "hybrid"].includes(billingProvider), {
+    check(["manual", "stripe", "paddle", "hybrid"].includes(billingProvider), {
       description: "Billing provider is an expected launch mode.",
       id: "billing_provider_supported",
-      remediation: "Set BILLING_PROVIDER to manual, stripe, or hybrid.",
+      remediation: "Set BILLING_PROVIDER to manual, stripe, paddle, or hybrid.",
     }),
   ];
 
@@ -363,11 +373,41 @@ export function buildGoLiveReadinessPlan({
     );
   } else {
     checks.push({
-      description: "Stripe live-mode rehearsal is not required for manual-only launch.",
+      description: "Stripe live-mode rehearsal is not required for the selected billing provider.",
       id: "stripe_rehearsal_not_required",
       level: "warn",
-      remediation: "Run npm run stripe:rehearsal before enabling card self-serve billing.",
+      remediation: "Run npm run stripe:rehearsal only before enabling Stripe self-serve billing.",
     });
+  }
+
+  if (usesPaddleBilling) {
+    const paddlePriceIdsConfigured = ["STARTER", "GROWTH", "SCALE"].every((plan) =>
+      Boolean(env[`PADDLE_PRICE_${plan}_MONTHLY`]?.trim() || env[`PADDLE_PRICE_${plan}`]?.trim()),
+    );
+
+    checks.push(
+      check(isConfiguredProductionValue(env.PADDLE_API_KEY), {
+        description: "Paddle server API key is configured for checkout and portal calls.",
+        id: "paddle_api_key_configured",
+        remediation: "Set PADDLE_API_KEY from Paddle Developer tools > Authentication.",
+      }),
+      check(isConfiguredProductionValue(env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN), {
+        description: "Paddle client-side token is configured for Paddle.js checkout.",
+        id: "paddle_client_token_configured",
+        remediation: "Set NEXT_PUBLIC_PADDLE_CLIENT_TOKEN from Paddle client-side tokens.",
+      }),
+      check(isConfiguredProductionValue(env.PADDLE_WEBHOOK_SECRET), {
+        description: "Paddle webhook signature secret is configured.",
+        id: "paddle_webhook_secret_configured",
+        remediation: "Set PADDLE_WEBHOOK_SECRET from the Paddle notification destination.",
+      }),
+      check(paddlePriceIdsConfigured, {
+        description: "Paddle monthly price IDs are configured for Starter, Pro, and Enterprise.",
+        id: "paddle_price_ids_configured",
+        remediation:
+          "Set PADDLE_PRICE_STARTER_MONTHLY, PADDLE_PRICE_GROWTH_MONTHLY, and PADDLE_PRICE_SCALE_MONTHLY.",
+      }),
+    );
   }
 
   return {

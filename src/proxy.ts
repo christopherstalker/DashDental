@@ -16,6 +16,7 @@ function buildContentSecurityPolicy() {
     "'self'",
     "'unsafe-inline'",
     "https://challenges.cloudflare.com",
+    "https://cdn.paddle.com",
     isDevelopment ? "'unsafe-eval'" : "",
   ]
     .filter(Boolean)
@@ -27,8 +28,8 @@ function buildContentSecurityPolicy() {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://challenges.cloudflare.com",
-    "frame-src https://challenges.cloudflare.com",
+    "connect-src 'self' https://challenges.cloudflare.com https://*.paddle.com https://api.paddle.com https://sandbox-api.paddle.com",
+    "frame-src https://challenges.cloudflare.com https://*.paddle.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

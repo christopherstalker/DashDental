@@ -13,14 +13,27 @@ import {
   applyStripeBillingEventToState,
   processStripeBillingOutboxEvent,
 } from "./billing-ledger";
+import {
+  applyPaddleBillingEventToState,
+  inferPlanFromPaddleObject,
+  normalizePaddleSubscriptionStatus,
+  readPaddleCustomerId,
+  readPaddleEventId,
+  readPaddleEventType,
+  readPaddleOrganizationId,
+  readPaddleSubscriptionId,
+  resolvePaddleBillingPeriod,
+  type PaddleEvent,
+} from "./paddle";
 import { captureError, structuredLog } from "./observability";
 import { enqueueOutboxDispatch } from "./queue-runtime";
+import { getPlanLimits } from "@/domain/business-rules";
 
-type WebhookProvider = "telegram" | "meta" | "web_form" | "twilio" | "stripe";
+type WebhookProvider = "telegram" | "meta" | "web_form" | "twilio" | "stripe" | "paddle";
 type SignatureStatus = "valid" | "invalid" | "pending" | "skipped";
 
 interface DurableInboundWebhookInput {
-  provider: Exclude<WebhookProvider, "stripe">;
+  provider: Exclude<WebhookProvider, "stripe" | "paddle">;
   rawBody: string;
   payload: Record<string, unknown>;
   signatureStatus: SignatureStatus;
@@ -39,6 +52,11 @@ interface DurableStripeWebhookInput {
       object: Record<string, unknown>;
     };
   };
+}
+
+interface DurablePaddleWebhookInput {
+  rawBody: string;
+  event: PaddleEvent;
 }
 
 interface LedgerReceipt {
@@ -564,6 +582,282 @@ export async function acceptStripeWebhook(input: DurableStripeWebhookInput) {
       await processStripeBillingOutboxEvent(result.outboxEventId);
     }
   }
+
+  return result;
+}
+
+export async function acceptPaddleWebhook(input: DurablePaddleWebhookInput) {
+  const object = input.event.data;
+  const eventId = readPaddleEventId(input.event);
+  const eventType = readPaddleEventType(input.event);
+  const customerId = readPaddleCustomerId(object);
+  const subscriptionId = readPaddleSubscriptionId(object);
+  const explicitOrganizationId = readPaddleOrganizationId(object);
+  const dedupeKey = createWebhookDedupeKey({
+    provider: "paddle",
+    providerAccountKey: explicitOrganizationId ?? customerId ?? subscriptionId ?? "",
+    externalEventId: eventId,
+  });
+
+  structuredLog("info", "paddle.event.received", {
+    provider: "paddle",
+    organizationId: explicitOrganizationId,
+    externalEventId: eventId,
+    eventType,
+    customerId,
+    subscriptionId,
+  });
+
+  if (!isPrismaStorageEnabled()) {
+    let duplicate = false;
+    await mutateAppState((state) => {
+      const result = applyPaddleBillingEventToState(state, {
+        event: input.event,
+        receivedAt: input.event.occurred_at ?? new Date().toISOString(),
+      });
+      duplicate = result.duplicate;
+      return result.state;
+    });
+
+    structuredLog("info", duplicate ? "paddle.event.duplicate" : "paddle.event.processed", {
+      provider: "paddle",
+      organizationId: explicitOrganizationId,
+      externalEventId: eventId,
+      eventType,
+    });
+
+    return { duplicate, receiptId: undefined, billingEventId: undefined };
+  }
+
+  const occurredAt = input.event.occurred_at ? new Date(input.event.occurred_at) : new Date();
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.webhookReceipt.findUnique({
+      where: { dedupeKey },
+      select: { id: true },
+    });
+    if (existing) {
+      const billingEvent = await tx.billingEvent.findUnique({
+        where: { providerEventId: eventId },
+        select: { id: true },
+      });
+      return {
+        duplicate: true,
+        receiptId: existing.id,
+        billingEventId: billingEvent?.id,
+      };
+    }
+
+    const existingSubscription =
+      explicitOrganizationId || subscriptionId || customerId
+        ? await tx.subscription.findFirst({
+            where: {
+              OR: [
+                ...(explicitOrganizationId ? [{ organizationId: explicitOrganizationId }] : []),
+                ...(subscriptionId ? [{ externalSubscriptionId: subscriptionId }] : []),
+                ...(customerId ? [{ externalCustomerId: customerId }] : []),
+              ],
+            },
+            orderBy: { updatedAt: "desc" },
+          })
+        : undefined;
+    const organizationId = explicitOrganizationId ?? existingSubscription?.organizationId;
+    const receipt = await tx.webhookReceipt.create({
+      data: {
+        provider: "paddle",
+        organizationId,
+        externalEventId: eventId,
+        dedupeKey,
+        payloadJson: toJsonValue(input.event),
+        payloadSha256: sha256(input.rawBody),
+        signatureStatus: "valid",
+        processingStatus: "processed",
+        correlationId: crypto.randomUUID(),
+        providerAccountKey: organizationId ?? customerId ?? subscriptionId ?? "",
+        occurredAt,
+        firstProcessedAt: new Date(),
+        lastProcessedAt: new Date(),
+      },
+      select: { id: true },
+    });
+
+    if (!organizationId) {
+      const billingEvent = await tx.billingEvent.create({
+        data: {
+          organizationId,
+          outboxEventId: undefined,
+          provider: "paddle",
+          providerEventId: eventId,
+          providerEventType: eventType,
+          providerObjectId: readString(object.id),
+          externalCustomerId: customerId,
+          externalSubscriptionId: subscriptionId,
+          status: "skipped",
+          decision: "organization_unresolved",
+          eventCreatedAt: occurredAt,
+          rawPayloadJson: toJsonValue(input.event),
+          processedAt: new Date(),
+          resultJson: toJsonValue({ reason: "organization_unresolved" }),
+        },
+        select: { id: true },
+      });
+      return {
+        duplicate: false,
+        receiptId: receipt.id,
+        billingEventId: billingEvent.id,
+      };
+    }
+
+    const plan = inferPlanFromPaddleObject(object, existingSubscription?.plan);
+    const status = normalizePaddleSubscriptionStatus(readString(object.status), eventType);
+    const period = resolvePaddleBillingPeriod({
+      object,
+      existing: existingSubscription
+        ? {
+            id: existingSubscription.id,
+            organizationId: existingSubscription.organizationId,
+            provider: existingSubscription.provider as "stripe" | "paddle" | "manual",
+            plan: existingSubscription.plan,
+            status: existingSubscription.status as "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "read_only",
+            currentPeriodStart: existingSubscription.currentPeriodStart.toISOString(),
+            currentPeriodEnd: existingSubscription.currentPeriodEnd.toISOString(),
+            externalCustomerId: existingSubscription.externalCustomerId,
+            externalSubscriptionId: existingSubscription.externalSubscriptionId,
+          }
+        : undefined,
+      receivedAt: occurredAt.toISOString(),
+    });
+    const externalSubscriptionId = subscriptionId ?? existingSubscription?.externalSubscriptionId ?? eventId;
+    const subscription = existingSubscription
+      ? await tx.subscription.update({
+          where: { id: existingSubscription.id },
+          data: {
+            provider: "paddle",
+            plan,
+            status,
+            externalCustomerId: customerId ?? existingSubscription.externalCustomerId,
+            externalSubscriptionId,
+            currentPeriodStart: new Date(period.currentPeriodStart),
+            currentPeriodEnd: new Date(period.currentPeriodEnd),
+            lastProviderEventId: eventId,
+            lastProviderEventType: eventType,
+            lastProviderEventAt: occurredAt,
+            lastSyncedAt: new Date(),
+          },
+        })
+      : await tx.subscription.create({
+          data: {
+            organizationId,
+            provider: "paddle",
+            plan,
+            status,
+            externalCustomerId: customerId ?? "",
+            externalSubscriptionId,
+            currentPeriodStart: new Date(period.currentPeriodStart),
+            currentPeriodEnd: new Date(period.currentPeriodEnd),
+            lastProviderEventId: eventId,
+            lastProviderEventType: eventType,
+            lastProviderEventAt: occurredAt,
+            lastSyncedAt: new Date(),
+          },
+        });
+
+    await tx.subscription.updateMany({
+      where: {
+        organizationId,
+        id: { not: subscription.id },
+        status: { in: ["active", "trialing", "past_due", "unpaid", "read_only"] },
+      },
+      data: {
+        status: "canceled",
+        lastProviderEventId: eventId,
+        lastProviderEventType: eventType,
+        lastProviderEventAt: occurredAt,
+        lastSyncedAt: new Date(),
+      },
+    });
+
+    await tx.usageLimit.upsert({
+      where: { organizationId },
+      create: {
+        organizationId,
+        ...getPlanLimits(plan),
+        periodUsageJson: { users: 0, integrations: 0, messages: 0, aiRuns: 0 },
+      },
+      update: getPlanLimits(plan),
+    });
+
+    const resultJson = {
+      state: "billing-synced",
+      subscriptionId: subscription.id,
+      status,
+      plan,
+    };
+    const billingEvent = await tx.billingEvent.create({
+      data: {
+        organizationId,
+        subscriptionId: subscription.id,
+        outboxEventId: undefined,
+        provider: "paddle",
+        providerEventId: eventId,
+        providerEventType: eventType,
+        providerObjectId: readString(object.id),
+        externalCustomerId: customerId,
+        externalSubscriptionId,
+        status: "processed",
+        decision: "applied",
+        eventCreatedAt: occurredAt,
+        rawPayloadJson: toJsonValue(input.event),
+        processedAt: new Date(),
+        resultJson: toJsonValue(resultJson),
+      },
+      select: { id: true },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        organizationId,
+        actorUserId: "system",
+        action: "billing.subscription_changed",
+        entityType: "subscription",
+        entityId: subscription.id,
+        metadataJson: toJsonValue({
+          source: "paddle",
+          sourceProviderEventId: eventId,
+          sourceProviderEventType: eventType,
+          previous: existingSubscription
+            ? {
+                plan: existingSubscription.plan,
+                status: existingSubscription.status,
+                externalCustomerId: existingSubscription.externalCustomerId,
+                externalSubscriptionId: existingSubscription.externalSubscriptionId,
+              }
+            : null,
+          next: {
+            plan,
+            status,
+            externalCustomerId: subscription.externalCustomerId,
+            externalSubscriptionId: subscription.externalSubscriptionId,
+          },
+        }),
+        ip: "paddle-webhook",
+      },
+    });
+
+    return {
+      duplicate: false,
+      receiptId: receipt.id,
+      billingEventId: billingEvent.id,
+    };
+  });
+
+  structuredLog("info", result.duplicate ? "paddle.event.duplicate" : "paddle.event.processed", {
+    provider: "paddle",
+    organizationId: explicitOrganizationId,
+    externalEventId: eventId,
+    eventType,
+    receiptId: result.receiptId,
+    billingEventId: result.billingEventId,
+  });
 
   return result;
 }

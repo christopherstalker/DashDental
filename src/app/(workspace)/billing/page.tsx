@@ -30,9 +30,12 @@ import {
   getBillingProvider,
   getManualBillingDetails,
   getManualBillingMissingFields,
+  getOnlineBillingProvider,
+  getOnlineBillingProviderLabel,
   isManualBillingConfigured,
   shouldShowManualBilling,
 } from "@/server/manual-billing";
+import { isPaddleCheckoutConfigured } from "@/server/paddle";
 import { isStripeConfigured } from "@/server/stripe";
 import { BillingActionButton } from "@/features/billing/components/billing-action-button";
 import { ManualInvoiceButton } from "@/features/billing/components/manual-invoice-button";
@@ -71,12 +74,19 @@ export default async function BillingPage({
       integration.organizationId === organization.id && integration.status === "active",
   ).length;
   const billingProvider = getBillingProvider();
-  const stripeConfigured = isStripeConfigured();
+  const onlineBillingProvider = getOnlineBillingProvider();
+  const onlineBillingProviderLabel = getOnlineBillingProviderLabel();
+  const onlineBillingConfigured =
+    onlineBillingProvider === "paddle"
+      ? isPaddleCheckoutConfigured()
+      : onlineBillingProvider === "stripe"
+        ? isStripeConfigured()
+        : false;
   const manualBillingDetails = getManualBillingDetails();
   const manualBillingConfigured = isManualBillingConfigured(manualBillingDetails);
   const manualBillingMissingFields = getManualBillingMissingFields(manualBillingDetails);
   const manualBillingVisible = shouldShowManualBilling();
-  const canUseStripeCheckout = stripeConfigured;
+  const canUseOnlineCheckout = Boolean(onlineBillingProvider && onlineBillingConfigured);
   const canUseManualBilling = manualBillingVisible && manualBillingConfigured;
   const callbackParams = await searchParams;
   const checkoutStatus = readQueryParam(callbackParams.checkout);
@@ -87,8 +97,11 @@ export default async function BillingPage({
     plan: activePlan,
     details: manualBillingDetails,
   });
-  const hasLiveStripeCustomer = Boolean(
-    subscription.externalCustomerId && !subscription.externalCustomerId.startsWith("cus_demo"),
+  const hasLiveOnlineCustomer = Boolean(
+    subscription.externalCustomerId &&
+      (onlineBillingProvider === "paddle"
+        ? subscription.externalCustomerId.startsWith("ctm_")
+        : !subscription.externalCustomerId.startsWith("cus_demo")),
   );
   const planCatalog = getPlanCatalog(activePlan);
   const nowIso = new Date().toISOString();
@@ -172,7 +185,7 @@ export default async function BillingPage({
           <CreditCard size={16} />
           <span>
             {checkoutStatus === "success"
-              ? `Checkout completed for ${checkoutPlan ?? "selected"} plan. Stripe webhook will activate the subscription after payment confirmation.`
+              ? `Checkout completed for ${checkoutPlan ?? "selected"} plan. ${onlineBillingProviderLabel} webhook will activate the subscription after payment confirmation.`
               : checkoutStatus === "cancelled"
                 ? "Checkout was cancelled. You can retry card checkout or use the bank-transfer invoice path."
                 : "Billing portal closed. Subscription changes are reflected after provider confirmation."}
@@ -196,7 +209,7 @@ export default async function BillingPage({
           </p>
         </div>
         <div className="dashboard-command-actions">
-          {canUseStripeCheckout ? (
+          {canUseOnlineCheckout ? (
             <BillingActionButton
               className="primary-button"
               disabled={subscriptionPaidActive}
@@ -214,7 +227,7 @@ export default async function BillingPage({
           ) : null}
           {manualBillingVisible ? (
             <ManualInvoiceButton
-              className={canUseStripeCheckout ? "secondary-button" : "primary-button"}
+              className={canUseOnlineCheckout ? "secondary-button" : "primary-button"}
               disabled={!canUseManualBilling || subscriptionPaidActive}
               label={
                 subscriptionPaidActive ? (
@@ -228,19 +241,19 @@ export default async function BillingPage({
               organizationId={organization.id}
               plan={activePlan}
             />
-          ) : !canUseStripeCheckout ? (
+          ) : !canUseOnlineCheckout ? (
             <BillingActionButton
               className="primary-button"
-              disabled={!stripeConfigured || !hasLiveStripeCustomer}
-              label={<LocalizedText k="billing.action.manageStripe" />}
+              disabled={!onlineBillingConfigured || !hasLiveOnlineCustomer}
+              label="Manage billing"
               mode="portal"
               organizationId={organization.id}
             />
           ) : null}
-          {!manualBillingVisible && subscriptionPaidActive && hasLiveStripeCustomer ? (
+          {!manualBillingVisible && subscriptionPaidActive && hasLiveOnlineCustomer ? (
             <BillingActionButton
               className="secondary-button"
-              label={<LocalizedText k="billing.action.manageStripe" />}
+              label="Manage billing"
               mode="portal"
               organizationId={organization.id}
             />
@@ -261,9 +274,9 @@ export default async function BillingPage({
           <div className="billing-value-note">
             <strong>Current payment route</strong>
             <p>
-              Owners can start a paid plan from this Billing page before the trial expires.
-              Manual bank transfer is the active release path; Stripe checkout can be enabled
-              later without changing the workspace model.
+              Owners can start a paid plan from this Billing page before the trial expires.{" "}
+              {onlineBillingProviderLabel} checkout is the self-serve path; manual bank transfer
+              remains available when the release mode includes invoice fallback.
             </p>
           </div>
           <div className="billing-status-card manual-bank-card">
@@ -288,7 +301,7 @@ export default async function BillingPage({
             <span>4. Workspace unlocks for the paid period</span>
           </div>
           <div className="dashboard-command-actions">
-            {canUseStripeCheckout ? (
+            {canUseOnlineCheckout ? (
               <BillingActionButton
                 className="primary-button"
                 disabled={subscriptionPaidActive}
@@ -306,7 +319,7 @@ export default async function BillingPage({
             ) : null}
             {manualBillingVisible ? (
               <ManualInvoiceButton
-                className={canUseStripeCheckout ? "secondary-button" : "primary-button"}
+                className={canUseOnlineCheckout ? "secondary-button" : "primary-button"}
                 disabled={!canUseManualBilling || subscriptionPaidActive}
                 label={
                   subscriptionPaidActive ? (
@@ -318,10 +331,10 @@ export default async function BillingPage({
                 organizationId={organization.id}
                 plan={activePlan}
               />
-            ) : !canUseStripeCheckout ? (
+            ) : !canUseOnlineCheckout ? (
               <BillingActionButton
                 className="primary-button"
-                disabled={!stripeConfigured}
+                disabled={!onlineBillingConfigured}
                 label="Launch checkout"
                 mode="checkout"
                 organizationId={organization.id}
@@ -346,7 +359,7 @@ export default async function BillingPage({
                 ? <>{subscriptionDaysLabel} <LocalizedText k="billing.metric.beforeLock" /></>
                 : <><LocalizedText k="billing.metric.lockedAfter" /> {formatDate(subscription.currentPeriodEnd)}</>
           }
-          value={manualBillingVisible ? <LocalizedText k="billing.metric.bankTransfer" /> : "Stripe"}
+          value={manualBillingVisible ? <LocalizedText k="billing.metric.bankTransfer" /> : onlineBillingProviderLabel}
         />
         <MetricTile
           icon={CircleDollarSign}
@@ -409,7 +422,7 @@ export default async function BillingPage({
               manualBillingVisible ? (
                 <>IBAN / SWIFT <LocalizedText k="billing.metric.bankTransfer" /></>
               ) : (
-                "Stripe Billing"
+                `${onlineBillingProviderLabel} Billing`
               )
             }
           />
@@ -425,7 +438,7 @@ export default async function BillingPage({
               <InfoLine label={<LocalizedText k="billing.section.support" />} value={manualBillingDetails.supportEmail} />
             </>
           ) : (
-            <InfoLine label={<LocalizedText k="billing.common.stripeCustomer" />} value={hasLiveStripeCustomer ? subscription.externalCustomerId : <LocalizedText k="billing.common.notConnected" />} />
+            <InfoLine label={`${onlineBillingProviderLabel} customer`} value={hasLiveOnlineCustomer ? subscription.externalCustomerId : <LocalizedText k="billing.common.notConnected" />} />
           )}
           <InfoLine label={<LocalizedText k="billing.section.currentPeriod" />} value={`${formatDate(subscription.currentPeriodStart)} - ${formatDate(subscription.currentPeriodEnd)}`} />
           <InfoLine label={<LocalizedText k="billing.section.billingStatus" />} value={subscriptionAccessStatus.replaceAll("_", " ")} />
@@ -448,11 +461,11 @@ export default async function BillingPage({
               </span>
             </div>
           ) : null}
-          {!manualBillingVisible && !stripeConfigured ? (
+          {!manualBillingVisible && !onlineBillingConfigured ? (
             <div className="limit-alert warning">
               <AlertTriangle size={16} />
               <span>
-                <LocalizedText k="billing.common.stripeEnvWarning" />
+                Configure {onlineBillingProviderLabel} API key, client token, webhook secret, and price IDs before enabling self-serve checkout.
               </span>
             </div>
           ) : null}
@@ -592,7 +605,7 @@ export default async function BillingPage({
                     </small>
                   ))}
                 </div>
-                {canUseStripeCheckout ? (
+                {canUseOnlineCheckout ? (
                   <BillingActionButton
                     disabled={isCurrentPlan && subscriptionPaidActive}
                     label={
@@ -621,9 +634,9 @@ export default async function BillingPage({
                     organizationId={organization.id}
                     plan={plan}
                   />
-                ) : !canUseStripeCheckout ? (
+                ) : !canUseOnlineCheckout ? (
                   <BillingActionButton
-                    disabled={!stripeConfigured || isCurrentPlan}
+                    disabled={!onlineBillingConfigured || isCurrentPlan}
                     label={isCurrentPlan ? <LocalizedText k="billing.action.currentPlan" /> : <LocalizedText k="billing.action.launchCheckout" />}
                     mode="checkout"
                     organizationId={organization.id}
@@ -696,7 +709,7 @@ function createFallbackSubscription(organizationId: string): Subscription {
   return {
     id: `sub-${organizationId || "fallback"}`,
     organizationId,
-    provider: "stripe",
+    provider: "manual",
     plan: "starter",
     status: "past_due",
     currentPeriodStart: nowIso,

@@ -3236,6 +3236,51 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   width: 100%;
 }
 
+.checkout-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-8);
+  background:
+    radial-gradient(circle at 20% 20%, var(--accent-glow), transparent 32%),
+    var(--bg-base);
+  color: var(--text-primary);
+}
+
+.checkout-card {
+  width: min(720px, 100%);
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-8);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.checkout-card h1 {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.checkout-card .billing-value-note {
+  display: grid;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.spin-icon {
+  animation: ddr-spin 900ms linear infinite;
+}
+
+@keyframes ddr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Inbox */
 .ddr-inbox {
   display: grid;

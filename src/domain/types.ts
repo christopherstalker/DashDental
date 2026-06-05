@@ -302,7 +302,7 @@ export interface DataAccessContract {
 export interface Subscription {
   id: string;
   organizationId: string;
-  provider: "stripe" | "manual";
+  provider: "stripe" | "paddle" | "manual";
   plan: "starter" | "growth" | "scale";
   status: "trialing" | "active" | "past_due" | "canceled" | "unpaid" | "read_only";
   currentPeriodStart: string;
@@ -316,7 +316,7 @@ export interface BillingEvent {
   organizationId?: string;
   subscriptionId?: string;
   outboxEventId?: string;
-  provider: "stripe" | "manual";
+  provider: "stripe" | "paddle" | "manual";
   providerEventId: string;
   providerEventType: string;
   providerObjectId?: string;

@@ -13,7 +13,6 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { getPlanCatalog } from "@/domain/business-rules";
 import type { FeatureFlagKey, IntegrationStatus, Provider, Subscription } from "@/domain/types";
@@ -153,9 +152,8 @@ export function SettingsScreen({
   templates: SettingsTemplate[];
   timezone: string;
 }) {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
-  const [billingState, setBillingState] = useState(billing);
+  const [billingState] = useState(billing);
   const [channelState, setChannelState] = useState(integrations);
   const [loadingChannelId, setLoadingChannelId] = useState<string | null>(null);
   const [upgradingPlan, setUpgradingPlan] = useState(false);
@@ -231,24 +229,18 @@ export function SettingsScreen({
     setStatusMessage(null);
 
     try {
-      const response = await fetch("/api/v1/billing/subscription/plan", {
+      const response = await fetch("/api/v1/billing/checkout-session", {
         body: JSON.stringify({ organizationId, plan: nextPlan }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { url?: string };
+      if (!response.ok || !payload.url) {
         throw new Error("plan_upgrade_failed");
       }
 
-      const catalog = getPlanCatalog(nextPlan);
-      setBillingState((current) => ({
-        ...current,
-        plan: nextPlan,
-        planLabel: catalog.label,
-      }));
-      setStatusMessage({ kind: "success", text: `Plan upgraded to ${catalog.label}.` });
-      window.setTimeout(() => router.refresh(), 250);
+      window.location.assign(payload.url);
     } catch {
       setStatusMessage({
         kind: "error",

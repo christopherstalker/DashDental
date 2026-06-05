@@ -25,7 +25,7 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 | `INCIDENT_ESCALATION_EMAIL` | server | yes | Urgent incident escalation. | Security/support routing. |
 | `RESEND_API_KEY` | server | yes | Sends clinic team invitation emails. | Resend API key vault. |
 | `EMAIL_FROM` | server | yes | Verified sender used for team invites. | Resend verified domain/sender. |
-| `BILLING_PROVIDER` | server | yes | `manual`, `stripe`, or `hybrid`. | Release decision. |
+| `BILLING_PROVIDER` | server | yes | `manual`, `paddle`, `stripe`, or `hybrid`. | Release decision. |
 
 ## Launch approval gates
 
@@ -43,6 +43,7 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 - `SYNTHETIC_MONITOR_SCHEDULED`
 - `PRODUCTION_MONITOR_POLICY_APPROVED`
 - `MANUAL_INVOICE_TEMPLATE_APPROVED` when using manual billing
+- `PADDLE_API_KEY`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_WEBHOOK_SECRET`, and `PADDLE_PRICE_*` when using Paddle billing
 
 Do not set these to `true` until the external action is actually complete.
 

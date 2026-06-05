@@ -43,6 +43,7 @@ enum Provider {
 
 enum WebhookProvider {
   stripe
+  paddle
   telegram
   meta
   web_form
@@ -677,7 +678,7 @@ model BillingEvent {
   id                String             @id @default(cuid())
   organizationId    String?
   subscriptionId    String?
-  outboxEventId     String             @unique
+  outboxEventId     String?            @unique
   provider          String             @default("stripe")
   providerEventId   String             @unique
   providerEventType String

@@ -6,6 +6,8 @@ import {
   readJsonObject,
 } from "@/server/api-helpers";
 import { optionalString, requiredSubscriptionPlan } from "@/server/validation";
+import { getOnlineBillingProvider } from "@/server/manual-billing";
+import { createPaddleCheckoutSession } from "@/server/paddle";
 import { createStripeCheckoutSession } from "@/server/stripe";
 import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
 
@@ -24,14 +26,25 @@ export async function POST(request: Request) {
       (item) => item.organizationId === organizationId,
     );
 
-    const session = await createStripeCheckoutSession({
-      requestUrl: request.url,
-      organizationId,
-      organizationName: organization?.name ?? organizationId,
-      userEmail: context.user.email,
-      plan: requiredSubscriptionPlan(payload),
-      customerId: subscription?.externalCustomerId,
-    });
+    const plan = requiredSubscriptionPlan(payload);
+    const provider = getOnlineBillingProvider();
+    const session =
+      provider === "paddle"
+        ? await createPaddleCheckoutSession({
+            requestUrl: request.url,
+            organizationId,
+            organizationName: organization?.name ?? organizationId,
+            userEmail: context.user.email,
+            plan,
+          })
+        : await createStripeCheckoutSession({
+            requestUrl: request.url,
+            organizationId,
+            organizationName: organization?.name ?? organizationId,
+            userEmail: context.user.email,
+            plan,
+            customerId: subscription?.externalCustomerId,
+          });
 
     return Response.json(session);
   } catch (error) {

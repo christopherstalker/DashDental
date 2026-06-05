@@ -1,7 +1,7 @@
 import { getPlanCatalog } from "@/domain/business-rules";
 import type { Organization, Subscription } from "@/domain/types";
 
-export type BillingProvider = "stripe" | "manual" | "hybrid";
+export type BillingProvider = "stripe" | "paddle" | "manual" | "hybrid";
 
 export interface ManualBillingDetails {
   provider: "manual";
@@ -36,11 +36,43 @@ function readEnv(key: string): string {
 
 export function getBillingProvider(): BillingProvider {
   const value = readEnv("BILLING_PROVIDER").toLowerCase();
-  if (value === "stripe" || value === "manual" || value === "hybrid") {
+  if (value === "stripe" || value === "paddle" || value === "manual" || value === "hybrid") {
     return value;
   }
 
+  if (readEnv("PADDLE_API_KEY")) {
+    return "paddle";
+  }
+
   return readEnv("STRIPE_SECRET_KEY") ? "stripe" : "manual";
+}
+
+export function getOnlineBillingProvider(): "paddle" | "stripe" | undefined {
+  const provider = getBillingProvider();
+  if (provider === "paddle" || provider === "stripe") {
+    return provider;
+  }
+  if (provider !== "hybrid") {
+    return undefined;
+  }
+  if (readEnv("PADDLE_API_KEY")) {
+    return "paddle";
+  }
+  if (readEnv("STRIPE_SECRET_KEY")) {
+    return "stripe";
+  }
+  return undefined;
+}
+
+export function getOnlineBillingProviderLabel(): "Paddle" | "Stripe" | "Online billing" {
+  const provider = getOnlineBillingProvider();
+  if (provider === "paddle") {
+    return "Paddle";
+  }
+  if (provider === "stripe") {
+    return "Stripe";
+  }
+  return "Online billing";
 }
 
 export function getManualBillingDetails(): ManualBillingDetails {

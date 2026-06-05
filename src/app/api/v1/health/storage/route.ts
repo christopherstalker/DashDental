@@ -1,8 +1,9 @@
 import { ApiError } from "@/server/api-error";
 import { getStorageConfiguration } from "@/server/data-store";
-import { getBillingProvider } from "@/server/manual-billing";
+import { getBillingProvider, getOnlineBillingProvider } from "@/server/manual-billing";
 import { captureError } from "@/server/observability";
 import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
+import { isPaddleCheckoutConfigured } from "@/server/paddle";
 import { isStripeConfigured } from "@/server/stripe";
 import { prisma } from "@/server/prisma";
 import {
@@ -28,7 +29,15 @@ export async function GET(request: Request) {
           };
     const metrics = await collectRuntimeMetrics();
     const billingProvider = getBillingProvider();
-    const stripeRequired = billingProvider === "stripe" || billingProvider === "hybrid";
+    const onlineBillingProvider = getOnlineBillingProvider();
+    const onlineBillingRequired =
+      billingProvider === "stripe" || billingProvider === "paddle" || billingProvider === "hybrid";
+    const onlineBillingConfigured =
+      onlineBillingProvider === "paddle"
+        ? isPaddleCheckoutConfigured()
+        : onlineBillingProvider === "stripe"
+          ? isStripeConfigured()
+          : false;
     const health = summarizeRuntimeHealth({
       productionRuntime: configuration.productionRuntime,
       storage: {
@@ -38,9 +47,9 @@ export async function GET(request: Request) {
       },
       queue: getQueueHealthInput(),
       stripe: {
-        configured: isStripeConfigured(),
+        configured: onlineBillingConfigured,
         provider: billingProvider,
-        required: stripeRequired,
+        required: onlineBillingRequired,
       },
       metrics,
     });
