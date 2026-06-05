@@ -38,6 +38,10 @@ import {
 import { isPaddleCheckoutConfigured } from "@/server/paddle";
 import { isStripeConfigured } from "@/server/stripe";
 import { BillingActionButton } from "@/features/billing/components/billing-action-button";
+import {
+  BillingPlanSelector,
+  type BillingPlanOption,
+} from "@/features/billing/components/billing-plan-selector";
 import { ManualInvoiceButton } from "@/features/billing/components/manual-invoice-button";
 import { MetricTile } from "@/features/design-system/components/metric-tile";
 import { PageHeader } from "@/features/design-system/components/page-header";
@@ -45,6 +49,7 @@ import { SurfaceCard } from "@/features/design-system/components/surface-card";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import type { TranslationKey } from "@/features/i18n/translations";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
+import { getBillingProviderDiagnostics } from "@/server/billing-diagnostics";
 
 const plans: Subscription["plan"][] = ["starter", "growth", "scale"];
 const publicPricingUrl = "https://dashdental.space/pricing";
@@ -76,6 +81,7 @@ export default async function BillingPage({
   const billingProvider = getBillingProvider();
   const onlineBillingProvider = getOnlineBillingProvider();
   const onlineBillingProviderLabel = getOnlineBillingProviderLabel();
+  const billingDiagnostics = getBillingProviderDiagnostics();
   const onlineBillingConfigured =
     onlineBillingProvider === "paddle"
       ? isPaddleCheckoutConfigured()
@@ -87,6 +93,11 @@ export default async function BillingPage({
   const manualBillingMissingFields = getManualBillingMissingFields(manualBillingDetails);
   const manualBillingVisible = shouldShowManualBilling();
   const canUseOnlineCheckout = Boolean(onlineBillingProvider && onlineBillingConfigured);
+  const annualCheckoutAvailable =
+    onlineBillingProvider === "paddle" &&
+    billingDiagnostics.checks.some(
+      (check) => check.id === "paddle_yearly_prices" && check.level === "pass",
+    );
   const canUseManualBilling = manualBillingVisible && manualBillingConfigured;
   const callbackParams = await searchParams;
   const checkoutStatus = readQueryParam(callbackParams.checkout);
@@ -123,6 +134,21 @@ export default async function BillingPage({
   );
   const subscriptionTrialActive = subscriptionAccessActive && subscriptionAccessStatus === "trialing";
   const estimatedRecoveredRevenue = organization.averagePatientValue * 8;
+  const billingPlanOptions: BillingPlanOption[] = plans.map((plan) => {
+    const catalog = getPlanCatalog(plan);
+    const limits = getPlanLimits(plan);
+
+    return {
+      annualPrice: getAnnualPlanPrice(plan),
+      included: [...catalog.included],
+      isCurrentPlan: plan === activePlan,
+      label: catalog.label,
+      limits,
+      monthlyPrice: catalog.monthlyPrice,
+      plan,
+      summary: catalog.summary,
+    };
+  });
   const usageLines = [
     {
       icon: Users,
@@ -196,29 +222,36 @@ export default async function BillingPage({
       <section className="dashboard-command">
         <div>
           <p className="eyebrow">
-            <LocalizedText k="billing.command.kicker" />
+            Billing command center
           </p>
           <strong>
-            {planCatalog.label} <LocalizedText k="billing.common.plan" /> ${planCatalog.monthlyPrice}/
-            <LocalizedText k="billing.common.monthShort" />.{" "}
-            <LocalizedText k="billing.command.cover" />
+            {planCatalog.label} is {subscriptionAccessStatus.replaceAll("_", " ")}.
+            {subscriptionTrialActive
+              ? ` ${subscriptionDaysRemaining} trial days remain before paid access is required.`
+              : subscriptionPaidActive
+                ? " Paid workspace access is active."
+                : " Workspace access is billing-only until a paid subscription is active."}
           </strong>
           <p className="blueprint-copy">
-            <LocalizedText k="billing.command.target" />{" "}
+            Self-serve payments run through {onlineBillingProviderLabel}; Paddle webhooks provision
+            plan limits automatically after checkout. Expected recovery target this month:{" "}
             {formatCurrency(estimatedRecoveredRevenue, organization)}.
           </p>
         </div>
         <div className="dashboard-command-actions">
-          {canUseOnlineCheckout ? (
+          {subscriptionPaidActive && hasLiveOnlineCustomer ? (
             <BillingActionButton
               className="primary-button"
-              disabled={subscriptionPaidActive}
+              label={`Manage in ${onlineBillingProviderLabel}`}
+              mode="portal"
+              organizationId={organization.id}
+            />
+          ) : canUseOnlineCheckout ? (
+            <BillingActionButton
+              className="primary-button"
+              disabled={!billingDiagnostics.selfServeCheckoutReady}
               label={
-                subscriptionPaidActive ? (
-                  <LocalizedText k="billing.action.planActive" />
-                ) : (
-                  <LocalizedText k="billing.action.launchCheckout" />
-                )
+                subscriptionTrialActive ? "Activate paid plan" : "Open checkout"
               }
               mode="checkout"
               organizationId={organization.id}
@@ -241,22 +274,6 @@ export default async function BillingPage({
               organizationId={organization.id}
               plan={activePlan}
             />
-          ) : !canUseOnlineCheckout ? (
-            <BillingActionButton
-              className="primary-button"
-              disabled={!onlineBillingConfigured || !hasLiveOnlineCustomer}
-              label="Manage billing"
-              mode="portal"
-              organizationId={organization.id}
-            />
-          ) : null}
-          {!manualBillingVisible && subscriptionPaidActive && hasLiveOnlineCustomer ? (
-            <BillingActionButton
-              className="secondary-button"
-              label="Manage billing"
-              mode="portal"
-              organizationId={organization.id}
-            />
           ) : null}
           <Link className="secondary-button" href={publicPricingUrl}>
             <LocalizedText k="billing.action.publicPricing" />
@@ -265,23 +282,27 @@ export default async function BillingPage({
       </section>
 
       <SurfaceCard
-        description="Every new clinic starts with a 14-day free trial. When the period ends, inbox, dashboard, integrations, AI, exports, and settings lock immediately until a paid plan is active."
-        eyebrow="Trial and payment"
-        title="Free for 14 days, then Dash Dental is paid."
+        description="Trial, checkout, portal, and webhook sync are visible in one place so billing problems are caught before a clinic loses access."
+        eyebrow="Payment system"
+        title="Self-serve billing with a hard access lock."
         wide
       >
         <div className="billing-purchase-flow">
           <div className="billing-value-note">
-            <strong>Current payment route</strong>
+            <strong>Access policy</strong>
             <p>
-              Owners can start a paid plan from this Billing page before the trial expires.{" "}
-              {onlineBillingProviderLabel} checkout is the self-serve path; manual bank transfer
-              remains available when the release mode includes invoice fallback.
+              Every clinic gets 14 trial days. When the period ends, workspace data locks
+              immediately unless Paddle confirms an active paid subscription. Billing,
+              workspace selection, and logout remain available.
+            </p>
+            <p>
+              Current route: <strong>{billingDiagnostics.onlineProviderLabel}</strong>. Provider
+              mode: <strong>{billingDiagnostics.providerMode}</strong>.
             </p>
           </div>
           <div className="billing-status-card manual-bank-card">
             <InfoLine
-              label="Trial"
+              label="Access state"
               value={
                 subscriptionTrialActive
                   ? `${subscriptionDaysRemaining} days left`
@@ -290,28 +311,36 @@ export default async function BillingPage({
                     : subscriptionAccessStatus.replaceAll("_", " ")
               }
             />
-            <InfoLine label="Monthly amount" value={`${manualInvoice.currency} ${manualInvoice.amount}`} />
-            <InfoLine label="Plan" value={manualInvoice.planLabel} />
-            <InfoLine label="Payment reference" value={manualInvoice.paymentReference} />
+            <InfoLine label="Active plan" value={planCatalog.label} />
+            <InfoLine label="Monthly amount" value={`$${planCatalog.monthlyPrice}`} />
+            <InfoLine label="Current period" value={`${formatDate(subscription.currentPeriodStart)} - ${formatDate(subscription.currentPeriodEnd)}`} />
+            <InfoLine
+              label={`${onlineBillingProviderLabel} customer`}
+              value={hasLiveOnlineCustomer ? maskExternalId(subscription.externalCustomerId) : "Created after first checkout"}
+            />
           </div>
-          <div className="billing-payment-steps">
-            <span>1. Choose plan</span>
-            <span>2. Request invoice or pay by bank transfer</span>
-            <span>3. Platform admin confirms payment</span>
-            <span>4. Workspace unlocks for the paid period</span>
+          <div className="billing-health-grid">
+            {billingDiagnostics.checks.map((check) => (
+              <div className={`billing-health-check ${check.level}`} key={check.id}>
+                <span>{check.label}</span>
+                <strong>{check.level}</strong>
+                <p>{check.detail}</p>
+              </div>
+            ))}
           </div>
           <div className="dashboard-command-actions">
-            {canUseOnlineCheckout ? (
+            {subscriptionPaidActive && hasLiveOnlineCustomer ? (
               <BillingActionButton
                 className="primary-button"
-                disabled={subscriptionPaidActive}
-                label={
-                  subscriptionPaidActive ? (
-                    <LocalizedText k="billing.action.planActive" />
-                  ) : (
-                    "Pay by card"
-                  )
-                }
+                label={`Open ${onlineBillingProviderLabel} portal`}
+                mode="portal"
+                organizationId={organization.id}
+              />
+            ) : canUseOnlineCheckout ? (
+              <BillingActionButton
+                className="primary-button"
+                disabled={!billingDiagnostics.selfServeCheckoutReady}
+                label="Open checkout"
                 mode="checkout"
                 organizationId={organization.id}
                 plan={activePlan}
@@ -328,15 +357,6 @@ export default async function BillingPage({
                     "Start paid subscription"
                   )
                 }
-                organizationId={organization.id}
-                plan={activePlan}
-              />
-            ) : !canUseOnlineCheckout ? (
-              <BillingActionButton
-                className="primary-button"
-                disabled={!onlineBillingConfigured}
-                label="Launch checkout"
-                mode="checkout"
                 organizationId={organization.id}
                 plan={activePlan}
               />
@@ -438,7 +458,7 @@ export default async function BillingPage({
               <InfoLine label={<LocalizedText k="billing.section.support" />} value={manualBillingDetails.supportEmail} />
             </>
           ) : (
-            <InfoLine label={`${onlineBillingProviderLabel} customer`} value={hasLiveOnlineCustomer ? subscription.externalCustomerId : <LocalizedText k="billing.common.notConnected" />} />
+            <InfoLine label={`${onlineBillingProviderLabel} customer`} value={hasLiveOnlineCustomer ? maskExternalId(subscription.externalCustomerId) : <LocalizedText k="billing.common.notConnected" />} />
           )}
           <InfoLine label={<LocalizedText k="billing.section.currentPeriod" />} value={`${formatDate(subscription.currentPeriodStart)} - ${formatDate(subscription.currentPeriodEnd)}`} />
           <InfoLine label={<LocalizedText k="billing.section.billingStatus" />} value={subscriptionAccessStatus.replaceAll("_", " ")} />
@@ -574,79 +594,15 @@ export default async function BillingPage({
         title={<LocalizedText k="billing.plans.title" />}
         wide
       >
-        <div className="plan-grid">
-          {plans.map((plan) => {
-            const catalog = getPlanCatalog(plan);
-            const limits = getPlanLimits(plan);
-            const isCurrentPlan = plan === activePlan;
-
-            return (
-              <div className={`plan-option ${isCurrentPlan ? "active" : ""}`} key={plan}>
-                <strong>{catalog.label}</strong>
-                <div className="plan-price">
-                  ${catalog.monthlyPrice}/<LocalizedText k="billing.common.monthShort" />
-                </div>
-                <p className="plan-summary">
-                  <LocalizedText k={getPlanSummaryKey(plan)} />
-                </p>
-                <span>{limits.maxUsers} <LocalizedText k="billing.plans.teamSeats" /></span>
-                <span>{limits.maxIntegrations} <LocalizedText k="billing.plans.liveIntegrations" /></span>
-                <span>{limits.monthlyMessages.toLocaleString()} <LocalizedText k="billing.plans.monthlyMessages" /></span>
-                <span>{limits.monthlyAiRuns.toLocaleString()} <LocalizedText k="billing.plans.aiRuns" /></span>
-                <span>
-                  {catalog.onboardingFee > 0
-                    ? <><LocalizedText k="billing.common.onboardingFrom" /> ${catalog.onboardingFee}</>
-                    : <LocalizedText k="billing.metric.onboardingIncluded" />}
-                </span>
-                <div className="plan-feature-list">
-                  {getPlanFeatureKeys(plan).map((key) => (
-                    <small key={key}>
-                      <LocalizedText k={key} />
-                    </small>
-                  ))}
-                </div>
-                {canUseOnlineCheckout ? (
-                  <BillingActionButton
-                    disabled={isCurrentPlan && subscriptionPaidActive}
-                    label={
-                      isCurrentPlan && subscriptionPaidActive
-                        ? <LocalizedText k="billing.action.currentPlan" />
-                        : <LocalizedText k="billing.action.launchCheckout" />
-                    }
-                    mode="checkout"
-                    organizationId={organization.id}
-                    plan={plan}
-                  />
-                ) : null}
-                {manualBillingVisible ? (
-                  <ManualInvoiceButton
-                    disabled={
-                      !canUseManualBilling ||
-                      (isCurrentPlan && subscriptionPaidActive)
-                    }
-                    label={
-                      isCurrentPlan && subscriptionPaidActive
-                        ? <LocalizedText k="billing.action.currentPlan" />
-                        : isCurrentPlan && subscriptionTrialActive
-                          ? <LocalizedText k="billing.action.startPaidPlan" />
-                        : <LocalizedText k="billing.action.requestInvoice" />
-                    }
-                    organizationId={organization.id}
-                    plan={plan}
-                  />
-                ) : !canUseOnlineCheckout ? (
-                  <BillingActionButton
-                    disabled={!onlineBillingConfigured || isCurrentPlan}
-                    label={isCurrentPlan ? <LocalizedText k="billing.action.currentPlan" /> : <LocalizedText k="billing.action.launchCheckout" />}
-                    mode="checkout"
-                    organizationId={organization.id}
-                    plan={plan}
-                  />
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
+        <BillingPlanSelector
+          annualCheckoutAvailable={annualCheckoutAvailable}
+          checkoutAvailable={billingDiagnostics.selfServeCheckoutReady}
+          customerPortalAvailable={billingDiagnostics.customerPortalReady && hasLiveOnlineCustomer}
+          options={billingPlanOptions}
+          organizationId={organization.id}
+          providerLabel={onlineBillingProviderLabel}
+          subscriptionPaidActive={subscriptionPaidActive}
+        />
       </SurfaceCard>
     </section>
   );
@@ -749,30 +705,17 @@ function getPlanSummaryKey(plan: Subscription["plan"]): TranslationKey {
   }
 }
 
-function getPlanFeatureKeys(plan: Subscription["plan"]): TranslationKey[] {
-  switch (plan) {
-    case "growth":
-      return [
-        "billing.plan.growth.feature1",
-        "billing.plan.growth.feature2",
-        "billing.plan.growth.feature3",
-        "billing.plan.growth.feature4",
-      ];
-    case "scale":
-      return [
-        "billing.plan.scale.feature1",
-        "billing.plan.scale.feature2",
-        "billing.plan.scale.feature3",
-        "billing.plan.scale.feature4",
-      ];
-    case "starter":
-      return [
-        "billing.plan.starter.feature1",
-        "billing.plan.starter.feature2",
-        "billing.plan.starter.feature3",
-        "billing.plan.starter.feature4",
-      ];
+function getAnnualPlanPrice(plan: Subscription["plan"]): number {
+  const monthlyPrice = getPlanCatalog(plan).monthlyPrice;
+  return Math.round(monthlyPrice * 12 * 0.83);
+}
+
+function maskExternalId(value: string): string {
+  if (value.length <= 12) {
+    return value;
   }
+
+  return `${value.slice(0, 7)}...${value.slice(-4)}`;
 }
 
 function formatDate(iso: string): string {

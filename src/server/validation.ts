@@ -30,6 +30,7 @@ const integrationStatuses: readonly IntegrationStatus[] = [
   "disconnected",
 ];
 const subscriptionPlans: readonly Subscription["plan"][] = ["starter", "growth", "scale"];
+const billingIntervals = ["monthly", "yearly"] as const;
 const subscriptionStatuses: readonly Subscription["status"][] = [
   "trialing",
   "active",
@@ -161,6 +162,27 @@ export function requiredSubscriptionPlan(
   }
 
   return value as Subscription["plan"];
+}
+
+export type BillingInterval = (typeof billingIntervals)[number];
+
+export function optionalBillingInterval(
+  payload: Record<string, unknown>,
+  key = "interval",
+): BillingInterval | undefined {
+  const value = optionalString(payload, key);
+  if (!value) {
+    return undefined;
+  }
+
+  if (!billingIntervals.includes(value as BillingInterval)) {
+    throw new ApiError(400, `${key} is invalid`, "validation_error", {
+      field: key,
+      allowed: billingIntervals,
+    });
+  }
+
+  return value as BillingInterval;
 }
 
 export function optionalSubscriptionStatus(

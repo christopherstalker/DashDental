@@ -10,6 +10,7 @@ import { getOnlineBillingProvider } from "@/server/manual-billing";
 import { createPaddlePortalSession } from "@/server/paddle";
 import { createStripePortalSession } from "@/server/stripe";
 import { assertPublicRouteRateLimit } from "@/server/public-route-rate-limit";
+import { ApiError } from "@/server/api-error";
 
 export async function POST(request: Request) {
   try {
@@ -25,6 +26,13 @@ export async function POST(request: Request) {
       (item) => item.organizationId === organizationId,
     );
     const provider = getOnlineBillingProvider();
+    if (!provider) {
+      throw new ApiError(
+        501,
+        "Self-serve billing is not configured",
+        "billing_provider_not_configured",
+      );
+    }
     const session =
       provider === "paddle"
         ? await createPaddlePortalSession({
@@ -36,7 +44,7 @@ export async function POST(request: Request) {
             customerId: subscription?.externalCustomerId,
           });
 
-    return Response.json(session);
+    return Response.json({ ...session, provider });
   } catch (error) {
     return errorResponse(error);
   }

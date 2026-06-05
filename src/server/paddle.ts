@@ -115,6 +115,30 @@ function getPriceId(plan: PaddlePlan, interval: PaddleBillingInterval = "monthly
   return priceId;
 }
 
+export function hasPaddlePriceId(
+  plan: PaddlePlan,
+  interval: PaddleBillingInterval = "monthly",
+): boolean {
+  const planKey = plan.toUpperCase();
+  const intervalKey = interval.toUpperCase();
+  return Boolean(
+    readEnv(`PADDLE_PRICE_${planKey}_${intervalKey}`) ||
+      readEnv(`PADDLE_PRICE_${planKey}`),
+  );
+}
+
+export function getPaddleCheckoutReadiness() {
+  const plans: PaddlePlan[] = ["starter", "growth", "scale"];
+
+  return {
+    apiKeyConfigured: Boolean(readEnv("PADDLE_API_KEY")),
+    clientTokenConfigured: Boolean(readEnv("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN")),
+    webhookSecretConfigured: Boolean(readEnv("PADDLE_WEBHOOK_SECRET")),
+    monthlyPriceIdsConfigured: plans.every((plan) => hasPaddlePriceId(plan, "monthly")),
+    yearlyPriceIdsConfigured: plans.every((plan) => hasPaddlePriceId(plan, "yearly")),
+  };
+}
+
 function priceIdPlan(priceId: string | undefined): PaddlePlan | undefined {
   if (!priceId) {
     return undefined;
@@ -200,8 +224,9 @@ export async function createPaddleCheckoutSession(input: {
   plan: PaddlePlan;
   interval?: PaddleBillingInterval;
   fetchImpl?: typeof fetch;
-}): Promise<{ url: string; transactionId: string }> {
+}): Promise<{ url: string; transactionId: string; provider: "paddle"; interval: PaddleBillingInterval }> {
   const appUrl = getAppUrl(input.requestUrl);
+  const interval = input.interval ?? "monthly";
   const transaction = await paddlePost<PaddleTransactionResponse>(
     "/transactions?include=checkout",
     {
@@ -213,11 +238,12 @@ export async function createPaddleCheckoutSession(input: {
         organization_id: input.organizationId,
         organization_name: input.organizationName,
         plan: input.plan,
+        billing_interval: interval,
         user_email: input.userEmail,
       },
       items: [
         {
-          price_id: getPriceId(input.plan, input.interval),
+          price_id: getPriceId(input.plan, interval),
           quantity: 1,
         },
       ],
@@ -230,6 +256,8 @@ export async function createPaddleCheckoutSession(input: {
   }
 
   return {
+    provider: "paddle",
+    interval,
     transactionId: transaction.id,
     url:
       transaction.checkout?.url ??

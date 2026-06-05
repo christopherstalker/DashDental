@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createEmptyAppState } from "../../src/domain/empty-app-state";
+import { getBillingProviderDiagnostics } from "../../src/server/billing-diagnostics";
 import { buildGoLiveReadinessPlan, requiredLaunchDocs, requiredLegalDocs } from "../../src/server/go-live-readiness";
 import {
   applyPaddleBillingEventToState,
@@ -98,6 +99,8 @@ test("Paddle checkout creates a transaction with tenant custom data and price ID
 
       assert.match(requestedUrl, /^https:\/\/sandbox-api\.paddle\.com\/transactions/);
       assert.equal(session.transactionId, "txn_01testtransaction000000000");
+      assert.equal(session.provider, "paddle");
+      assert.equal(session.interval, "monthly");
       assert.equal(session.url.includes("/checkout/paddle"), true);
       assert.deepEqual(requestedBody.items, [
         { price_id: "pri_01growthmonthly00000000000", quantity: 1 },
@@ -105,6 +108,56 @@ test("Paddle checkout creates a transaction with tenant custom data and price ID
       assert.deepEqual(requestedBody.custom_data, {
         organization_id: "org_123",
         organization_name: "Bright Bite",
+        billing_interval: "monthly",
+        plan: "growth",
+        user_email: "owner@example.com",
+      });
+    },
+  );
+});
+
+test("Paddle checkout can create annual transactions with yearly price IDs", async () => {
+  await withEnv(
+    {
+      APP_URL: "https://dashdental.space",
+      PADDLE_API_KEY: "test-paddle-sandbox-api-key",
+      PADDLE_ENV: "sandbox",
+      PADDLE_PRICE_GROWTH_MONTHLY: "pri_01growthmonthly00000000000",
+      PADDLE_PRICE_GROWTH_YEARLY: "pri_01growthyearly000000000000",
+    },
+    async () => {
+      let requestedBody: Record<string, unknown> = {};
+      const fetchImpl = (async (_url, init) => {
+        requestedBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+
+        return Response.json({
+          data: {
+            id: "txn_01annualtransaction00000000",
+            checkout: {
+              url: "https://dashdental.space/checkout/paddle?_ptxn=txn_01annualtransaction00000000",
+            },
+          },
+        });
+      }) as typeof fetch;
+
+      const session = await createPaddleCheckoutSession({
+        requestUrl: "https://dashdental.space/billing",
+        organizationId: "org_123",
+        organizationName: "Bright Bite",
+        userEmail: "owner@example.com",
+        plan: "growth",
+        interval: "yearly",
+        fetchImpl,
+      });
+
+      assert.equal(session.interval, "yearly");
+      assert.deepEqual(requestedBody.items, [
+        { price_id: "pri_01growthyearly000000000000", quantity: 1 },
+      ]);
+      assert.deepEqual(requestedBody.custom_data, {
+        organization_id: "org_123",
+        organization_name: "Bright Bite",
+        billing_interval: "yearly",
         plan: "growth",
         user_email: "owner@example.com",
       });
@@ -142,6 +195,65 @@ test("Paddle billing event activates a tenant subscription in app state", () => 
   assert.equal(subscription?.externalCustomerId, "ctm_01customer0000000000000000");
   assert.equal(result.state.billingEvents[0]?.provider, "paddle");
   assert.equal(result.state.usageLimits[0]?.monthlyMessages, 2000);
+});
+
+test("billing diagnostics expose self-serve Paddle readiness without secret values", async () => {
+  await withEnv(
+    {
+      BILLING_PROVIDER: "paddle",
+      NEXT_PUBLIC_PADDLE_CLIENT_TOKEN: "live_client_token",
+      PADDLE_API_KEY: "test-paddle-live-api-key",
+      PADDLE_PRICE_GROWTH_MONTHLY: "pri_01growthmonthly00000000000",
+      PADDLE_PRICE_GROWTH_YEARLY: "pri_01growthyearly000000000000",
+      PADDLE_PRICE_SCALE_MONTHLY: "pri_01scalemonthly000000000000",
+      PADDLE_PRICE_SCALE_YEARLY: "pri_01scaleyearly0000000000000",
+      PADDLE_PRICE_STARTER_MONTHLY: "pri_01startermonthly000000000",
+      PADDLE_PRICE_STARTER_YEARLY: "pri_01starteryearly0000000000",
+      PADDLE_WEBHOOK_SECRET: "pdl_ntfset_live_secret",
+    },
+    () => {
+      const diagnostics = getBillingProviderDiagnostics();
+
+      assert.equal(diagnostics.onlineProvider, "paddle");
+      assert.equal(diagnostics.selfServeCheckoutReady, true);
+      assert.equal(diagnostics.customerPortalReady, true);
+      assert.equal(
+        diagnostics.checks.some(
+          (check) => check.id === "paddle_yearly_prices" && check.level === "pass",
+        ),
+        true,
+      );
+      assert.equal(JSON.stringify(diagnostics).includes("pdl_ntfset_live_secret"), false);
+    },
+  );
+});
+
+test("billing diagnostics warn when annual Paddle prices are missing", async () => {
+  await withEnv(
+    {
+      BILLING_PROVIDER: "paddle",
+      NEXT_PUBLIC_PADDLE_CLIENT_TOKEN: "live_client_token",
+      PADDLE_API_KEY: "test-paddle-live-api-key",
+      PADDLE_PRICE_GROWTH_MONTHLY: "pri_01growthmonthly00000000000",
+      PADDLE_PRICE_GROWTH_YEARLY: undefined,
+      PADDLE_PRICE_SCALE_MONTHLY: "pri_01scalemonthly000000000000",
+      PADDLE_PRICE_SCALE_YEARLY: undefined,
+      PADDLE_PRICE_STARTER_MONTHLY: "pri_01startermonthly000000000",
+      PADDLE_PRICE_STARTER_YEARLY: undefined,
+      PADDLE_WEBHOOK_SECRET: "pdl_ntfset_live_secret",
+    },
+    () => {
+      const diagnostics = getBillingProviderDiagnostics();
+
+      assert.equal(diagnostics.selfServeCheckoutReady, true);
+      assert.equal(
+        diagnostics.checks.some(
+          (check) => check.id === "paddle_yearly_prices" && check.level === "warn",
+        ),
+        true,
+      );
+    },
+  );
 });
 
 test("go-live readiness accepts Paddle billing when Paddle secrets and price IDs are configured", () => {

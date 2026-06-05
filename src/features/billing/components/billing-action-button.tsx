@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { CreditCard } from "lucide-react";
 import type { Subscription } from "@/domain/types";
+import type { BillingInterval } from "@/server/validation";
 import { useCurrentLanguageCode } from "@/features/i18n/translation-store";
 import { translate } from "@/features/i18n/translations";
 
@@ -12,6 +13,7 @@ type BillingActionMode = "checkout" | "portal";
 export function BillingActionButton({
   className = "secondary-button",
   disabled = false,
+  interval,
   label,
   mode,
   organizationId,
@@ -19,6 +21,7 @@ export function BillingActionButton({
 }: {
   className?: string;
   disabled?: boolean;
+  interval?: BillingInterval;
   label: ReactNode;
   mode: BillingActionMode;
   organizationId: string;
@@ -43,15 +46,22 @@ export function BillingActionButton({
         body: JSON.stringify({
           organizationId,
           ...(plan ? { plan } : {}),
+          ...(interval ? { interval } : {}),
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
+        code?: string;
         url?: string;
         error?: string;
       };
 
       if (!response.ok || !payload.url) {
-        setError(payload.error ?? translate("billing.action.unavailable", languageCode));
+        setError(
+          payload.error ??
+            (payload.code === "paddle_customer_missing"
+              ? "A paid Paddle customer is created after the first successful checkout."
+              : translate("billing.action.unavailable", languageCode)),
+        );
         return;
       }
 
