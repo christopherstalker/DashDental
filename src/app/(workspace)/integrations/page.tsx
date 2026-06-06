@@ -22,6 +22,7 @@ import { LocalizedText } from "@/features/i18n/components/localized-text";
 import type { TranslationKey } from "@/features/i18n/translations";
 import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-bootstrap";
 import { IntegrationConnectionPanel } from "@/features/integrations/components/integration-connection-panel";
+import { buildIntegrationOperationalState } from "@/features/operations/integration-operational-state";
 import { getMessagingSetupGuide, getWebFormSetupGuide } from "@/server/integration-onboarding";
 
 type ProviderSlot = {
@@ -188,8 +189,18 @@ export default async function IntegrationsPage() {
     return integration?.status !== "active";
   });
   const failedEvents = bootstrap.state.integrationEvents.filter(
-    (event) => event.status === "failed" || event.status === "dead_letter",
+    (event) =>
+      event.organizationId === organization.id &&
+      (event.status === "failed" || event.status === "dead_letter"),
   ).length;
+  const integrationEvents = bootstrap.state.integrationEvents.filter(
+    (event) => event.organizationId === organization.id,
+  );
+  const latestIntegrationEvents = integrationEvents.toSorted(
+    (left, right) =>
+      Date.parse(right.processedAt ?? right.createdAt) -
+      Date.parse(left.processedAt ?? left.createdAt),
+  );
   const appUrl = process.env.APP_URL?.replace(/\/$/, "") ?? "https://dashdental.space";
   const messagingGuides = (["telegram", "whatsapp", "instagram"] as const).map((provider) =>
     getMessagingSetupGuide(appUrl, organization.id, provider),
@@ -282,9 +293,17 @@ export default async function IntegrationsPage() {
             const integration = integrationFor(integrations, slot.provider);
             const status = integration?.status ?? "not_created";
             const Icon = getProviderIcon(slot.provider);
+            const operationalState = buildIntegrationOperationalState({
+              events: integrationEvents,
+              integration,
+              provider: slot.provider,
+            });
 
             return (
-              <article className="provider-connection-card" key={slot.provider}>
+              <article
+                className={`provider-connection-card operational-card ${operationalState.tone}`}
+                key={slot.provider}
+              >
                 <div className="provider-connection-head">
                   <div className="provider-icon-badge">
                     <Icon size={18} />
@@ -308,6 +327,27 @@ export default async function IntegrationsPage() {
                   <span><LocalizedText k="integrations.meta.health" /></span>
                   <strong>{integration ? `${integration.healthScore}%` : "0%"}</strong>
                 </div>
+                <div className="operational-meter" aria-label={`${slot.title} health`}>
+                  <span style={{ width: `${Math.max(4, Math.min(100, integration?.healthScore ?? 0))}%` }} />
+                </div>
+                <div className="operational-evidence-grid">
+                  <div>
+                    <span>Runtime</span>
+                    <strong>{operationalState.statusLabel}</strong>
+                  </div>
+                  <div>
+                    <span>Last activity</span>
+                    <strong>{operationalState.lastActivityLabel}</strong>
+                  </div>
+                  <div>
+                    <span>Event flow</span>
+                    <strong>{operationalState.eventSummary}</strong>
+                  </div>
+                  <div>
+                    <span>Reliability</span>
+                    <strong>{operationalState.reliabilityLabel}</strong>
+                  </div>
+                </div>
                 {integration?.errorState ? (
                   <p className="provider-error-copy">
                     {getIntegrationErrorKey(integration.errorState) ? (
@@ -317,12 +357,54 @@ export default async function IntegrationsPage() {
                     )}
                   </p>
                 ) : null}
+                <div className="operational-next-action">
+                  <span>Next action</span>
+                  <strong>{operationalState.nextAction}</strong>
+                </div>
                 <span className="secondary-button compact-button">
                   <LocalizedText fallback={slot.cta} k={slot.ctaKey} />
                 </span>
               </article>
             );
           })}
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard
+        description="Recent provider events make the system feel observable: staff can see whether data is arriving, failing, or waiting for setup."
+        eyebrow="Runtime evidence"
+        title="Integration event ledger"
+        wide
+      >
+        <div className="operational-event-ledger">
+          {latestIntegrationEvents.length > 0 ? (
+            latestIntegrationEvents.slice(0, 6).map((event) => (
+              <div className={`operational-event-row ${event.status}`} key={event.id}>
+                <div>
+                  <strong>{formatProvider(event.provider)}</strong>
+                  <span>{event.providerEventId}</span>
+                </div>
+                <span className={`status-dot ${event.status === "processed" ? "active" : "degraded"}`}>
+                  {event.status.replaceAll("_", " ")}
+                </span>
+                <div>
+                  <span>Retries</span>
+                  <strong>{event.retryCount}</strong>
+                </div>
+                <div>
+                  <span>Observed</span>
+                  <strong>{formatEventTime(event.processedAt ?? event.createdAt)}</strong>
+                </div>
+                {event.errorMessage ? <p>{event.errorMessage}</p> : null}
+              </div>
+            ))
+          ) : (
+            <div className="empty-state operational-empty-state">
+              <Plug size={28} />
+              <h2>No provider events yet</h2>
+              <p>Connect one channel, send a test lead, and this ledger will show event delivery evidence.</p>
+            </div>
+          )}
         </div>
       </SurfaceCard>
 
@@ -453,3 +535,11 @@ function IntegrationsAccessRequired() {
   );
 }
 
+function formatEventTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+  }).format(new Date(iso));
+}

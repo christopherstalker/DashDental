@@ -3494,6 +3494,144 @@ html[data-theme] ::-webkit-scrollbar-thumb {
   width: 100%;
 }
 
+.operational-card {
+  align-content: start;
+  gap: var(--space-4);
+}
+
+.operational-card.live {
+  border-color: color-mix(in srgb, var(--status-ok) 22%, var(--border));
+}
+
+.operational-card.attention {
+  border-color: color-mix(in srgb, var(--status-warm) 32%, var(--border));
+}
+
+.operational-card.offline {
+  border-color: color-mix(in srgb, var(--status-alert) 32%, var(--border));
+}
+
+.operational-meter {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+}
+
+.operational-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+}
+
+.operational-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.operational-evidence-grid div,
+.operational-next-action,
+.operational-acceptance-card,
+.operational-event-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  padding: var(--space-3);
+}
+
+.operational-evidence-grid span,
+.operational-next-action span,
+.operational-acceptance-card span,
+.operational-event-row span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.operational-evidence-grid strong,
+.operational-next-action strong,
+.operational-acceptance-card strong,
+.operational-event-row strong {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.operational-next-action {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+}
+
+.operational-event-ledger {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.operational-event-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(92px, 0.4fr) minmax(132px, 0.6fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.operational-event-row.failed,
+.operational-event-row.dead_letter {
+  border-color: color-mix(in srgb, var(--status-alert) 28%, var(--border));
+}
+
+.operational-event-row.received {
+  border-color: color-mix(in srgb, var(--status-info) 24%, var(--border));
+}
+
+.operational-event-row p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--status-alert);
+  font-size: var(--text-sm);
+}
+
+.operational-empty-state {
+  min-height: 220px;
+}
+
+.operational-acceptance-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.operational-acceptance-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-height: 188px;
+}
+
+.operational-acceptance-card.ready {
+  border-color: color-mix(in srgb, var(--status-ok) 24%, var(--border));
+}
+
+.operational-acceptance-card.blocked {
+  border-color: color-mix(in srgb, var(--status-warm) 28%, var(--border));
+}
+
+.operational-acceptance-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--line-sm);
+}
+
+.operational-acceptance-card .secondary-button {
+  align-self: end;
+  justify-content: center;
+}
+
 .checkout-shell {
   min-height: 100vh;
   display: grid;
@@ -4847,6 +4985,10 @@ html[data-theme="dark"] .ddr-dashboard-shell .integration-config-card {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .operational-acceptance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ddr-dashboard-shell {
     grid-template-columns: 56px minmax(0, 1fr);
   }
@@ -5272,7 +5414,10 @@ html[data-theme="dark"] .ddr-dashboard-shell .integration-config-card {
 
   .billing-health-grid,
   .billing-plan-grid,
-  .billing-plan-limits {
+  .billing-plan-limits,
+  .operational-acceptance-grid,
+  .operational-evidence-grid,
+  .operational-event-row {
     grid-template-columns: 1fr;
   }
 

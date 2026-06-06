@@ -26,6 +26,7 @@ import { getWorkspaceShellBootstrap } from "@/features/app-shell/data/workspace-
 import { GuidedOnboardingWizard } from "@/features/onboarding/components/guided-onboarding-wizard";
 import { LocalizedText } from "@/features/i18n/components/localized-text";
 import { LaunchPageEvent } from "@/features/launch-analytics/components/launch-event-tracker";
+import { buildIntegrationOperationalState } from "@/features/operations/integration-operational-state";
 import { buildSetupLaunchReview } from "@/server/launch-analytics";
 
 type LaunchStepStatus = "complete" | "pending";
@@ -71,6 +72,20 @@ export default async function SetupPage() {
   const liveLeadCount = bootstrap.state.leads.filter(
     (lead) => lead.organizationId === organization.id,
   ).length;
+  const integrationEvents = bootstrap.state.integrationEvents.filter(
+    (event) => event.organizationId === organization.id,
+  );
+  const operationalStates = integrations.map((integration) =>
+    buildIntegrationOperationalState({
+      events: integrationEvents,
+      integration,
+      provider: integration.provider,
+    }),
+  );
+  const provenChannels = operationalStates.filter((state) => state.processedEvents > 0).length;
+  const operationalWarnings = operationalStates.filter(
+    (state) => state.tone === "attention" || state.tone === "offline",
+  ).length;
   const launchSteps = buildLaunchSteps({
     activeIntegrations: activeIntegrations.map((integration) => integration.provider),
     activeMembers: activeMemberships.length,
@@ -85,6 +100,46 @@ export default async function SetupPage() {
   const progress = Math.round((completed / launchSteps.length) * 100);
   const nextStep = launchSteps.find((step) => step.status === "pending");
   const planLabel = subscription ? getPlanCatalog(subscription.plan).label : "No plan";
+  const subscriptionReady = isSubscriptionAccessActive(subscription, new Date().toISOString());
+  const acceptanceChecks = [
+    {
+      action: "Open billing",
+      evidence: `${bootstrap.billing.status.replaceAll("_", " ")} - ${bootstrap.billing.daysRemaining} day${
+        bootstrap.billing.daysRemaining === 1 ? "" : "s"
+      } remaining`,
+      href: "/billing",
+      label: "Payment gate",
+      ready: subscriptionReady,
+    },
+    {
+      action: "Connect channel",
+      evidence: `${activeIntegrations.length} live, ${provenChannels} proven by events`,
+      href: "/integrations",
+      label: "Inbound capture",
+      ready: activeIntegrations.length > 0 && provenChannels > 0,
+    },
+    {
+      action: "Run test lead",
+      evidence: `${liveLeadCount} patient lead${liveLeadCount === 1 ? "" : "s"} captured`,
+      href: "/integrations#web_form",
+      label: "First-value proof",
+      ready: liveLeadCount > 0,
+    },
+    {
+      action: "Review channels",
+      evidence: `${operationalWarnings} channel warning${operationalWarnings === 1 ? "" : "s"}`,
+      href: "/integrations",
+      label: "Runtime health",
+      ready: operationalWarnings === 0 && activeIntegrations.length > 0,
+    },
+    {
+      action: "Approve data",
+      evidence: contract?.status.replaceAll("_", " ") ?? "draft",
+      href: "/compliance",
+      label: "Data boundary",
+      ready: contract?.status === "approved",
+    },
+  ];
   const launchReview = buildSetupLaunchReview({
     billingDaysRemaining: bootstrap.billing.daysRemaining,
     billingStatus: bootstrap.billing.status,
@@ -272,6 +327,29 @@ export default async function SetupPage() {
           value={planLabel}
         />
       </div>
+
+      <SurfaceCard
+        description="These are the acceptance criteria that make a clinic feel production-ready, not just configured."
+        eyebrow="Production acceptance"
+        title="Proof before daily use"
+        wide
+      >
+        <div className="operational-acceptance-grid">
+          {acceptanceChecks.map((check) => (
+            <div className={`operational-acceptance-card ${check.ready ? "ready" : "blocked"}`} key={check.label}>
+              <div>
+                <span>{check.label}</span>
+                <strong>{check.ready ? "Ready" : "Needs action"}</strong>
+              </div>
+              <p>{check.evidence}</p>
+              <Link className="secondary-button compact-button" href={check.href}>
+                {check.action}
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          ))}
+        </div>
+      </SurfaceCard>
 
       <section className="radar-panel">
         <div className="section-heading">
