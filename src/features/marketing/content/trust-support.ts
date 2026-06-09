@@ -659,9 +659,9 @@ const english: TrustSupportCopy = {
             "Support can discuss safe import options, but Dash Dental should not be used as a full archive of medical records.",
         },
         {
-          question: "What if Stripe payment fails?",
+          question: "What if invoice payment is delayed?",
           answer:
-            "Contact support with the owner email and plan. Manual invoice activation may be available while card billing is reviewed.",
+            "Contact support with the owner email, plan, and invoice reference. Support can confirm whether the workspace should stay active, move to a read-only hold, or wait for payment confirmation.",
         },
         {
           question: "What if a provider webhook is delayed?",
@@ -1173,9 +1173,9 @@ const ukrainian: TrustSupportCopy = {
             "Support може обговорити безпечний імпорт, але Dash Dental не має бути повним архівом медичних записів.",
         },
         {
-          question: "Що якщо Stripe payment failed?",
+          question: "Що якщо invoice payment затримується?",
           answer:
-            "Напишіть support з owner email і планом. Manual invoice activation може бути доступним під час review.",
+            "Напишіть support з owner email, планом і invoice reference. Support підтвердить active access, read-only hold або payment confirmation.",
         },
         {
           question: "Що якщо webhook провайдера затримується?",

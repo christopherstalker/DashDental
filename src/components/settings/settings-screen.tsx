@@ -217,7 +217,7 @@ export function SettingsScreen({
     setStatusMessage({ kind: "success", text: "Settings saved for this clinic workspace." });
   }
 
-  async function upgradePlan() {
+  function upgradePlan() {
     const nextPlan = nextPlanFor(billingState.plan);
 
     if (nextPlan === billingState.plan) {
@@ -227,28 +227,7 @@ export function SettingsScreen({
 
     setUpgradingPlan(true);
     setStatusMessage(null);
-
-    try {
-      const response = await fetch("/api/v1/billing/checkout-session", {
-        body: JSON.stringify({ organizationId, plan: nextPlan }),
-        credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        method: "POST",
-      });
-      const payload = (await response.json().catch(() => ({}))) as { url?: string };
-      if (!response.ok || !payload.url) {
-        throw new Error("plan_upgrade_failed");
-      }
-
-      window.location.assign(payload.url);
-    } catch {
-      setStatusMessage({
-        kind: "error",
-        text: "Could not open the plan upgrade flow. Try billing again in a moment.",
-      });
-    } finally {
-      setUpgradingPlan(false);
-    }
+    window.location.assign(`/billing?plan=${encodeURIComponent(nextPlan)}`);
   }
 
   return (
@@ -360,7 +339,7 @@ export function SettingsScreen({
             <article className="ddr-card ddr-settings-panel">
               <div className="ddr-card-heading">
                 <h2>Billing</h2>
-                <p>Release pricing with clear limits, active billing state, and instant plan changes.</p>
+                <p>Release pricing with clear limits, active billing state, and invoice-based plan changes.</p>
               </div>
               <div className="ddr-billing-summary">
                 <div>
@@ -382,10 +361,10 @@ export function SettingsScreen({
                   type="button"
                 >
                   {upgradingPlan
-                    ? "Upgrading..."
+                    ? "Opening billing..."
                     : billingState.plan === "scale"
                       ? "Highest plan"
-                      : `Upgrade to ${getPlanCatalog(nextPlanFor(billingState.plan)).label}`}
+                      : `Request ${getPlanCatalog(nextPlanFor(billingState.plan)).label} invoice`}
                 </button>
               </div>
             </article>

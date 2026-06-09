@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createEmptyAppState } from "../../src/domain/empty-app-state";
 import { getBillingProviderDiagnostics } from "../../src/server/billing-diagnostics";
+import { getBillingProvider } from "../../src/server/manual-billing";
 import { buildGoLiveReadinessPlan, requiredLaunchDocs, requiredLegalDocs } from "../../src/server/go-live-readiness";
 import {
   applyPaddleBillingEventToState,
@@ -224,6 +225,51 @@ test("billing diagnostics expose self-serve Paddle readiness without secret valu
         true,
       );
       assert.equal(JSON.stringify(diagnostics).includes("pdl_ntfset_live_secret"), false);
+    },
+  );
+});
+
+test("launch billing defaults to manual even when online provider secrets exist", async () => {
+  await withEnv(
+    {
+      BILLING_PROVIDER: undefined,
+      MANUAL_BILLING_IBAN: "UA123456789",
+      MANUAL_BILLING_RECIPIENT_NAME: "Dash Dental LLC",
+      PADDLE_API_KEY: "test-paddle-live-api-key",
+      STRIPE_SECRET_KEY: "sk_live_123",
+    },
+    () => {
+      const diagnostics = getBillingProviderDiagnostics();
+
+      assert.equal(getBillingProvider(), "manual");
+      assert.equal(diagnostics.providerMode, "manual");
+      assert.equal(diagnostics.onlineProvider, undefined);
+      assert.equal(diagnostics.selfServeCheckoutReady, false);
+      assert.equal(diagnostics.manualFallbackReady, true);
+      assert.ok(
+        diagnostics.checks.some(
+          (check) => check.id === "billing_provider" && check.level === "pass",
+        ),
+      );
+      assert.equal(diagnostics.checks.some((check) => check.level === "block"), false);
+    },
+  );
+});
+
+test("hybrid billing prefers Paddle checkout while keeping manual invoices visible", async () => {
+  await withEnv(
+    {
+      BILLING_PROVIDER: "hybrid",
+      PADDLE_API_KEY: "test-paddle-live-api-key",
+      STRIPE_SECRET_KEY: "sk_live_123",
+    },
+    async () => {
+      const { getOnlineBillingProvider, shouldShowManualBilling } = await import(
+        "../../src/server/manual-billing"
+      );
+
+      assert.equal(getOnlineBillingProvider(), "paddle");
+      assert.equal(shouldShowManualBilling(), true);
     },
   );
 });

@@ -156,7 +156,7 @@ test("production env template and checklist cover paid launch blockers", async (
     "production_monitor_policy_approved",
     "manual_billing_ready",
     "manual_invoice_template_approved",
-    "stripe_live_rehearsal_ready",
+    "online_billing_deferred_or_rehearsed",
   ]) {
     assert.equal(requiredCheckIds.has(id), true, `${id} missing from checklist`);
   }

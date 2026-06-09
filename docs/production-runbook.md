@@ -8,7 +8,9 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 - Redis: BullMQ queues for webhook processing, outbox dispatch, billing, AI, recovery, and reconciliation.
 - Next.js app: user-facing web app and internal proxy routes.
 - NestJS backend: durable webhook ingress, outbox dispatch, projections, billing sync, support console APIs.
-- Stripe webhooks: subscription state source of truth.
+- Billing state: manual subscription grants are the first-clinic source of
+  truth; Paddle or Stripe webhooks become authoritative only when that online
+  provider is explicitly selected and rehearsed.
 - Provider webhooks: Telegram, Meta/WhatsApp/Instagram, and web forms.
 
 ## Required Environment
@@ -22,8 +24,10 @@ This runbook is for operating the Dental Recovery SaaS runtime: Next.js app, Nes
 - `INTEGRATION_SECRET`: encryption key for clinic integration credentials and MFA TOTP secrets.
 - `APP_URL`: public HTTPS app URL used by providers.
 - `BACKEND_INTERNAL_URL`: internal URL from Next.js to Nest backend.
-- `PADDLE_API_KEY`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_*`: Paddle self-serve billing.
-- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`: legacy Stripe fallback if explicitly selected.
+- `BILLING_PROVIDER`, `MANUAL_BILLING_*`, `MANUAL_INVOICE_TEMPLATE_APPROVED`:
+  manual invoice launch route.
+- `PADDLE_API_KEY`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_*`: Paddle self-serve billing when explicitly selected.
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`: Stripe self-serve billing when explicitly selected.
 - `SUPPORT_OWNER_NAME`, `SUPPORT_OWNER_EMAIL`, `SECURITY_CONTACT_EMAIL`, `INCIDENT_ESCALATION_EMAIL`: launch ownership and escalation contacts.
 - `EDGE_PROTECTION_DEPLOYED`, `REQUIRE_PUBLIC_AUTH_BOT_PROTECTION`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`: public abuse and bot protection controls.
 - `SYNTHETIC_MONITOR_BASE_URL`, `SYNTHETIC_MONITOR_SCHEDULED`: scheduled launch monitor target and confirmation.
@@ -82,20 +86,21 @@ provider setup is complete.
 - Projection rebuild: run `POST /api/v1/admin/runtime/projections/rebuild` and verify missing/stale projection counts are zero.
 - Failure drill: run `telegram.duplicate_inbound` and confirm only one durable receipt/message is materialized.
 - Replay safety: replay an invalid receipt without force and confirm `skipped: invalid-signature`.
-- Billing safety: replay the same Stripe provider event id twice and confirm the second event is already recorded.
-- Stale billing: process a newer Stripe subscription event, then an older one, and confirm the older event is skipped.
+- Billing safety: request a manual invoice, grant access from `/platform/subscriptions`, and confirm the audit entry includes actor, plan, period, and invoice reference.
+- Online-provider safety, when enabled: replay the same Paddle or Stripe provider event id twice and confirm the second event is already recorded.
 - Data lifecycle: run `POST /api/v1/admin/runtime/data-lifecycle/sweep` with `{ "dryRun": true }`.
 
 ## Go-Live Billing and Legal Pack
 
-Before taking broad paid self-serve traffic, confirm the commercial handoff is complete:
+For first-clinic paid launch, ship manual invoice first. Before taking broad
+paid self-serve traffic, complete a separate online-provider handoff:
 
 - External setup checklist: use `docs/external-launch-setup.md` for Turnstile,
   CDN/edge rules, GitHub monitor variables, and legal approval evidence.
-- Paddle checkout path: set `BILLING_PROVIDER=paddle` or `hybrid`, configure the Paddle webhook destination at `/api/v1/webhooks/paddle`, fill `PADDLE_PRICE_*`, and verify Checkout, Portal, webhook signature verification, and subscription ledger reconciliation in staging before taking paid traffic.
-- Manual invoice path: set `BILLING_PROVIDER=manual` or `hybrid`, fill `MANUAL_BILLING_*`, verify `/billing` shows only non-secret bank/payment instructions, and document the support SLA for activating paid access after payment confirmation.
+- Manual invoice path: set `BILLING_PROVIDER=manual`, fill `MANUAL_BILLING_*`, verify `/billing` shows only non-secret bank/payment instructions, and document the support SLA for activating paid access after payment confirmation.
+- Paddle checkout path, deferred: set `BILLING_PROVIDER=paddle` or explicit `hybrid`, configure the Paddle webhook destination at `/api/v1/webhooks/paddle`, fill `PADDLE_PRICE_*`, and verify Checkout, Portal, webhook signature verification, and subscription ledger reconciliation in staging before taking paid self-serve traffic.
 - Hard lock path: after the 14-day trial or current period ends, verify `/dashboard`, `/inbox`, `/settings`, integrations, exports, sends, AI, and workspace API reads return billing-only access while `/billing`, `/workspaces`, and logout remain reachable.
-- Stripe-ready path: if Stripe is explicitly enabled, confirm live `STRIPE_PRICE_*`, Checkout, Portal, webhook signature verification, and subscription ledger reconciliation in staging before enabling production plan changes.
+- Stripe-ready path, deferred fallback: if Stripe is explicitly enabled, confirm live `STRIPE_PRICE_*`, Checkout, Portal, webhook signature verification, and subscription ledger reconciliation in staging before enabling production plan changes.
 - Stripe live-mode rehearsal: run `npm run stripe:rehearsal` only before enabling broad Stripe self-serve; blocked checks are launch blockers for Stripe billing.
 - Go-live readiness gate: run `npm run go-live:check` after edge rules, bot protection, legal review, support ownership, billing mode, and synthetic monitor scheduling are configured. Treat any `BLOCK` as a launch blocker.
 - Trial and retention terms: confirm public pricing, trial, privacy, and terms pages all state the 14-day trial, read-only/payment-required behavior, and operational retention boundaries.

@@ -103,6 +103,8 @@ test("production handoff documents manual billing and legal launch pack", async 
   assert.match(backendEnv, /MANUAL_BILLING_SUPPORT_EMAIL/);
   assert.match(backendEnv, /BILLING_PROVIDER/);
   assert.match(runbook, /Go-Live Billing and Legal Pack/);
+  assert.match(runbook, /ship manual invoice first/i);
+  assert.match(runbook, /Paddle checkout path, deferred/i);
   assert.match(runbook, /manual invoice/i);
   assert.match(runbook, /DPA/i);
   assert.match(runbook, /subprocessor/i);

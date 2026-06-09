@@ -61,7 +61,8 @@ backend/
 - `integrations`: adapter registry, Clinic DB sync entrypoints, credentials flow.
 - `webhooks`: public ingestion endpoints with idempotent async queue handoff.
 - `ai`: summary/risk/intent generation entrypoints and future metering hooks.
-- `billing`: Stripe checkout, portal, subscription sync structure.
+- `billing`: manual-launch subscription state plus deferred Stripe checkout,
+  portal, and webhook sync structure.
 - `usage`: per-plan counters and enforcement service surface.
 - `compliance`: data access contract and export surface.
 - `audit`: append-only business action trail.
@@ -106,7 +107,8 @@ Each module exposes one narrow service that owns its bounded context:
 - `IntegrationsService`: adapter orchestration and Clinic DB sync kickoff
 - `WebhooksService`: intake + enqueue
 - `AiService`: summary enqueue / retrieval surface
-- `BillingService` + `StripeService`: checkout, portal, subscription sync
+- `BillingService` + `StripeService`: manual-mode gate plus deferred checkout,
+  portal, and subscription sync
 - `UsageService`: plan counters and limit checks
 - `ComplianceService`: contract approval and export flow
 - `AuditService`: append-only audit write surface
@@ -122,7 +124,7 @@ Queues live in [src/infra/queue/queue.names.ts](./src/infra/queue/queue.names.ts
 - `sla.sweep`: promotes leads into `unanswered` and `at_risk`
 - `clinic-db.sync`: read-only Clinic DB import jobs
 - `ai.summary`: AI summary/risk/intent jobs
-- `billing.webhook`: async Stripe webhook synchronization
+- `billing.webhook`: async online-provider webhook synchronization
 - `billing.usage-rollup`: usage aggregation per billing period
 - `audit.export`: compliance and audit package generation
 - `dead-letter`: terminal failures after retry budget is exhausted
@@ -188,10 +190,12 @@ RBAC is implemented in `src/common/rbac/role-policy.ts` and applied with `@Roles
 
 Billing is isolated behind `billing/`:
 
-- `BillingController` exposes checkout and portal endpoints.
-- `BillingService` owns the domain behavior.
-- `StripeService` is the provider-facing boundary.
-- `SubscriptionEntity` and `BillingCustomerEntity` model external Stripe state in local storage.
+- `BillingController` exposes checkout and portal endpoints for online billing.
+- `BillingService` owns the domain behavior and blocks those endpoints while
+  `BILLING_PROVIDER=manual`.
+- `StripeService` is the Stripe-facing boundary when Stripe is explicitly selected.
+- `SubscriptionEntity` and `BillingCustomerEntity` model subscription state,
+  including external provider ids when an online provider is enabled.
 - `UsageService` is where plan enforcement plugs into AI, messaging, user seats, and integrations.
 
 ## Audit Logs

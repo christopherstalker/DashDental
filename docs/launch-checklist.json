@@ -100,7 +100,7 @@
     {
       "id": "manual_billing_ready",
       "owner": "finance",
-      "evidence": "Manual billing recipient, instructions, and support inbox configured"
+      "evidence": "Manual billing recipient, IBAN, instructions, and support inbox configured"
     },
     {
       "id": "expired_trial_billing_lock_verified",
@@ -118,9 +118,9 @@
       "evidence": "Invoice template, payment message, late-payment policy, and activation timing approved"
     },
     {
-      "id": "stripe_live_rehearsal_ready",
+      "id": "online_billing_deferred_or_rehearsed",
       "owner": "finance",
-      "evidence": "npm run stripe:rehearsal reports ready before card self-serve"
+      "evidence": "First-clinic launch uses BILLING_PROVIDER=manual, or the selected Paddle/Stripe self-serve path has passed staging rehearsal before card checkout is enabled"
     }
   ],
   "productionMonitorPolicy": {

@@ -27,6 +27,7 @@ const readyManualEnv = {
   JWT_ACCESS_SECRET: "prod-access-secret-with-more-than-32-characters",
   JWT_REFRESH_SECRET: "prod-refresh-secret-with-more-than-32-characters",
   LEGAL_REVIEW_APPROVED: "true",
+  MANUAL_BILLING_IBAN: "UA123456789",
   MANUAL_BILLING_INSTRUCTIONS: "Send payment with the invoice reference.",
   MANUAL_INVOICE_TEMPLATE_APPROVED: "true",
   MANUAL_BILLING_RECIPIENT_NAME: "Dash Dental LLC",

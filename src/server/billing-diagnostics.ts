@@ -44,12 +44,14 @@ export function getBillingProviderDiagnostics(): BillingProviderDiagnostics {
       id: "billing_provider",
       label: "Billing route",
       detail:
-        onlineProvider === "paddle"
+        providerMode === "manual"
+          ? "Manual invoice billing is the active launch route."
+          : onlineProvider === "paddle"
           ? "Self-serve checkout and portal are routed through Paddle."
           : onlineProvider === "stripe"
             ? "Self-serve checkout and portal are routed through Stripe."
-            : "No online billing provider is active. Manual billing is the only route.",
-      level: onlineProvider ? "pass" : "block",
+            : "No online billing provider is active for this billing mode.",
+      level: onlineProvider || providerMode === "manual" ? "pass" : "block",
     },
   ];
 

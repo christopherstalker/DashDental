@@ -138,7 +138,7 @@ const english = {
   "home.security.kicker": "Production path",
   "home.security.title": "Security, privacy, and terms are now part of the sales surface.",
   "home.security.body":
-    "Manual IBAN billing gets the first clinics in the door. The platform still keeps tenant isolation, audit trails, health checks, Stripe-ready billing seams, and plain-language policy pages.",
+    "Manual IBAN billing gets the first clinics in the door. The platform still keeps tenant isolation, audit trails, health checks, provider-ready billing seams, and plain-language policy pages.",
 
   "pricing.hero.kicker": "Pricing built for clinic recovery operations",
   "pricing.hero.title": "Choose the recovery command center your clinic can launch this week.",
@@ -1165,7 +1165,7 @@ const english = {
     "The workspace moves into a locked state unless the owner activates a paid plan or receives a manual subscription grant from platform admin. Existing data remains visible to authorized owners for billing and export workflows.",
   "faq.item.bank.q": "Do you support bank-transfer billing instead of cards?",
   "faq.item.bank.a":
-    "Yes. The current commercial path supports manual IBAN invoices, subscription status tracking, plan limits, and admin activation. Stripe can be enabled later without changing the clinic workspace model.",
+    "Yes. The current launch path supports manual IBAN invoices, subscription status tracking, plan limits, and admin activation. Paddle or Stripe can be enabled later without changing the clinic workspace model.",
   "faq.item.integrations.q": "Which integrations can be connected?",
   "faq.item.integrations.a": "The platform is designed around messaging channels such as website forms, Telegram, WhatsApp, and Instagram. Start with one channel; provider approvals may be required for some Meta channels.",
   "faq.item.ai.q": "Is AI required for the product to work?",

@@ -1,6 +1,8 @@
 # Manual Billing Runbook
 
-Use manual billing until Stripe self-serve is approved and rehearsed.
+Use manual billing for the first-clinic launch. Keep Paddle and Stripe
+self-serve disabled until the chosen online provider is approved, configured,
+and rehearsed in staging.
 
 ## Policy
 

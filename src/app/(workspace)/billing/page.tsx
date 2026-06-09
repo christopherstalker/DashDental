@@ -93,12 +93,30 @@ export default async function BillingPage({
   const manualBillingMissingFields = getManualBillingMissingFields(manualBillingDetails);
   const manualBillingVisible = shouldShowManualBilling();
   const canUseOnlineCheckout = Boolean(onlineBillingProvider && onlineBillingConfigured);
+  const manualInvoiceRouteActive = manualBillingVisible && !onlineBillingProvider;
+  const billingRouteLabel = manualInvoiceRouteActive
+    ? "Manual invoice"
+    : onlineBillingProviderLabel;
   const annualCheckoutAvailable =
     onlineBillingProvider === "paddle" &&
     billingDiagnostics.checks.some(
       (check) => check.id === "paddle_yearly_prices" && check.level === "pass",
     );
   const canUseManualBilling = manualBillingVisible && manualBillingConfigured;
+  const billingCommandCopy = manualInvoiceRouteActive
+    ? "Paid activation is manual invoice first. Owners request an invoice, then support grants access from the subscription console after payment confirmation."
+    : manualBillingVisible
+      ? `Online checkout runs through ${onlineBillingProviderLabel}; manual invoice remains available as the fallback path.`
+      : `Self-serve payments run through ${onlineBillingProviderLabel}; webhooks provision plan limits after checkout.`;
+  const paymentSystemTitle = manualInvoiceRouteActive
+    ? "Manual invoice billing with a hard access lock."
+    : "Self-serve billing with a hard access lock.";
+  const paymentSystemDescription = manualInvoiceRouteActive
+    ? "Trial, invoice requests, admin activation, and access locks are visible in one place so billing problems are caught before a clinic loses access."
+    : "Trial, checkout, portal, and webhook sync are visible in one place so billing problems are caught before a clinic loses access.";
+  const accessPolicyCopy = manualInvoiceRouteActive
+    ? "Every clinic gets 14 trial days. When the period ends, workspace data locks immediately unless support confirms paid access from an approved invoice. Billing, workspace selection, and logout remain available."
+    : `Every clinic gets 14 trial days. When the period ends, workspace data locks immediately unless ${onlineBillingProviderLabel} confirms an active paid subscription. Billing, workspace selection, and logout remain available.`;
   const callbackParams = await searchParams;
   const checkoutStatus = readQueryParam(callbackParams.checkout);
   const checkoutPlan = readQueryParam(callbackParams.plan);
@@ -233,8 +251,7 @@ export default async function BillingPage({
                 : " Workspace access is billing-only until a paid subscription is active."}
           </strong>
           <p className="blueprint-copy">
-            Self-serve payments run through {onlineBillingProviderLabel}; Paddle webhooks provision
-            plan limits automatically after checkout. Expected recovery target this month:{" "}
+            {billingCommandCopy} Expected recovery target this month:{" "}
             {formatCurrency(estimatedRecoveredRevenue, organization)}.
           </p>
         </div>
@@ -282,21 +299,17 @@ export default async function BillingPage({
       </section>
 
       <SurfaceCard
-        description="Trial, checkout, portal, and webhook sync are visible in one place so billing problems are caught before a clinic loses access."
+        description={paymentSystemDescription}
         eyebrow="Payment system"
-        title="Self-serve billing with a hard access lock."
+        title={paymentSystemTitle}
         wide
       >
         <div className="billing-purchase-flow">
           <div className="billing-value-note">
             <strong>Access policy</strong>
+            <p>{accessPolicyCopy}</p>
             <p>
-              Every clinic gets 14 trial days. When the period ends, workspace data locks
-              immediately unless Paddle confirms an active paid subscription. Billing,
-              workspace selection, and logout remain available.
-            </p>
-            <p>
-              Current route: <strong>{billingDiagnostics.onlineProviderLabel}</strong>. Provider
+              Current route: <strong>{billingRouteLabel}</strong>. Provider
               mode: <strong>{billingDiagnostics.providerMode}</strong>.
             </p>
           </div>
@@ -314,10 +327,14 @@ export default async function BillingPage({
             <InfoLine label="Active plan" value={planCatalog.label} />
             <InfoLine label="Monthly amount" value={`$${planCatalog.monthlyPrice}`} />
             <InfoLine label="Current period" value={`${formatDate(subscription.currentPeriodStart)} - ${formatDate(subscription.currentPeriodEnd)}`} />
-            <InfoLine
-              label={`${onlineBillingProviderLabel} customer`}
-              value={hasLiveOnlineCustomer ? maskExternalId(subscription.externalCustomerId) : "Created after first checkout"}
-            />
+            {onlineBillingProvider ? (
+              <InfoLine
+                label={`${onlineBillingProviderLabel} customer`}
+                value={hasLiveOnlineCustomer ? maskExternalId(subscription.externalCustomerId) : "Created after first checkout"}
+              />
+            ) : (
+              <InfoLine label="Invoice support" value={manualBillingDetails.supportEmail} />
+            )}
           </div>
           <div className="billing-health-grid">
             {billingDiagnostics.checks.map((check) => (
@@ -598,6 +615,8 @@ export default async function BillingPage({
           annualCheckoutAvailable={annualCheckoutAvailable}
           checkoutAvailable={billingDiagnostics.selfServeCheckoutReady}
           customerPortalAvailable={billingDiagnostics.customerPortalReady && hasLiveOnlineCustomer}
+          manualInvoiceAvailable={canUseManualBilling}
+          manualInvoiceVisible={manualBillingVisible}
           options={billingPlanOptions}
           organizationId={organization.id}
           providerLabel={onlineBillingProviderLabel}

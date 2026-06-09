@@ -25,7 +25,7 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 | `INCIDENT_ESCALATION_EMAIL` | server | yes | Urgent incident escalation. | Security/support routing. |
 | `RESEND_API_KEY` | server | yes | Sends clinic team invitation emails. | Resend API key vault. |
 | `EMAIL_FROM` | server | yes | Verified sender used for team invites. | Resend verified domain/sender. |
-| `BILLING_PROVIDER` | server | yes | `manual`, `paddle`, `stripe`, or `hybrid`. | Release decision. |
+| `BILLING_PROVIDER` | server | yes | Launch default is `manual`. Use `paddle`, `stripe`, or `hybrid` only for an approved online-provider rollout. Hybrid keeps manual invoices visible and routes online checkout to Paddle when configured, otherwise Stripe. | Release decision. |
 
 ## Launch approval gates
 
@@ -44,6 +44,7 @@ safe placeholders only; real values belong in the hosting provider, not in Git.
 - `PRODUCTION_MONITOR_POLICY_APPROVED`
 - `MANUAL_INVOICE_TEMPLATE_APPROVED` when using manual billing
 - `PADDLE_API_KEY`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_WEBHOOK_SECRET`, and `PADDLE_PRICE_*` when using Paddle billing
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_*` when using Stripe billing
 
 Do not set these to `true` until the external action is actually complete.
 

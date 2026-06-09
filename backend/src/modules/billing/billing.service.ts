@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@app/infra/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 
 type BillingPlan = 'starter' | 'growth' | 'scale';
+type BillingProvider = 'manual' | 'paddle' | 'stripe' | 'hybrid';
 type BillingStatus =
   | 'trialing'
   | 'active'
@@ -100,6 +101,28 @@ function inferPlan(object: Record<string, unknown>): BillingPlan {
   return envMatchedPlan ?? 'growth';
 }
 
+function readBillingProvider(): BillingProvider {
+  const value = process.env.BILLING_PROVIDER?.trim().toLowerCase();
+  if (value === 'manual' || value === 'paddle' || value === 'stripe' || value === 'hybrid') {
+    return value;
+  }
+
+  return 'manual';
+}
+
+function isStripeCheckoutSelected() {
+  const provider = readBillingProvider();
+  if (provider === 'stripe') {
+    return true;
+  }
+
+  return (
+    provider === 'hybrid' &&
+    Boolean(process.env.STRIPE_SECRET_KEY?.trim()) &&
+    !process.env.PADDLE_API_KEY?.trim()
+  );
+}
+
 function toIsoFromUnix(value: unknown): Date {
   const unixSeconds = readNumber(value);
   return unixSeconds ? new Date(unixSeconds * 1000) : new Date();
@@ -124,10 +147,26 @@ export class BillingService {
   ) {}
 
   async openCheckout(organizationId: string, plan: string) {
+    if (!isStripeCheckoutSelected()) {
+      throw new BadRequestException({
+        code: 'online_billing_not_enabled',
+        message: 'Manual invoice billing is active for launch. Use manual invoice activation.',
+        provider: readBillingProvider(),
+      });
+    }
+
     return this.stripeService.createCheckoutSession(organizationId, plan);
   }
 
   async openPortal(organizationId: string) {
+    if (!isStripeCheckoutSelected()) {
+      throw new BadRequestException({
+        code: 'online_billing_not_enabled',
+        message: 'Manual invoice billing is active for launch. Use manual invoice activation.',
+        provider: readBillingProvider(),
+      });
+    }
+
     return this.stripeService.createCustomerPortalSession(organizationId);
   }
 

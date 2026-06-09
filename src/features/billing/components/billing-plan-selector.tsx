@@ -5,6 +5,7 @@ import { CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 import type { Subscription } from "@/domain/types";
 import type { BillingInterval } from "@/server/validation";
 import { BillingActionButton } from "./billing-action-button";
+import { ManualInvoiceButton } from "./manual-invoice-button";
 
 export interface BillingPlanOption {
   plan: Subscription["plan"];
@@ -26,6 +27,8 @@ export function BillingPlanSelector({
   annualCheckoutAvailable,
   checkoutAvailable,
   customerPortalAvailable,
+  manualInvoiceAvailable,
+  manualInvoiceVisible,
   options,
   organizationId,
   providerLabel,
@@ -34,6 +37,8 @@ export function BillingPlanSelector({
   annualCheckoutAvailable: boolean;
   checkoutAvailable: boolean;
   customerPortalAvailable: boolean;
+  manualInvoiceAvailable: boolean;
+  manualInvoiceVisible: boolean;
   options: BillingPlanOption[];
   organizationId: string;
   providerLabel: string;
@@ -55,41 +60,54 @@ export function BillingPlanSelector({
       <div className="billing-plan-toolbar">
         <div>
           <strong>Choose a production plan</strong>
-          <p>
-            Plans are paid after the 14-day trial. The checkout opens in {providerLabel};
-            subscription updates sync back by webhook.
-          </p>
+          {checkoutAvailable ? (
+            <p>
+              Plans are paid after the 14-day trial. The checkout opens in {providerLabel};
+              subscription updates sync back by webhook.
+            </p>
+          ) : manualInvoiceVisible ? (
+            <p>
+              Plans are paid by invoice after the 14-day trial. Request the target plan,
+              then platform support activates access after payment confirmation.
+            </p>
+          ) : (
+            <p>
+              Plan changes are unavailable until billing is configured for this workspace.
+            </p>
+          )}
         </div>
-        <div className="billing-period-toggle" role="tablist" aria-label="Billing period">
-          <button
-            aria-selected={interval === "monthly"}
-            className={interval === "monthly" ? "active" : ""}
-            onClick={() => setInterval("monthly")}
-            role="tab"
-            type="button"
-          >
-            Monthly
-          </button>
-          <button
-            aria-selected={interval === "yearly"}
-            className={interval === "yearly" ? "active" : ""}
-            disabled={!annualCheckoutAvailable}
-            onClick={() => setInterval("yearly")}
-            role="tab"
-            type="button"
-          >
-            Annual
-            <span>Save 17%</span>
-          </button>
-        </div>
+        {checkoutAvailable ? (
+          <div className="billing-period-toggle" role="tablist" aria-label="Billing period">
+            <button
+              aria-selected={interval === "monthly"}
+              className={interval === "monthly" ? "active" : ""}
+              onClick={() => setInterval("monthly")}
+              role="tab"
+              type="button"
+            >
+              Monthly
+            </button>
+            <button
+              aria-selected={interval === "yearly"}
+              className={interval === "yearly" ? "active" : ""}
+              disabled={!annualCheckoutAvailable}
+              onClick={() => setInterval("yearly")}
+              role="tab"
+              type="button"
+            >
+              Annual
+              <span>Save 17%</span>
+            </button>
+          </div>
+        ) : null}
       </div>
 
-      {!annualCheckoutAvailable ? (
+      {checkoutAvailable && !annualCheckoutAvailable ? (
         <div className="compact-alert warning aligned-left">
           <ShieldCheck size={16} />
           <span>Annual checkout is disabled until all Paddle yearly price IDs are configured.</span>
         </div>
-      ) : annualSavings > 0 ? (
+      ) : checkoutAvailable && annualSavings > 0 ? (
         <div className="compact-alert info aligned-left">
           <Sparkles size={16} />
           <span>Annual billing saves about ${annualSavings.toLocaleString()} on the Pro plan.</span>
@@ -155,15 +173,35 @@ export function BillingPlanSelector({
                 ))}
               </div>
 
-              <BillingActionButton
-                className={option.plan === "growth" ? "primary-button" : "secondary-button"}
-                disabled={actionDisabled || (currentPaidPlan && !customerPortalAvailable)}
-                interval={actionMode === "checkout" ? interval : undefined}
-                label={actionLabel}
-                mode={actionMode}
-                organizationId={organizationId}
-                plan={actionMode === "checkout" ? option.plan : undefined}
-              />
+              {checkoutAvailable || customerPortalAvailable ? (
+                <BillingActionButton
+                  className={option.plan === "growth" ? "primary-button" : "secondary-button"}
+                  disabled={actionDisabled || (currentPaidPlan && !customerPortalAvailable)}
+                  interval={actionMode === "checkout" ? interval : undefined}
+                  label={actionLabel}
+                  mode={actionMode}
+                  organizationId={organizationId}
+                  plan={actionMode === "checkout" ? option.plan : undefined}
+                />
+              ) : manualInvoiceVisible ? (
+                <ManualInvoiceButton
+                  className={option.plan === "growth" ? "primary-button" : "secondary-button"}
+                  disabled={!manualInvoiceAvailable || currentPaidPlan}
+                  label={
+                    currentPaidPlan
+                      ? "Plan active"
+                      : option.isCurrentPlan
+                        ? "Request invoice"
+                        : `Request ${option.label} invoice`
+                  }
+                  organizationId={organizationId}
+                  plan={option.plan}
+                />
+              ) : (
+                <button className="secondary-button" disabled type="button">
+                  Billing unavailable
+                </button>
+              )}
             </div>
           );
         })}

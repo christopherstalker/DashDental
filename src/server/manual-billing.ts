@@ -40,11 +40,7 @@ export function getBillingProvider(): BillingProvider {
     return value;
   }
 
-  if (readEnv("PADDLE_API_KEY")) {
-    return "paddle";
-  }
-
-  return readEnv("STRIPE_SECRET_KEY") ? "stripe" : "manual";
+  return "manual";
 }
 
 export function getOnlineBillingProvider(): "paddle" | "stripe" | undefined {

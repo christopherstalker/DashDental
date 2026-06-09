@@ -7,7 +7,9 @@ It is intentionally practical: every item needs evidence before paid use.
 
 - Billing mode: manual invoice first.
 - Trial: 14 days.
-- Stripe: disabled for launch unless `npm run stripe:rehearsal` reports ready.
+- Paddle/Stripe checkout: disabled for first-clinic launch unless a separate
+  online-provider rehearsal is approved. Stripe also requires
+  `npm run stripe:rehearsal` to report ready.
 - Compliance language: do not claim HIPAA, SOC 2, ISO, or certification status.
 - Support: business-day support unless a signed order form says otherwise.
 
@@ -18,7 +20,7 @@ It is intentionally practical: every item needs evidence before paid use.
 2. Production env reviewed.
    Evidence: `npm run go-live:check` has no `BLOCK` results for the launch hostname.
 3. Manual billing ready.
-   Evidence: invoice template, recipient name, payment instructions, support email, and activation timing are approved.
+   Evidence: invoice template, recipient name, IBAN, payment instructions, support email, and activation timing are approved.
 4. Admin subscription workflow tested.
    Evidence: a fake clinic can be found in `/platform/subscriptions`, granted Growth, moved to read-only hold, and unlocked again.
 5. Clinic onboarding script rehearsed.

@@ -30755,7 +30755,7 @@ export const generatedDictionaries = {
     "home.pricing.badge": "Pinakamahusay na unang sale",
     "home.pricing.kicker": "Mga Plano",
     "home.pricing.title": "Presyo laban sa na-recover na kita, hindi mga generic na upuan.",
-    "home.security.body": "Ang manu-manong IBAN na pagsingil ay nakakakuha ng mga unang klinika sa pintuan. Pinapanatili pa rin ng platform ang paghihiwalay ng nangungupahan, mga audit trail, pagsusuri sa kalusugan, Stripe-ready billing seams, at mga pahina ng patakaran sa simpleng wika.",
+    "home.security.body": "Ang manu-manong IBAN na pagsingil ay nakakakuha ng mga unang klinika sa pintuan. Pinapanatili pa rin ng platform ang paghihiwalay ng nangungupahan, mga audit trail, pagsusuri sa kalusugan, provider-ready billing seams, at mga pahina ng patakaran sa simpleng wika.",
     "home.security.kicker": "Production path",
     "home.security.title": "Bahagi na ngayon ng mga benta ang seguridad, privacy, at mga tuntunin.",
     "home.trust.body": "Ang pagsubok, pagsingil sa bank-transfer, pagsasama, upuan, AI na hangganan, at panganib sa medikal na data ay makikita sa harap. Ginagawa nitong mas madaling bilhin ang produkto.",

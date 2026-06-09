@@ -1,7 +1,8 @@
 # Cancellation and Refund Policy
 
-This policy is the default launch template for manual invoice or Stripe billing
-until a signed order form says otherwise.
+This policy is the default launch template for manual invoice billing until a
+signed order form enables Paddle, Stripe, or another approved online billing
+provider.
 
 ## Trial
 
@@ -11,10 +12,10 @@ terms, and demo recovery flow.
 
 ## Cancellation
 
-Customers can request cancellation through the support contact on the order form
-or through Stripe Customer Portal when Stripe is enabled. Cancellation stops
-future renewal charges. Read-only access can remain available for operational
-handoff and billing review.
+Customers can request cancellation through the support contact on the order
+form, or through the selected online provider portal when one is enabled.
+Cancellation stops future renewal charges. Read-only access can remain
+available for operational handoff and billing review.
 
 ## Refunds
 
@@ -24,9 +25,9 @@ customer received paid activation for the period.
 
 ## Plan Changes
 
-Upgrades can unlock higher limits after payment or Stripe confirmation.
-Downgrades should preserve customer data while applying the lower plan limits at
-the agreed effective date.
+Upgrades can unlock higher limits after payment confirmation or selected online
+provider confirmation. Downgrades should preserve customer data while applying
+the lower plan limits at the agreed effective date.
 
 ## Data After Cancellation
 

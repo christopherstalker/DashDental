@@ -27,12 +27,14 @@ Plan limits must match the public pricing page on the signature date.
 - Trial length: 14 days.
 - During trial: workspace, inbox, setup, billing, and demo recovery flows are available.
 - After trial: paid actions can lock while billing and setup stay readable.
-- Activation: Stripe Checkout/Portal when enabled, or manual invoice with support
-  activation after payment confirmation.
+- Activation: manual invoice with support activation after payment
+  confirmation. Paddle or Stripe Checkout/Portal may be used only when the
+  selected online billing provider is enabled on the signed order.
 
 ## Billing
 
-- Billing provider: manual invoice, Stripe, or hybrid.
+- Billing provider: manual invoice for launch; Paddle, Stripe, or hybrid only
+  when explicitly enabled.
 - Currency:
 - Billing period:
 - Invoice reference:

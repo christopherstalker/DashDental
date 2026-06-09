@@ -327,6 +327,7 @@ export function buildGoLiveReadinessPlan({
     const manualBillingReady =
       isEmail(env.MANUAL_BILLING_SUPPORT_EMAIL) &&
       Boolean(env.MANUAL_BILLING_RECIPIENT_NAME?.trim()) &&
+      Boolean(env.MANUAL_BILLING_IBAN?.trim()) &&
       Boolean(env.MANUAL_BILLING_INSTRUCTIONS?.trim()) &&
       isEnabled(env.MANUAL_INVOICE_TEMPLATE_APPROVED);
 
@@ -340,6 +341,11 @@ export function buildGoLiveReadinessPlan({
         description: "Manual billing recipient name is configured.",
         id: "manual_billing_recipient_name",
         remediation: "Set MANUAL_BILLING_RECIPIENT_NAME before manual invoice launch.",
+      }),
+      check(Boolean(env.MANUAL_BILLING_IBAN?.trim()), {
+        description: "Manual billing IBAN is configured for invoice requests.",
+        id: "manual_billing_iban",
+        remediation: "Set MANUAL_BILLING_IBAN before manual invoice launch.",
       }),
       check(Boolean(env.MANUAL_BILLING_INSTRUCTIONS?.trim()), {
         description: "Manual billing payment instructions are configured.",

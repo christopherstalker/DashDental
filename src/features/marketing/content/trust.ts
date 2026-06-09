@@ -20,7 +20,7 @@ export const faqItems = [
     question: "Do you support bank-transfer billing instead of cards?",
     questionKey: "faq.item.bank.q",
     answer:
-      "Yes. The current commercial path supports manual IBAN invoices, subscription status tracking, plan limits, and admin activation. Stripe can be enabled later without changing the clinic workspace model.",
+      "Yes. The current launch path supports manual IBAN invoices, subscription status tracking, plan limits, and admin activation. Paddle or Stripe can be enabled later without changing the clinic workspace model.",
   },
   {
     answerKey: "faq.item.integrations.a",
